@@ -22,46 +22,12 @@ const UPLOAD_DIR = process.env.UPLOAD_DIR ?? 'uploads';
 // CORS
 // ─────────────────────────────────────────────────────────────
 
-const allowedOrigins = [
-  'http://localhost:5173',
-  'http://localhost:3000',
-  'https://weddingsandd.onrender.com',
-];
-
 app.use(cors({
-  origin: (origin, callback) => {
-    // מאפשר POSTMAN / mobile apps / server-to-server
-    if (!origin) {
-      return callback(null, true);
-    }
-
-    if (allowedOrigins.includes(origin)) {
-      return callback(null, true);
-    }
-
-    return callback(new Error(`CORS blocked for origin: ${origin}`));
-  },
-
+  origin: true, // reflects the exact request origin — required for credentials
   credentials: true,
-
-  methods: [
-    'GET',
-    'POST',
-    'PUT',
-    'PATCH',
-    'DELETE',
-    'OPTIONS',
-  ],
-
-  allowedHeaders: [
-    'Content-Type',
-    'Authorization',
-    'X-Guest-ID',
-  ],
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Guest-ID'],
 }));
-
-// חשוב מאוד ל־PREFLIGHT
-app.options('*', cors());
 
 // ─────────────────────────────────────────────────────────────
 // Body Parsers

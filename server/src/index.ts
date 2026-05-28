@@ -17,9 +17,18 @@ const PORT = Number(process.env.PORT ?? 5176);
 const UPLOAD_DIR = process.env.UPLOAD_DIR ?? 'uploads';
 
 // ─── Middleware ───────────────────────────────────────────────
+const allowedOrigins = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(',').map((o) => o.trim())
+  : ['http://localhost:5175'];
+
 app.use(
   cors({
-    origin: process.env.NODE_ENV === 'production' ? false : 'http://localhost:5175',
+    origin: (origin, callback) => {
+      // allow server-to-server or same-origin requests (no origin header)
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.includes(origin)) return callback(null, true);
+      callback(new Error(`CORS: origin ${origin} not allowed`));
+    },
     credentials: true,
   }),
 );

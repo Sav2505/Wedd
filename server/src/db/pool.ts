@@ -12,7 +12,9 @@ types.setTypeParser(1083, (val: string) => val); // TIME  → "HH:MM:SS"
 types.setTypeParser(1114, (val: string) => val); // TIMESTAMP (no tz) → string
 
 
-const hasConnectionString = Boolean(process.env.DATABASE_URL);
+const connectionString =
+  process.env.SUPABASE_URI ?? process.env.DATABASE_URL;
+
 const hasIndividualVars =
   process.env.PG_HOST &&
   process.env.PG_PORT &&
@@ -20,16 +22,19 @@ const hasIndividualVars =
   process.env.PG_USER &&
   process.env.PG_PASSWORD;
 
-if (!hasConnectionString && !hasIndividualVars) {
+if (!connectionString && !hasIndividualVars) {
   throw new Error(
-    'DB config missing: set DATABASE_URL or PG_HOST/PG_PORT/PG_DATABASE/PG_USER/PG_PASSWORD',
+    'DB config missing: set SUPABASE_URI, DATABASE_URL, or PG_HOST/PG_PORT/PG_DATABASE/PG_USER/PG_PASSWORD',
   );
 }
 
+const isSupabase = Boolean(process.env.SUPABASE_URI);
+
 export const pool = new Pool(
-  hasConnectionString
+  connectionString
     ? {
-        connectionString: process.env.DATABASE_URL,
+        connectionString,
+        ssl: isSupabase ? { rejectUnauthorized: false } : undefined,
         max: 10,
         idleTimeoutMillis: 30_000,
         connectionTimeoutMillis: 5_000,

@@ -43,7 +43,7 @@ export default function SeatingTab() {
       .finally(() => setLoading(false));
   }, []);
 
-  const ownTable = tables.find(t => t.table_number === guest?.table_number) ?? null;
+  // const ownTable = tables.find(t => t.table_number === guest?.table_number) ?? null;
 
   function handleSelectTable(id: string) {
     const t = tables.find(t => t.id === id);
@@ -245,7 +245,7 @@ export default function SeatingTab() {
                 </Typography>
               ) : (
                 <List dense disablePadding>
-                  {dialogTable.guests.map((g, i) => {
+                  {dialogTable.guests.map((g) => {
                     const isMe = g.id === guest?.id;
                     return (
                       <ListItem

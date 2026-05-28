@@ -3,7 +3,7 @@ import {
     Box, Typography, Button, IconButton, TextField, Chip,
     CircularProgress, Alert, Autocomplete, Dialog,
     DialogTitle, DialogContent, DialogActions,
-    Tooltip, Badge, Divider, ToggleButtonGroup, ToggleButton,
+    Tooltip, Divider, ToggleButtonGroup, ToggleButton,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';

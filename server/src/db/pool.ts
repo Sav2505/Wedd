@@ -1,5 +1,9 @@
+import { setDefaultResultOrder } from 'node:dns';
 import { Pool, types } from 'pg';
 import dotenv from 'dotenv';
+
+// Render's network blocks IPv6 — force all DNS lookups to return IPv4 first
+setDefaultResultOrder('ipv4first');
 
 dotenv.config();
 

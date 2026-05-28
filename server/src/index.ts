@@ -19,6 +19,29 @@ const PORT = Number(process.env.PORT ?? 5176);
 const UPLOAD_DIR = process.env.UPLOAD_DIR ?? 'uploads';
 
 // ─────────────────────────────────────────────────────────────
+// CORS DEBUG — log every incoming request BEFORE cors runs
+// ─────────────────────────────────────────────────────────────
+
+app.use((req, res, next) => {
+  console.log(`\n━━━ INCOMING REQUEST ━━━`);
+  console.log(`  Method : ${req.method}`);
+  console.log(`  URL    : ${req.originalUrl}`);
+  console.log(`  Origin : ${req.headers.origin ?? '(none)'}`);
+  console.log(`  Host   : ${req.headers.host}`);
+
+  // Patch res.setHeader so we can log what CORS headers are being set
+  const originalSetHeader = res.setHeader.bind(res);
+  res.setHeader = (name: string, value: any) => {
+    if (name.toLowerCase().startsWith('access-control')) {
+      console.log(`  [CORS header set] ${name}: ${value}`);
+    }
+    return originalSetHeader(name, value);
+  };
+
+  next();
+});
+
+// ─────────────────────────────────────────────────────────────
 // CORS
 // ─────────────────────────────────────────────────────────────
 
@@ -37,12 +60,13 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // ─────────────────────────────────────────────────────────────
-// Debug Logs
+// Debug Logs (after cors — log what was actually sent)
 // ─────────────────────────────────────────────────────────────
 
-app.use((req, _res, next) => {
-  console.log(`[${req.method}] ${req.originalUrl}`);
-  console.log(`Origin: ${req.headers.origin}`);
+app.use((req, res, next) => {
+  // For OPTIONS preflight, cors() already sent the response.
+  // This middleware only runs for non-OPTIONS requests.
+  console.log(`  [After CORS] continuing to route handler...`);
   next();
 });
 

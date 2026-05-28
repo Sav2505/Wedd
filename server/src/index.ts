@@ -23,18 +23,9 @@ const UPLOAD_DIR = process.env.UPLOAD_DIR ?? 'uploads';
 // ─────────────────────────────────────────────────────────────
 
 app.use((req, res, next) => {
-  console.log(`\n━━━ INCOMING REQUEST ━━━`);
-  console.log(`  Method : ${req.method}`);
-  console.log(`  URL    : ${req.originalUrl}`);
-  console.log(`  Origin : ${req.headers.origin ?? '(none)'}`);
-  console.log(`  Host   : ${req.headers.host}`);
-
   // Patch res.setHeader so we can log what CORS headers are being set
   const originalSetHeader = res.setHeader.bind(res);
   res.setHeader = (name: string, value: any) => {
-    if (name.toLowerCase().startsWith('access-control')) {
-      console.log(`  [CORS header set] ${name}: ${value}`);
-    }
     return originalSetHeader(name, value);
   };
 
@@ -66,7 +57,6 @@ app.use(express.urlencoded({ extended: true }));
 app.use((req, res, next) => {
   // For OPTIONS preflight, cors() already sent the response.
   // This middleware only runs for non-OPTIONS requests.
-  console.log(`  [After CORS] continuing to route handler...`);
   next();
 });
 

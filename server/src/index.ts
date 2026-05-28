@@ -18,17 +18,8 @@ const UPLOAD_DIR = process.env.UPLOAD_DIR ?? 'uploads';
 
 // ─── Middleware ───────────────────────────────────────────────
 
-const allowedOrigins = process.env.ALLOWED_ORIGINS
-  ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim())
-  : ['http://localhost:5173', 'http://localhost:5174'];
-
 app.use(cors({
-  origin: (origin, callback) => {
-    // allow requests with no origin (mobile apps, curl, etc.)
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.includes(origin)) return callback(null, true);
-    callback(new Error(`CORS: origin ${origin} not allowed`));
-  },
+  origin: true, // reflects the request origin — works with credentials
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Guest-ID'],

@@ -132,7 +132,7 @@ export default function LoginPage() {
   return (
     <Box
       sx={{
-        minHeight: '100vh',
+        minHeight: '100dvh',
         position: 'relative',
         display: 'flex',
         alignItems: 'center',
@@ -144,7 +144,7 @@ export default function LoginPage() {
           'radial-gradient(ellipse at 60% 85%, rgba(245,237,217,0.4) 0%, transparent 60%),' +
           'linear-gradient(160deg, #FAF7F2 0%, #F5EDD9 50%, #FAF7F2 100%)',
         px: 2,
-        py: 4,
+        py: { xs: 2, sm: 4 },
       }}
     >
       {/* Falling petals */}

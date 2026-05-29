@@ -90,5 +90,6 @@ export interface WeddingTableWithGuests extends WeddingTable {
     id: string;
     full_name: string;
     side: 'חתן' | 'כלה' | 'שניהם' | null;
+    plus_count: number;
   }>;
 }

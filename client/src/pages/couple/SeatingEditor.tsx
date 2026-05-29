@@ -39,6 +39,7 @@ interface UnassignedGuest {
     id: string;
     full_name: string;
     side: string | null;
+    plus_count: number;
 }
 
 // ─── Component ───────────────────────────────────────────────
@@ -281,8 +282,8 @@ export default function SeatingEditor() {
         );
     }
 
-    const totalGuests = tables.reduce((s, t) => s + t.guests.length, 0);
-    const unassignedCount = unassigned.length;
+    const totalGuests = tables.reduce((s, t) => s + t.guests.reduce((gs, g) => gs + 1 + (g.plus_count ?? 0), 0), 0);
+    const unassignedCount = unassigned.reduce((s, g) => s + 1 + (g.plus_count ?? 0), 0);
 
     return (
         <Box sx={{ p: { xs: 1.5, sm: 2.5 } }}>
@@ -565,7 +566,7 @@ export default function SeatingEditor() {
                                 )}
                                 <Box>
                                     <Typography variant="body2" sx={{ color: '#A08070', mb: 1, fontWeight: 600 }}>
-                                        מוזמנים ({selectedTable.guests.length}/{selectedTable.capacity})
+                                        מוזמנים ({selectedTable.guests.reduce((s, g) => s + 1 + (g.plus_count ?? 0), 0)}/{selectedTable.capacity})
                                     </Typography>
 
                                     {selectedTable.guests.length === 0 ? (
@@ -577,7 +578,7 @@ export default function SeatingEditor() {
                                             {selectedTable.guests.map(g => (
                                                 <Chip
                                                     key={g.id}
-                                                    label={g.full_name}
+                                                    label={g.plus_count > 0 ? `${g.full_name} (+${g.plus_count})` : g.full_name}
                                                     size="small"
                                                     onDelete={() => handleUnassignGuest(g.id)}
                                                     sx={{
@@ -594,11 +595,11 @@ export default function SeatingEditor() {
                                 </Box>
 
                                 {/* Add guest autocomplete */}
-                                {selectedTable.guests.length < selectedTable.capacity && unassigned.length > 0 && (
+                                {selectedTable.guests.reduce((s, g) => s + 1 + (g.plus_count ?? 0), 0) < selectedTable.capacity && unassigned.length > 0 && (
                                     <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-start' }}>
                                         <Autocomplete<UnassignedGuest>
                                             options={unassigned}
-                                            getOptionLabel={o => o.full_name}
+                                            getOptionLabel={o => o.plus_count > 0 ? `${o.full_name} (+${o.plus_count})` : o.full_name}
                                             value={guestToAdd}
                                             onChange={(_, v) => setGuestToAdd(v)}
                                             size="small"
@@ -627,7 +628,7 @@ export default function SeatingEditor() {
                                     </Box>
                                 )}
 
-                                {unassigned.length === 0 && selectedTable.guests.length < selectedTable.capacity && (
+                                {unassigned.length === 0 && selectedTable.guests.reduce((s, g) => s + 1 + (g.plus_count ?? 0), 0) < selectedTable.capacity && (
                                     <Typography variant="caption" sx={{ color: '#B8A898', fontStyle: 'italic' }}>
                                         כל המוזמנים שובצו לשולחן 🎉
                                     </Typography>

@@ -11,7 +11,7 @@ export async function getAllTables(): Promise<WeddingTableWithGuests[]> {
       t.pos_x, t.pos_y, t.shape, t.orientation, t.created_at,
       COALESCE(
         json_agg(
-          json_build_object('id', g.id, 'full_name', g.full_name, 'side', g.side)
+          json_build_object('id', g.id, 'full_name', g.full_name, 'side', g.side, 'plus_count', COALESCE(g.plus_count, 0))
           ORDER BY g.full_name
         ) FILTER (WHERE g.id IS NOT NULL), '[]'
       ) AS guests
@@ -128,9 +128,9 @@ export async function unassignGuest(guestId: string): Promise<void> {
 
 // ─── Unassigned guests list ────────────────────────────────────
 
-export async function getUnassignedGuests(): Promise<Pick<Guest, 'id' | 'full_name' | 'side'>[]> {
-  const { rows } = await pool.query<Pick<Guest, 'id' | 'full_name' | 'side'>>(
-    "SELECT id, full_name, side FROM guests WHERE table_number IS NULL AND role = 'guest' ORDER BY full_name",
+export async function getUnassignedGuests(): Promise<Array<Pick<Guest, 'id' | 'full_name' | 'side'> & { plus_count: number }>> {
+  const { rows } = await pool.query<Pick<Guest, 'id' | 'full_name' | 'side'> & { plus_count: number }>(
+    "SELECT id, full_name, side, COALESCE(plus_count, 0) AS plus_count FROM guests WHERE table_number IS NULL AND role = 'guest' ORDER BY full_name",
   );
   return rows;
 }

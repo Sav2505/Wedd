@@ -58,8 +58,8 @@ export async function unassignGuest(guestId: string): Promise<void> {
   await api.delete(`/tables/guests/${guestId}`);
 }
 
-export async function getUnassignedGuests(): Promise<{ id: string; full_name: string; side: string | null }[]> {
-  const { data } = await api.get<ApiResponse<{ id: string; full_name: string; side: string | null }[]>>('/tables/unassigned');
+export async function getUnassignedGuests(): Promise<{ id: string; full_name: string; side: string | null; plus_count: number }[]> {
+  const { data } = await api.get<ApiResponse<{ id: string; full_name: string; side: string | null; plus_count: number }[]>>('/tables/unassigned');
   if (!data.success || !data.data) return [];
   return data.data;
 }

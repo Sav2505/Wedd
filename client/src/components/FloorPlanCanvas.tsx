@@ -274,7 +274,7 @@ export default function FloorPlanCanvas({
                 color:     'rgba(154,120,51,0.65)',
                 lineHeight: 1,
               }}>
-                {table.guests.length}/{table.capacity}
+                {table.guests.reduce((s, g) => s + 1 + (g.plus_count ?? 0), 0)}/{table.capacity}
               </Typography>
             )}
 

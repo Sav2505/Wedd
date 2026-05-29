@@ -140,11 +140,12 @@ export default function MainLayout() {
           <Tabs
             value={activeTab}
             onChange={(_, v) => setActiveTab(v)}
-            variant="standard"
-            centered
+            variant="scrollable"
+            scrollButtons="auto"
+            allowScrollButtonsMobile
             sx={{
               minHeight: 58,
-              '& .MuiTabs-flexContainer': { gap: 0 },
+              '& .MuiTabs-flexContainer': { gap: 0, justifyContent: 'center' },
               '& .MuiTab-root': {
                 minHeight: 58, py: 1.1, px: { xs: 1, sm: 2 },
                 fontSize: { xs: '0.75rem', sm: '0.85rem' }, gap: '4px',

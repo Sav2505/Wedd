@@ -235,12 +235,13 @@ function OrnamentalHeader({
           <Tabs
             value={activeTab}
             onChange={(_, v) => onTabChange(v)}
-            variant="standard"
-            centered
+            variant="scrollable"
+            scrollButtons="auto"
+            allowScrollButtonsMobile
             TabIndicatorProps={{ style: { background: 'linear-gradient(90deg,#C9A84C,#E0C97A)', height: 3, borderRadius: 2 } }}
             sx={{
               minHeight: 62,
-              '& .MuiTabs-flexContainer': { gap: 0 },
+              '& .MuiTabs-flexContainer': { gap: 0, justifyContent: 'center' },
               '& .MuiTabs-scrollButtons': {
                 color: '#C9A84C',
                 '&.Mui-disabled': { opacity: 0.2 },

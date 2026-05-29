@@ -350,39 +350,61 @@ export default function GuestListEditor() {
                   boxShadow: '0 4px 14px rgba(154,120,51,0.08)',
                 }}
               >
-                <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                  <Stack direction="row" alignItems="center" spacing={1} sx={{ width: '100%' }}>
-                    <GroupWorkIcon sx={{ color: '#9A7833', fontSize: 18 }} />
-                    <Typography sx={{ color: '#2C1810', fontWeight: 700 }}>{group.name}</Typography>
-                    <Chip
-                      size="small"
-                      label={(() => {
-                        const total = items.reduce((s, g) => s + 1 + (g.plus_count ?? 0), 0);
-                        return total > items.length
-                          ? `${items.length} רשומות · ${total} בסה"כ`
-                          : `${items.length} אורחים`;
-                      })()}
-                      sx={{ bgcolor: 'rgba(201,168,76,0.14)', color: '#9A7833' }}
-                    />
-                    <Box sx={{ flexGrow: 1 }} />
-                    <Tooltip title="עריכת שם קבוצה">
-                      <IconButton size="small" onClick={(e) => { e.stopPropagation(); openEditGroup(group); }}>
-                        <EditIcon sx={{ fontSize: 16, color: '#A08070' }} />
-                      </IconButton>
-                    </Tooltip>
-                    <Tooltip title="מחיקת קבוצה">
-                      <IconButton size="small" onClick={(e) => { e.stopPropagation(); setDeleteGroupId(group.id); }}>
-                        <DeleteOutlineIcon sx={{ fontSize: 16, color: '#C04040' }} />
-                      </IconButton>
-                    </Tooltip>
-                    <Button
-                      size="small"
-                      onClick={(e) => { e.stopPropagation(); openCreateGuest(group.id); }}
-                      sx={{ color: '#9A7833', fontWeight: 700 }}
-                    >
-                      + אורח
-                    </Button>
-                  </Stack>
+                <AccordionSummary
+                  expandIcon={<ExpandMoreIcon sx={{ fontSize: 18, color: '#9A7833' }} />}
+                  sx={{ '& .MuiAccordionSummary-content': { minWidth: 0, my: '10px' } }}
+                >
+                  <Box sx={{ display: 'flex', alignItems: 'center', width: '100%', minWidth: 0, gap: 0.75 }}>
+                    {/* Info */}
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flex: '1 1 auto', minWidth: 0 }}>
+                      <Typography sx={{
+                        color: '#2C1810', fontWeight: 700,
+                        fontSize: { xs: '0.8rem', sm: '0.9rem' },
+                        width: { xs: 110, sm: 170 },
+                        flexShrink: 0,
+                        wordBreak: 'break-word', lineHeight: 1.3,
+                      }}>{group.name}</Typography>
+                      <Chip
+                        size="small"
+                        label={(() => {
+                          const total = items.reduce((s, g) => s + 1 + (g.plus_count ?? 0), 0);
+                          if (total > items.length) {
+                            return (
+                              <Box component="span" sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', fontSize: '0.63rem', lineHeight: 1.3 }}>
+                                <span>{items.length} רשומים</span>
+                                <span>{total} בסה"כ</span>
+                              </Box>
+                            );
+                          }
+                          return `${items.length} אורחים`;
+                        })()}
+                        sx={{ bgcolor: 'rgba(201,168,76,0.14)', color: '#9A7833', height: 'auto', flexShrink: 0, '& .MuiChip-label': { py: 0.25, px: 0.75 } }}
+                      />
+                    </Box>
+                    {/* Actions */}
+                    <Box sx={{ display: 'flex', alignItems: 'center', flexShrink: 0, width: 118, justifyContent: 'flex-end' }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                        <Tooltip title="עריכת שם קבוצה">
+                          <IconButton size="small" onClick={(e) => { e.stopPropagation(); openEditGroup(group); }}>
+                            <EditIcon sx={{ fontSize: 14, color: '#A08070' }} />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="מחיקת קבוצה">
+                          <IconButton size="small" onClick={(e) => { e.stopPropagation(); setDeleteGroupId(group.id); }}>
+                            <DeleteOutlineIcon sx={{ fontSize: 14, color: '#C04040' }} />
+                          </IconButton>
+                        </Tooltip>
+                      </Box>
+                      <Box sx={{ width: '1px', height: 18, bgcolor: 'rgba(201,168,76,0.35)', mx: 1, flexShrink: 0 }} />
+                      <Button
+                        size="small"
+                        onClick={(e) => { e.stopPropagation(); openCreateGuest(group.id); }}
+                        sx={{ color: '#9A7833', fontWeight: 700, fontSize: '0.7rem', minWidth: 0, px: 0.5, lineHeight: 1 }}
+                      >
+                        + אורח
+                      </Button>
+                    </Box>
+                  </Box>
                 </AccordionSummary>
                 <AccordionDetails sx={{ pt: 0.5 }}>
                   {items.length === 0 ? (
@@ -418,25 +440,44 @@ export default function GuestListEditor() {
           boxShadow: '0 3px 10px rgba(154,120,51,0.06)',
         }}
       >
-        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-          <Stack direction="row" alignItems="center" spacing={1} sx={{ width: '100%' }}>
-            <FolderOpenIcon sx={{ color: '#9A7833', fontSize: 18 }} />
-            <Typography sx={{ color: '#2C1810', fontWeight: 700 }}>ללא קבוצה</Typography>
-            <Chip
-              size="small"
-              label={(() => {
-                const total = grouped.ungrouped.reduce((s, g) => s + 1 + (g.plus_count ?? 0), 0);
-                return total > grouped.ungrouped.length
-                  ? `${grouped.ungrouped.length} רשומות · ${total} בסה"כ`
-                  : `${grouped.ungrouped.length} אורחים`;
-              })()}
-              sx={{ bgcolor: 'rgba(201,168,76,0.10)', color: '#9A7833' }}
-            />
-            <Box sx={{ flexGrow: 1 }} />
-            <Button size="small" onClick={(e) => { e.stopPropagation(); openCreateGuest(null); }} sx={{ color: '#9A7833', fontWeight: 700 }}>
-              + אורח
-            </Button>
-          </Stack>
+        <AccordionSummary
+          expandIcon={<ExpandMoreIcon sx={{ fontSize: 18, color: '#9A7833' }} />}
+          sx={{ '& .MuiAccordionSummary-content': { minWidth: 0, my: '10px' } }}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center', width: '100%', minWidth: 0, gap: 0.75 }}>
+            {/* Info */}
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flex: '1 1 auto', minWidth: 0 }}>
+              <Typography sx={{
+                color: '#2C1810', fontWeight: 700,
+                fontSize: { xs: '0.8rem', sm: '0.9rem' },
+                width: { xs: 110, sm: 170 },
+                flexShrink: 0,
+                wordBreak: 'break-word', lineHeight: 1.3,
+              }}>ללא קבוצה</Typography>
+              <Chip
+                size="small"
+                label={(() => {
+                  const total = grouped.ungrouped.reduce((s, g) => s + 1 + (g.plus_count ?? 0), 0);
+                  if (total > grouped.ungrouped.length) {
+                    return (
+                      <Box component="span" sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', fontSize: '0.63rem', lineHeight: 1.3 }}>
+                        <span>{grouped.ungrouped.length} רשומים</span>
+                        <span>{total} בסה"כ</span>
+                      </Box>
+                    );
+                  }
+                  return `${grouped.ungrouped.length} אורחים`;
+                })()}
+                sx={{ bgcolor: 'rgba(201,168,76,0.10)', color: '#9A7833', height: 'auto', flexShrink: 0, '& .MuiChip-label': { py: 0.25, px: 0.75 } }}
+              />
+            </Box>
+            {/* Actions */}
+            <Box sx={{ display: 'flex', alignItems: 'center', flexShrink: 0, width: 118, justifyContent: 'flex-end' }}>
+              <Button size="small" onClick={(e) => { e.stopPropagation(); openCreateGuest(null); }} sx={{ color: '#9A7833', fontWeight: 700, fontSize: '0.7rem', minWidth: 0, px: 0.5, lineHeight: 1 }}>
+                + אורח
+              </Button>
+            </Box>
+          </Box>
         </AccordionSummary>
         <AccordionDetails sx={{ pt: 0.5 }}>
           {grouped.ungrouped.length === 0 ? (

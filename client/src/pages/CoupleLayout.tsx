@@ -235,9 +235,8 @@ function OrnamentalHeader({
           <Tabs
             value={activeTab}
             onChange={(_, v) => onTabChange(v)}
-            variant="scrollable"
-            scrollButtons="auto"
-            allowScrollButtonsMobile
+            variant="standard"
+            centered
             TabIndicatorProps={{ style: { background: 'linear-gradient(90deg,#C9A84C,#E0C97A)', height: 3, borderRadius: 2 } }}
             sx={{
               minHeight: 62,

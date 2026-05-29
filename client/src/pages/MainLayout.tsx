@@ -140,7 +140,8 @@ export default function MainLayout() {
           <Tabs
             value={activeTab}
             onChange={(_, v) => setActiveTab(v)}
-            variant="fullWidth"
+            variant="standard"
+            centered
             sx={{
               minHeight: 58,
               '& .MuiTabs-flexContainer': { gap: 0 },

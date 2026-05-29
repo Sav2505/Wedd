@@ -11,7 +11,7 @@ const api = axios.create({
 // Request interceptor — attach X-Guest-ID when a guest is stored
 api.interceptors.request.use((config) => {
   try {
-    const raw = sessionStorage.getItem('wedding_guest');
+    const raw = localStorage.getItem('wedding_guest');
     if (raw) {
       const guest = JSON.parse(raw) as { id: string };
       config.headers['X-Guest-ID'] = guest.id;

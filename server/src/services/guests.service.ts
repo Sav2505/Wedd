@@ -6,6 +6,11 @@ function compactName(firstName: string, lastName: string): string {
   return `${firstName.trim()} ${lastName.trim()}`.replace(/\s+/g, ' ').trim();
 }
 
+/** Strip invisible Unicode directional/formatting characters (often pasted from WhatsApp/contacts) */
+function sanitizePhone(phone: string): string {
+  return phone.replace(/[\u200e\u200f\u202a-\u202e\u2066-\u2069\ufeff]/g, '').trim();
+}
+
 export async function listGuestGroups(): Promise<Array<GuestGroup & { guest_count: number }>> {
   const { rows } = await pool.query<Array<GuestGroup & { guest_count: number }>[number]>(`
     SELECT
@@ -102,7 +107,7 @@ export async function createGuest(payload: {
 }): Promise<ManagedGuest> {
   const firstName = payload.first_name.trim();
   const lastName = payload.last_name.trim();
-  const phone = payload.phone.trim();
+  const phone = sanitizePhone(payload.phone);
 
   if (!firstName || !lastName) throw createError('שם פרטי ושם משפחה הם שדות חובה', 400);
   if (!phone) throw createError('מספר טלפון הוא שדה חובה', 400);
@@ -157,7 +162,7 @@ export async function updateGuest(id: string, payload: {
   const now = current.rows[0];
   const firstName = (payload.first_name ?? now.first_name ?? '').trim() || splitFirst(now.full_name);
   const lastName = (payload.last_name ?? now.last_name ?? '').trim() || splitLast(now.full_name);
-  const phone = (payload.phone ?? now.phone).trim();
+  const phone = sanitizePhone(payload.phone ?? now.phone);
   const side = payload.side === undefined ? now.side : payload.side;
   const groupId = payload.guest_group_id === undefined ? now.guest_group_id : payload.guest_group_id;
   const plusCount = payload.plus_count !== undefined ? Math.max(0, Math.floor(payload.plus_count)) : undefined;

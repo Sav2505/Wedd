@@ -241,7 +241,7 @@ function OrnamentalHeader({
             TabIndicatorProps={{ style: { background: 'linear-gradient(90deg,#C9A84C,#E0C97A)', height: 3, borderRadius: 2 } }}
             sx={{
               minHeight: 62,
-              '& .MuiTabs-flexContainer': { gap: 0, justifyContent: 'center' },
+              '& .MuiTabs-flexContainer': { gap: 0, justifyContent: { xs: 'flex-start', md: 'center' } },
               '& .MuiTabs-scrollButtons': {
                 color: '#C9A84C',
                 '&.Mui-disabled': { opacity: 0.2 },

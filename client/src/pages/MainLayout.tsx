@@ -145,7 +145,7 @@ export default function MainLayout() {
             allowScrollButtonsMobile
             sx={{
               minHeight: 58,
-              '& .MuiTabs-flexContainer': { gap: 0, justifyContent: 'center' },
+              '& .MuiTabs-flexContainer': { gap: 0, justifyContent: { xs: 'flex-start', md: 'center' } },
               '& .MuiTab-root': {
                 minHeight: 58, py: 1.1, px: { xs: 1, sm: 2 },
                 fontSize: { xs: '0.75rem', sm: '0.85rem' }, gap: '4px',

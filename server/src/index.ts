@@ -8,6 +8,7 @@ import infoRoutes from './routes/info.routes';
 import photosRoutes from './routes/photos.routes';
 import tablesRoutes from './routes/tables.routes';
 import guestsRoutes from './routes/guests.routes';
+import { pool } from './db/pool';
 
 import { errorHandler, notFound } from './middleware/errorHandler';
 
@@ -105,5 +106,19 @@ app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`🌍 ENV: ${process.env.NODE_ENV ?? 'development'}`);
 });
+
+// ─────────────────────────────────────────────────────────────
+// Supabase Keep-Alive (prevents free-tier pause after 7 days)
+// ─────────────────────────────────────────────────────────────
+const KEEP_ALIVE_INTERVAL_MS = 23 * 60 * 60 * 1000; // 23h
+
+setInterval(async () => {
+  try {
+    await pool.query('SELECT 1');
+    console.log('[DB] Keep-alive ping OK —', new Date().toISOString());
+  } catch (err: any) {
+    console.error('[DB] Keep-alive ping FAILED:', err.message);
+  }
+}, KEEP_ALIVE_INTERVAL_MS);
 
 export default app;

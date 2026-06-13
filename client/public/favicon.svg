@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <defs>
+    <!-- Gold gradient matching the theme palette -->
+    <linearGradient id="g" x1="20%" y1="20%" x2="80%" y2="80%">
+      <stop offset="0%"   stop-color="#EDD97E"/>
+      <stop offset="50%"  stop-color="#C9A84C"/>
+      <stop offset="100%" stop-color="#9A7833"/>
+    </linearGradient>
+
+    <!-- Brighter gold for the sparkle -->
+    <linearGradient id="gs" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%"   stop-color="#F5E9A0"/>
+      <stop offset="100%" stop-color="#C9A84C"/>
+    </linearGradient>
+
+    <!-- Cream background gradient -->
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%"   stop-color="#FAF7F2"/>
+      <stop offset="100%" stop-color="#EDE4D3"/>
+    </linearGradient>
+
+    <!-- Clip: shows only the bottom half of the right ring (drawn on top of left) -->
+    <clipPath id="c">
+      <rect x="0" y="62" width="100" height="38"/>
+    </clipPath>
+
+    <!-- Soft gold drop-shadow -->
+    <filter id="f" x="-25%" y="-25%" width="150%" height="150%">
+      <feDropShadow dx="0" dy="1.5" stdDeviation="2.5" flood-color="#8B6020" flood-opacity="0.28"/>
+    </filter>
+
+    <!-- Lighter shadow for sparkle -->
+    <filter id="fs" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="1" stdDeviation="1.5" flood-color="#8B6020" flood-opacity="0.22"/>
+    </filter>
+  </defs>
+
+  <!-- ── Background ─────────────────────────────────────── -->
+  <rect width="100" height="100" rx="20" fill="url(#bg)"/>
+  <!-- Subtle gold border -->
+  <rect width="100" height="100" rx="20" fill="none" stroke="url(#g)" stroke-width="1.5" opacity="0.45"/>
+
+  <!-- ── Wedding Rings ──────────────────────────────────── -->
+  <g filter="url(#f)">
+    <!-- Right ring – back layer -->
+    <circle cx="62" cy="62" r="18" fill="none" stroke="url(#g)" stroke-width="8"/>
+    <!-- Left ring – covers right ring in the top half -->
+    <circle cx="38" cy="62" r="18" fill="none" stroke="url(#g)" stroke-width="8"/>
+    <!-- Right ring bottom – covers left ring in the bottom half (interlocked) -->
+    <circle cx="62" cy="62" r="18" fill="none" stroke="url(#g)" stroke-width="8" clip-path="url(#c)"/>
+  </g>
+
+  <!-- Metallic shine arcs on each ring (top-left highlight) -->
+  <path d="M25.3,49.3 A18,18 0 0,1 47,46.4"
+        stroke="#F5E8A0" stroke-width="2.2" fill="none" opacity="0.65" stroke-linecap="round"/>
+  <path d="M49.3,49.3 A18,18 0 0,1 71,46.4"
+        stroke="#F5E8A0" stroke-width="2.2" fill="none" opacity="0.65" stroke-linecap="round"/>
+
+  <!-- ── Diamond Sparkle ───────────────────────────────── -->
+  <path d="M50,8 L52.8,14.5 L59,17 L52.8,19.5 L50,26 L47.2,19.5 L41,17 L47.2,14.5 Z"
+        fill="url(#gs)" filter="url(#fs)"/>
+  <!-- White center highlight -->
+  <circle cx="50" cy="17" r="1.8" fill="#FFFFFF" opacity="0.82"/>
+</svg>

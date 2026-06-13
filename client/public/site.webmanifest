@@ -1,0 +1,19 @@
+{
+  "name": "החתונה שלנו",
+  "short_name": "חתונה",
+  "description": "אפליקציית האורחים לחתונה שלנו",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "theme_color": "#C9A84C",
+  "background_color": "#FAF7F2",
+  "display": "standalone",
+  "start_url": "/",
+  "lang": "he",
+  "dir": "rtl"
+}

@@ -108,9 +108,9 @@ app.listen(PORT, () => {
 });
 
 // ─────────────────────────────────────────────────────────────
-// Supabase Keep-Alive (prevents free-tier pause after 7 days)
+// DB Keep-Alive (prevents free-tier DB pause after 7 days)
 // ─────────────────────────────────────────────────────────────
-const KEEP_ALIVE_INTERVAL_MS = 23 * 60 * 60 * 1000; // 23h
+const DB_KEEP_ALIVE_MS = 23 * 60 * 60 * 1000; // 23h
 
 setInterval(async () => {
   try {
@@ -119,6 +119,22 @@ setInterval(async () => {
   } catch (err: any) {
     console.error('[DB] Keep-alive ping FAILED:', err.message);
   }
-}, KEEP_ALIVE_INTERVAL_MS);
+}, DB_KEEP_ALIVE_MS);
+
+// ─────────────────────────────────────────────────────────────
+// Render Keep-Alive — self-ping every 10 min to prevent sleep
+// ─────────────────────────────────────────────────────────────
+const RENDER_KEEP_ALIVE_MS = 10 * 60 * 1000; // 10 min
+
+setInterval(async () => {
+  const serviceUrl = process.env.RENDER_EXTERNAL_URL;
+  if (!serviceUrl) return; // only runs on Render (env var is set automatically)
+  try {
+    const res = await fetch(`${serviceUrl}/health`);
+    console.log('[Render] Keep-alive ping OK —', new Date().toISOString(), res.status);
+  } catch (err: any) {
+    console.error('[Render] Keep-alive ping FAILED:', err.message);
+  }
+}, RENDER_KEEP_ALIVE_MS);
 
 export default app;

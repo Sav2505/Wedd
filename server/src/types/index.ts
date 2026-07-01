@@ -93,3 +93,30 @@ export interface WeddingTableWithGuests extends WeddingTable {
     plus_count: number;
   }>;
 }
+
+// ─── Tasks ───────────────────────────────────────────────────
+
+export type TaskStatus = 'not_started' | 'in_progress' | 'waiting' | 'completed' | 'cancelled';
+
+export type TaskCategory =
+  | 'venue' | 'photographer' | 'dj' | 'dress' | 'suit' | 'rings'
+  | 'decorations' | 'invitations' | 'transportation' | 'makeup'
+  | 'hair' | 'rabbi' | 'flowers' | 'food' | 'alcohol' | 'gifts' | 'other';
+
+export interface WeddingTask {
+  id: string;
+  task_name: string;
+  supplier_name: string | null;
+  category: TaskCategory;
+  status: TaskStatus;
+  deposit: number;
+  paid_amount: number;
+  total_amount: number;
+  due_date: string | null;
+  phone: string | null;
+  website: string | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+  created_by: string | null;
+}

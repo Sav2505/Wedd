@@ -87,3 +87,32 @@ export interface ManagedGuest {
   plus_count: number;
   created_at: string;
 }
+
+// ─── Tasks & Budget ──────────────────────────────────────────
+
+export type TaskStatus = 'not_started' | 'in_progress' | 'waiting' | 'completed' | 'cancelled';
+
+export type TaskCategory =
+  | 'venue' | 'photographer' | 'dj' | 'dress' | 'suit' | 'rings'
+  | 'decorations' | 'invitations' | 'transportation' | 'makeup'
+  | 'hair' | 'rabbi' | 'flowers' | 'food' | 'alcohol' | 'gifts' | 'other';
+
+export interface WeddingTask {
+  id: string;
+  task_name: string;
+  supplier_name: string | null;
+  category: TaskCategory;
+  status: TaskStatus;
+  deposit: number;
+  paid_amount: number;
+  total_amount: number;
+  due_date: string | null;
+  phone: string | null;
+  website: string | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+  created_by: string | null;
+}
+
+export type TaskFormData = Omit<WeddingTask, 'id' | 'created_at' | 'updated_at' | 'created_by'>;

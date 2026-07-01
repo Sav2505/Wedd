@@ -7,6 +7,7 @@ import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import PhotoLibraryOutlinedIcon from '@mui/icons-material/PhotoLibraryOutlined';
 import TableBarIcon from '@mui/icons-material/TableBar';
 import Groups2Icon from '@mui/icons-material/Groups2';
+import AssignmentOutlinedIcon from '@mui/icons-material/AssignmentOutlined';
 import LogoutIcon from '@mui/icons-material/LogoutOutlined';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useAppDispatch, useAppSelector } from '../store';
@@ -18,18 +19,20 @@ import MessageEditor from './couple/MessageEditor';
 import SeatingEditor from './couple/SeatingEditor';
 import GuestListEditor from './couple/GuestListEditor';
 import PhotosTab from './PhotosTab';
+import TaskManagementPage from './couple/TaskManagementPage';
 
 // ─── Tab config ──────────────────────────────────────────────
 
 const TABS = [
-  { label: 'ניהול האירוע', icon: <EditCalendarOutlinedIcon sx={{ fontSize: 22 }} /> },
-  { label: 'הודעה לאורחים', icon: <FavoriteBorderIcon sx={{ fontSize: 22 }} /> },
-  { label: 'הושבה', icon: <TableBarIcon sx={{ fontSize: 22 }} /> },
-  { label: 'רשימת אורחים', icon: <Groups2Icon sx={{ fontSize: 22 }} /> },
-  { label: 'גלריה', icon: <PhotoLibraryOutlinedIcon sx={{ fontSize: 22 }} /> },
+  { label: 'ניהול האירוע',    icon: <EditCalendarOutlinedIcon sx={{ fontSize: 22 }} /> },
+  { label: 'הודעה לאורחים',  icon: <FavoriteBorderIcon sx={{ fontSize: 22 }} /> },
+  { label: 'הושבה',           icon: <TableBarIcon sx={{ fontSize: 22 }} /> },
+  { label: 'רשימת אורחים',   icon: <Groups2Icon sx={{ fontSize: 22 }} /> },
+  { label: 'גלריה',           icon: <PhotoLibraryOutlinedIcon sx={{ fontSize: 22 }} /> },
+  { label: 'משימות והוצאות', icon: <AssignmentOutlinedIcon sx={{ fontSize: 22 }} /> },
 ] as const;
 
-const PANELS = [<WeddingInfoEditor />, <MessageEditor />, <SeatingEditor />, <GuestListEditor />, <PhotosTab />];
+const PANELS = [<WeddingInfoEditor />, <MessageEditor />, <SeatingEditor />, <GuestListEditor />, <PhotosTab />, <TaskManagementPage />];
 
 // ─── Panel animation ─────────────────────────────────────────
 

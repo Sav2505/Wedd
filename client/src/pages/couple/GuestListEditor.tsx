@@ -254,7 +254,6 @@ export default function GuestListEditor() {
       <Box
         sx={{
           position: 'sticky',
-          top: 78,
           zIndex: 10,
           borderRadius: 2.5,
           mb: 2,
@@ -262,7 +261,6 @@ export default function GuestListEditor() {
           background: 'linear-gradient(145deg, rgba(255,252,245,0.94), rgba(249,240,220,0.94))',
           border: '1px solid rgba(201,168,76,0.28)',
           boxShadow: '0 5px 18px rgba(154,120,51,0.10)',
-          mt: 7,
         }}
       >
         <Stack direction={{ xs: 'column', md: 'row' }} spacing={1} alignItems={{ md: 'center' }}>
@@ -290,6 +288,7 @@ export default function GuestListEditor() {
                 borderColor: 'rgba(201,168,76,0.5)',
                 color: '#9A7833',
                 fontWeight: 700,
+                fontSize: "14px"
               }}
             >
               קבוצה חדשה
@@ -302,6 +301,7 @@ export default function GuestListEditor() {
                 background: 'linear-gradient(135deg, #E0C97A, #C9A84C)',
                 color: '#2C1810',
                 fontWeight: 700,
+                fontSize: "14px",
                 '&:hover': { background: 'linear-gradient(135deg, #E8D490, #D4A855)' },
               }}
             >
@@ -310,7 +310,7 @@ export default function GuestListEditor() {
           </Stack>
         </Stack>
 
-        <Stack direction="row" spacing={1} mt={1} flexWrap="wrap">
+        <Stack direction="row" spacing={1} mt={1} ml={1} flexWrap="wrap">
           <Chip size="small" label={`${guests.length} אורחים רשומים`} sx={{ bgcolor: 'rgba(201,168,76,0.18)', color: '#8A6A2B' }} />
           <Chip size="small" label={`${groups.length} קבוצות`} sx={{ bgcolor: 'rgba(154,120,51,0.13)', color: '#8A6A2B' }} />
           {(() => {
@@ -338,7 +338,6 @@ export default function GuestListEditor() {
               transition={{ duration: 0.22, ease: 'easeOut' }}
             >
               <Accordion
-                defaultExpanded
                 disableGutters
                 sx={{
                   mb: 1.5,
@@ -368,7 +367,7 @@ export default function GuestListEditor() {
                           const total = items.reduce((s, g) => s + 1 + (g.plus_count ?? 0), 0);
                           if (total > items.length) {
                             return (
-                              <Box component="span" sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', fontSize: '0.63rem', lineHeight: 1.3 }}>
+                              <Box component="span" sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', fontSize: '0.65rem', lineHeight: 1.5, padding: "2px 4px" }}>
                                 <span>{items.length} רשומים</span>
                                 <span>{total} בסה"כ</span>
                               </Box>

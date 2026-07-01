@@ -2,31 +2,31 @@ import { useState, useEffect } from 'react';
 import {
   Box, Tab, Tabs, Typography, IconButton, Tooltip, Fade,
 } from '@mui/material';
-import EditCalendarOutlinedIcon  from '@mui/icons-material/EditCalendarOutlined';
-import FavoriteBorderIcon        from '@mui/icons-material/FavoriteBorder';
-import PhotoLibraryOutlinedIcon  from '@mui/icons-material/PhotoLibraryOutlined';
-import TableBarIcon               from '@mui/icons-material/TableBar';
-import Groups2Icon                from '@mui/icons-material/Groups2';
-import LogoutIcon                from '@mui/icons-material/LogoutOutlined';
+import EditCalendarOutlinedIcon from '@mui/icons-material/EditCalendarOutlined';
+import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
+import PhotoLibraryOutlinedIcon from '@mui/icons-material/PhotoLibraryOutlined';
+import TableBarIcon from '@mui/icons-material/TableBar';
+import Groups2Icon from '@mui/icons-material/Groups2';
+import LogoutIcon from '@mui/icons-material/LogoutOutlined';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useAppDispatch, useAppSelector } from '../store';
-import { logout }         from '../store/authSlice';
+import { logout } from '../store/authSlice';
 import { getWeddingInfo } from '../services/info.service';
-import { WeddingInfo }    from '../types/domain';
-import WeddingInfoEditor  from './couple/WeddingInfoEditor';
-import MessageEditor      from './couple/MessageEditor';
-import SeatingEditor      from './couple/SeatingEditor';
-import GuestListEditor    from './couple/GuestListEditor';
-import PhotosTab          from './PhotosTab';
+import { WeddingInfo } from '../types/domain';
+import WeddingInfoEditor from './couple/WeddingInfoEditor';
+import MessageEditor from './couple/MessageEditor';
+import SeatingEditor from './couple/SeatingEditor';
+import GuestListEditor from './couple/GuestListEditor';
+import PhotosTab from './PhotosTab';
 
 // ─── Tab config ──────────────────────────────────────────────
 
 const TABS = [
-  { label: 'ניהול האירוע',  icon: <EditCalendarOutlinedIcon sx={{ fontSize: 22 }} /> },
-  { label: 'הודעה לאורחים', icon: <FavoriteBorderIcon      sx={{ fontSize: 22 }} /> },
-  { label: 'הושבה',          icon: <TableBarIcon            sx={{ fontSize: 22 }} /> },
-  { label: 'רשימת אורחים',   icon: <Groups2Icon             sx={{ fontSize: 22 }} /> },
-  { label: 'גלריה',          icon: <PhotoLibraryOutlinedIcon sx={{ fontSize: 22 }} /> },
+  { label: 'ניהול האירוע', icon: <EditCalendarOutlinedIcon sx={{ fontSize: 22 }} /> },
+  { label: 'הודעה לאורחים', icon: <FavoriteBorderIcon sx={{ fontSize: 22 }} /> },
+  { label: 'הושבה', icon: <TableBarIcon sx={{ fontSize: 22 }} /> },
+  { label: 'רשימת אורחים', icon: <Groups2Icon sx={{ fontSize: 22 }} /> },
+  { label: 'גלריה', icon: <PhotoLibraryOutlinedIcon sx={{ fontSize: 22 }} /> },
 ] as const;
 
 const PANELS = [<WeddingInfoEditor />, <MessageEditor />, <SeatingEditor />, <GuestListEditor />, <PhotosTab />];
@@ -34,15 +34,15 @@ const PANELS = [<WeddingInfoEditor />, <MessageEditor />, <SeatingEditor />, <Gu
 // ─── Panel animation ─────────────────────────────────────────
 
 const panelVariants = {
-  enter:  { opacity: 0, y: 18 },
+  enter: { opacity: 0, y: 18 },
   center: { opacity: 1, y: 0, transition: { duration: 0.42, ease: 'easeOut' as const } },
-  exit:   { opacity: 0, y: -12, transition: { duration: 0.22, ease: 'easeIn' as const } },
+  exit: { opacity: 0, y: -12, transition: { duration: 0.22, ease: 'easeIn' as const } },
 };
 
 // ─── Botanical SVG ornament ───────────────────────────────────
 
 function BotanicalSVG() {
-  const g  = '#C9A84C';
+  const g = '#C9A84C';
   const gl = '#E0C97A';
   const gd = '#9A7833';
 
@@ -82,30 +82,30 @@ function BotanicalSVG() {
   const LeftSpray = () => (
     <g opacity={0.88}>
       <path d="M -5,-5 C 15,25 10,55 30,80 C 42,97 38,120 45,140" stroke={g} strokeWidth={1.4} fill="none" strokeLinecap="round" opacity={0.5} />
-      <path d="M 22,45 C 40,32 65,30 88,20"  stroke={g} strokeWidth={1.1} fill="none" strokeLinecap="round" opacity={0.45} />
-      <path d="M 34,82 C 52,70 78,72 96,62"  stroke={g} strokeWidth={1.0} fill="none" strokeLinecap="round" opacity={0.42} />
+      <path d="M 22,45 C 40,32 65,30 88,20" stroke={g} strokeWidth={1.1} fill="none" strokeLinecap="round" opacity={0.45} />
+      <path d="M 34,82 C 52,70 78,72 96,62" stroke={g} strokeWidth={1.0} fill="none" strokeLinecap="round" opacity={0.42} />
       <path d="M 88,20 C 96,12 104,18 100,26" stroke={g} strokeWidth={0.9} fill="none" strokeLinecap="round" opacity={0.38} />
 
-      <Leaf x={12}  y={22}  angle={-50} len={13} op={0.62} />
-      <Leaf x={18}  y={22}  angle={30}  len={11} op={0.52} />
-      <Leaf x={24}  y={52}  angle={-45} len={14} op={0.60} />
-      <Leaf x={30}  y={52}  angle={35}  len={11} op={0.50} />
-      <Leaf x={36}  y={86}  angle={-40} len={13} op={0.58} />
-      <Leaf x={40}  y={86}  angle={30}  len={10} op={0.48} />
-      <Leaf x={38}  y={118} angle={-35} len={12} op={0.52} />
-      <Leaf x={50}  y={34}  angle={-20} len={11} op={0.58} />
-      <Leaf x={68}  y={28}  angle={-10} len={10} op={0.52} />
-      <Leaf x={58}  y={70}  angle={-18} len={11} op={0.55} />
-      <Leaf x={76}  y={66}  angle={-8}  len={10} op={0.50} />
+      <Leaf x={12} y={22} angle={-50} len={13} op={0.62} />
+      <Leaf x={18} y={22} angle={30} len={11} op={0.52} />
+      <Leaf x={24} y={52} angle={-45} len={14} op={0.60} />
+      <Leaf x={30} y={52} angle={35} len={11} op={0.50} />
+      <Leaf x={36} y={86} angle={-40} len={13} op={0.58} />
+      <Leaf x={40} y={86} angle={30} len={10} op={0.48} />
+      <Leaf x={38} y={118} angle={-35} len={12} op={0.52} />
+      <Leaf x={50} y={34} angle={-20} len={11} op={0.58} />
+      <Leaf x={68} y={28} angle={-10} len={10} op={0.52} />
+      <Leaf x={58} y={70} angle={-18} len={11} op={0.55} />
+      <Leaf x={76} y={66} angle={-8} len={10} op={0.50} />
 
-      <Rose x={90} y={16} r={9}  op={0.82} />
-      <Rose x={98} y={60} r={7}  op={0.74} />
+      <Rose x={90} y={16} r={9} op={0.82} />
+      <Rose x={98} y={60} r={7} op={0.74} />
       <Rose x={44} y={138} r={6} op={0.66} />
 
-      <Bud x={16}  y={5}  angle={-15} op={0.58} />
-      <Bud x={62}  y={22} angle={10}  op={0.54} />
-      <Bud x={90}  y={62} angle={-5}  op={0.54} />
-      <Bud x={102} y={24} angle={20}  op={0.50} />
+      <Bud x={16} y={5} angle={-15} op={0.58} />
+      <Bud x={62} y={22} angle={10} op={0.54} />
+      <Bud x={90} y={62} angle={-5} op={0.54} />
+      <Bud x={102} y={24} angle={20} op={0.50} />
     </g>
   );
 
@@ -134,11 +134,11 @@ function BotanicalSVG() {
       {/* Divider between names and tabs */}
       <g transform="translate(210,158)" opacity={0.48}>
         <line x1={-92} y1={0} x2={-18} y2={0} stroke={g} strokeWidth={0.7} />
-        <line x1={18}  y1={0} x2={92}  y2={0} stroke={g} strokeWidth={0.7} />
+        <line x1={18} y1={0} x2={92} y2={0} stroke={g} strokeWidth={0.7} />
         <path d="M -5,-5 L 0,-9 L 5,-5 L 9,0 L 5,5 L 0,9 L -5,5 L -9,0 Z" fill={g} opacity={0.8} />
         <circle cx={0} cy={0} r={1.8} fill={gd} />
         <path d="M -2,-2 L 0,-4 L 2,-2 L 4,0 L 2,2 L 0,4 L -2,2 L -4,0 Z" fill={g} transform="translate(-14,0)" opacity={0.6} />
-        <path d="M -2,-2 L 0,-4 L 2,-2 L 4,0 L 2,2 L 0,4 L -2,2 L -4,0 Z" fill={g} transform="translate(14,0)"  opacity={0.6} />
+        <path d="M -2,-2 L 0,-4 L 2,-2 L 4,0 L 2,2 L 0,4 L -2,2 L -4,0 Z" fill={g} transform="translate(14,0)" opacity={0.6} />
       </g>
     </svg>
   );
@@ -223,7 +223,7 @@ function OrnamentalHeader({
               {(() => {
                 const d = new Date(info.wedding_date + 'T12:00:00');
                 const weekday = d.toLocaleDateString('he-IL', { weekday: 'long' });
-                const date    = d.toLocaleDateString('he-IL', { day: 'numeric', month: 'long', year: 'numeric' });
+                const date = d.toLocaleDateString('he-IL', { day: 'numeric', month: 'long', year: 'numeric' });
                 return `${weekday}, ${date}`;
               })()}
             </Typography>
@@ -269,12 +269,12 @@ function OrnamentalHeader({
 
 export default function CoupleLayout() {
   const dispatch = useAppDispatch();
-  const guest    = useAppSelector((s) => s.auth.guest);
+  const guest = useAppSelector((s) => s.auth.guest);
   const [activeTab, setActiveTab] = useState(0);
-  const [info,      setInfo]      = useState<WeddingInfo | null>(null);
+  const [info, setInfo] = useState<WeddingInfo | null>(null);
 
   useEffect(() => {
-    getWeddingInfo().then(setInfo).catch(() => {/* non-critical */});
+    getWeddingInfo().then(setInfo).catch(() => {/* non-critical */ });
   }, []);
 
   return (
@@ -306,7 +306,7 @@ export default function CoupleLayout() {
       <Box
         sx={{
           flex: 1, maxWidth: 680, width: '100%',
-          mx: 'auto', px: { xs: 0, sm: 1 }, pb: 4, overflow: 'hidden',
+          mx: 'auto', px: { xs: 0, sm: 1 }, overflow: 'hidden'
         }}
       >
         <AnimatePresence mode="wait">

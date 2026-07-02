@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useAppSelector } from '../../store';
 import {
   Alert,
   Box,
@@ -12,6 +13,7 @@ import {
   IconButton,
   InputAdornment,
   MenuItem,
+  Snackbar,
   Stack,
   TextField,
   Typography,
@@ -30,7 +32,9 @@ import TableRestaurantIcon from '@mui/icons-material/TableRestaurant';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import RemoveCircleOutlineIcon from '@mui/icons-material/RemoveCircleOutline';
 import PeopleAltIcon from '@mui/icons-material/PeopleAlt';
+import LinkIcon from '@mui/icons-material/Link';
 import { AnimatePresence, motion } from 'framer-motion';
+import { buildGuestUrl } from '../../utils/guestUrl';
 
 import { GuestGroup, ManagedGuest } from '../../types/domain';
 import {
@@ -65,6 +69,7 @@ const EMPTY_FORM: GuestForm = {
 };
 
 export default function GuestListEditor() {
+  const currentUser = useAppSelector((state) => state.auth.guest);
   const [groups, setGroups] = useState<GuestGroup[]>([]);
   const [guests, setGuests] = useState<ManagedGuest[]>([]);
   const [loading, setLoading] = useState(true);
@@ -157,7 +162,8 @@ export default function GuestListEditor() {
 
   function openCreateGuest(groupId: string | null = null) {
     setEditingGuest(null);
-    setGuestForm({ ...EMPTY_FORM, guest_group_id: groupId });
+    const defaultSide: SideOption = currentUser?.side === 'חתן' ? 'חתן' : currentUser?.side === 'כלה' ? 'כלה' : null;
+    setGuestForm({ ...EMPTY_FORM, guest_group_id: groupId, side: defaultSide });
     setGuestDialogOpen(true);
   }
 
@@ -665,6 +671,15 @@ function GuestRow({
   onEdit: () => void;
   onDelete: () => void;
 }) {
+  const [copied, setCopied] = useState(false);
+
+  function handleCopyLink() {
+    const phone = guest.phone.replace(/\D/g, '');
+    const last4 = phone.slice(-4);
+    const url = buildGuestUrl(`${guest.first_name} ${guest.last_name}`, last4);
+    navigator.clipboard.writeText(url).then(() => setCopied(true));
+  }
+
   return (
     <Box
       sx={{
@@ -702,6 +717,11 @@ function GuestRow({
         </Box>
 
         <Stack direction="row" spacing={0.3}>
+          <Tooltip title="העתק קישור כניסה">
+            <IconButton size="small" onClick={handleCopyLink}>
+              <LinkIcon sx={{ fontSize: 17, color: copied ? '#4caf50' : '#A08070' }} />
+            </IconButton>
+          </Tooltip>
           <Tooltip title="עריכה">
             <IconButton size="small" onClick={onEdit}>
               <EditIcon sx={{ fontSize: 17, color: '#A08070' }} />
@@ -714,6 +734,14 @@ function GuestRow({
           </Tooltip>
         </Stack>
       </Stack>
+
+      <Snackbar
+        open={copied}
+        autoHideDuration={2200}
+        onClose={() => setCopied(false)}
+        message="הקישור הועתק ללוח"
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      />
     </Box>
   );
 }

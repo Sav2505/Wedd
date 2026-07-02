@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Box,
   TextField,
@@ -11,10 +11,12 @@ import {
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
 import PhoneAndroidIcon from '@mui/icons-material/PhoneAndroid';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useSearchParams } from 'react-router-dom';
 import { useAppDispatch } from '../store';
 import { setGuest } from '../store/authSlice';
 import { login } from '../services/auth.service';
 import FallingPetals from '../components/FallingPetals';
+import { parseGuestParams } from '../utils/guestUrl';
 
 // ─── Decorative SVG ring ────────────────────────────────────
 
@@ -99,11 +101,31 @@ const cardVariants = {
 
 export default function LoginPage() {
   const dispatch = useAppDispatch();
+  const [searchParams] = useSearchParams();
 
   const [fullName, setFullName]               = useState('');
   const [lastFourDigits, setLastFourDigits]   = useState('');
   const [error, setError]                     = useState<string | null>(null);
   const [loading, setLoading]                 = useState(false);
+
+  // ─── Auto-login from URL params (?n=<name>&p=<last4>) ──────
+  useEffect(() => {
+    const creds = parseGuestParams(searchParams);
+    if (!creds) return;
+
+    setLoading(true);
+    login({ fullName: creds.fullName, lastFourDigits: creds.lastFourDigits })
+      .then(({ guest }) => {
+        dispatch(setGuest(guest));
+        // Remove credentials from the browser's address bar / history
+        window.history.replaceState({}, '', window.location.pathname);
+      })
+      .catch((err) => {
+        setError(err instanceof Error ? err.message : 'שגיאה בהתחברות אוטומטית');
+      })
+      .finally(() => setLoading(false));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -97,7 +97,7 @@ export type TaskCategory =
   | 'venue' | 'photographer' | 'dj' | 'dress' | 'suit' | 'rings'
   | 'decorations' | 'invitations' | 'transportation' | 'makeup'
   | 'hair' | 'rabbi' | 'flowers' | 'food' | 'alcohol' | 'gifts'
-  | 'design' | 'side_event' | 'hotel' | 'attire' | 'other';
+  | 'design' | 'lighting' | 'side_event' | 'hotel' | 'attire' | 'lighting' | 'other';
 
 export interface WeddingTask {
   id: string;

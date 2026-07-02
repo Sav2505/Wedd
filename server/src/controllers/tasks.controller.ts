@@ -8,7 +8,7 @@ const VALID_CATEGORIES: TaskCategory[] = [
   'venue','photographer','dj','dress','suit','rings',
   'decorations','invitations','transportation','makeup',
   'hair','rabbi','flowers','food','alcohol','gifts',
-  'design','side_event','hotel','attire','other',
+  'design','side_event','hotel','attire','lighting', 'other',
 ];
 
 const VALID_STATUSES: TaskStatus[] = [

@@ -41,6 +41,7 @@ const CAT_COLORS: Record<string, string> = {
   alcohol:        '#039BE5', // light blue
   gifts:          '#00897B', // teal
   design:         '#8E24AA', // purple
+  lighting:       '#FDD835', // yellow
   side_event:     '#F4511E', // orange-red
   hotel:          '#00695C', // dark teal
   attire:         '#558B2F', // olive

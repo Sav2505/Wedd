@@ -22,6 +22,7 @@ import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import SearchIcon from '@mui/icons-material/Search';
 import AssignmentIcon from '@mui/icons-material/Assignment';
+import PhoneIcon from '@mui/icons-material/Phone';
 import { AnimatePresence, motion } from 'framer-motion';
 import { TaskCategory, TaskStatus, WeddingTask } from '../../../types/domain';
 import { CATEGORY_OPTIONS, STATUS_OPTIONS } from './TaskDialog';
@@ -203,6 +204,7 @@ export default function TaskTable({ tasks, onEdit, onDelete }: Props) {
               <TableCell sx={{ fontWeight: 700, whiteSpace: 'nowrap', bgcolor: 'rgba(201,168,76,0.08)' }}>נותר</TableCell>
               <SortCell colKey="due_date"     label="תאריך יעד" />
               <TableCell sx={{ fontWeight: 700, bgcolor: 'rgba(201,168,76,0.08)' }}>הערות</TableCell>
+              <TableCell sx={{ fontWeight: 700, bgcolor: 'rgba(201,168,76,0.08)', whiteSpace: 'nowrap' }}>טלפון ספק</TableCell>
               <TableCell sx={{ fontWeight: 700, bgcolor: 'rgba(201,168,76,0.08)' }}>פעולות</TableCell>
             </TableRow>
           </TableHead>
@@ -211,7 +213,7 @@ export default function TaskTable({ tasks, onEdit, onDelete }: Props) {
             <AnimatePresence initial={false}>
               {paginated.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={11}>
+                  <TableCell colSpan={12}>
                     <Box
                       component={motion.div}
                       initial={{ opacity: 0 }}
@@ -271,6 +273,26 @@ export default function TaskTable({ tasks, onEdit, onDelete }: Props) {
                         <Typography variant="body2" noWrap color="text.secondary" title={task.notes ?? ''}>
                           {task.notes ?? '—'}
                         </Typography>
+                      </TableCell>
+                      <TableCell sx={{ whiteSpace: 'nowrap' }}>
+                        {task.phone ? (
+                          <Tooltip title={`התקשר ל-${task.phone}`}>
+                            <IconButton
+                              size="small"
+                              component="a"
+                              href={`tel:${task.phone}`}
+                              sx={{ color: 'primary.main', gap: 0.5 }}
+                              aria-label={`התקשר ל-${task.phone}`}
+                            >
+                              <PhoneIcon fontSize="small" />
+                              <Typography variant="caption" sx={{ fontWeight: 600 }}>
+                                {task.phone}
+                              </Typography>
+                            </IconButton>
+                          </Tooltip>
+                        ) : (
+                          <Typography variant="body2" color="text.secondary">—</Typography>
+                        )}
                       </TableCell>
                       <TableCell>
                         <Stack direction="row" spacing={0.5}>

@@ -24,23 +24,27 @@ import { CATEGORY_OPTIONS } from './TaskDialog';
 // ─── Category Colors ──────────────────────────────────────────
 
 const CAT_COLORS: Record<string, string> = {
-  venue:          '#C9A84C',
-  photographer:   '#5C3D2E',
-  dj:             '#7b57c9',
-  dress:          '#e91e8c',
-  suit:           '#1976d2',
-  rings:          '#f9a825',
-  decorations:    '#66bb6a',
-  invitations:    '#26a69a',
-  transportation: '#78909c',
-  makeup:         '#ec407a',
-  hair:           '#ab47bc',
-  rabbi:          '#8d6e63',
-  flowers:        '#ef5350',
-  food:           '#ff7043',
-  alcohol:        '#42a5f5',
-  gifts:          '#26c6da',
-  other:          '#bdbdbd',
+  venue:          '#C9A84C', // gold
+  photographer:   '#5C3D2E', // dark brown
+  dj:             '#3949AB', // indigo
+  dress:          '#F06292', // soft pink
+  suit:           '#1E88E5', // blue
+  rings:          '#FFB300', // amber
+  decorations:    '#43A047', // green
+  invitations:    '#00ACC1', // cyan
+  transportation: '#78909C', // blue-grey
+  makeup:         '#FF5722', // deep orange
+  hair:           '#AD1457', // dark rose
+  rabbi:          '#6D4C41', // brown
+  flowers:        '#E53935', // red
+  food:           '#8BC34A', // lime green
+  alcohol:        '#039BE5', // light blue
+  gifts:          '#00897B', // teal
+  design:         '#8E24AA', // purple
+  side_event:     '#F4511E', // orange-red
+  hotel:          '#00695C', // dark teal
+  attire:         '#558B2F', // olive
+  other:          '#9E9E9E', // grey
 };
 
 function fmt(n: number) {

@@ -160,14 +160,14 @@ export default function TaskSummaryCards({ tasks, guestCount, avgGift, onAvgGift
       delay: 0.06,
     },
     {
-      label: 'ממתינות לביצוע',
+      label: 'ממתין לביצוע',
       value: <AnimCounter value={stats.pending} suffix=" נותרו" />,
       icon: <PendingActionsIcon />,
       accent: '#ff9800',
       delay: 0.12,
     },
     {
-      label: 'תקציב החתונה',
+      label: 'עלות כוללת',
       value: <AnimCounter value={stats.budget} prefix="₪" />,
       icon: <AccountBalanceWalletIcon />,
       delay: 0.18,

@@ -86,7 +86,7 @@ function DropZone({ onFilesSelect, uploading }: { onFilesSelect: (files: File[])
             {dragOver ? 'שחרר כאן להעלאה' : 'גרור תמונות לכאן, או לחץ לבחירה'}
           </Typography>
           <Typography variant="caption" sx={{ color: '#C0A090' }}>
-            JPEG · PNG · WEBP · GIF — ניתן לבחור כמה תמונות בבת אחת
+            ניתן לבחור כמה תמונות בבת אחת
           </Typography>
         </Box>
       </motion.div>
@@ -346,11 +346,11 @@ function Lightbox({ photo, photos, onClose, onNav }: {
 
 export default function PhotosTab() {
   const guest = useAppSelector((s) => s.auth.guest);
-  const [photos, setPhotos]       = useState<Photo[]>([]);
-  const [loading, setLoading]     = useState(true);
-  const [error, setError]         = useState<string | null>(null);
-  const [lightbox, setLightbox]   = useState<Photo | null>(null);
-  const [queue, setQueue]         = useState<QueueItem[]>([]);
+  const [photos, setPhotos] = useState<Photo[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [lightbox, setLightbox] = useState<Photo | null>(null);
+  const [queue, setQueue] = useState<QueueItem[]>([]);
   const uploading = queue.some((q) => q.status === 'pending' || q.status === 'uploading');
 
   // Track photo IDs seen so polling only adds genuinely new ones

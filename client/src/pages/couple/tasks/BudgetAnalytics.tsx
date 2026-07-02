@@ -11,6 +11,7 @@ import {
   Bar,
   BarChart,
   Cell,
+  LabelList,
   Legend,
   Pie,
   PieChart,
@@ -22,6 +23,91 @@ import {
 import { motion } from 'framer-motion';
 import { WeddingTask } from '../../../types/domain';
 import { CATEGORY_OPTIONS } from './TaskDialog';
+
+// ─── Bar colors: green (small) → orange (large) ──────────────────────────────────
+
+function barColor(i: number, total: number): string {
+  // index 0 = largest → orange; last = smallest → green
+  const t = total <= 1 ? 0 : (total - 1 - i) / (total - 1); // 0=green, 1=orange
+  const h = Math.round(120 - t * 90); // 120° green → 30° orange
+  return `hsl(${h}, 72%, 40%)`;
+}
+// ─── Custom XAxis tick: angled supplier name with white pill background ──────────
+
+function SupplierXTick({
+  x, y, payload,
+}: {
+  x?: number; y?: number; payload?: { value: string };
+}) {
+  if (!payload || x === undefined || y === undefined) return null;
+  const display = payload.value.length > 10 ? payload.value.slice(0, 9) + '…' : payload.value;
+  return (
+    <g transform={`translate(${x},${y})`}>
+      <rect
+        x={-30}
+        y={4}
+        width={60}
+        height={18}
+        rx={3}
+        fill="rgba(255,255,255,0.92)"
+      />
+      <text
+        transform="rotate(-35)"
+        textAnchor="end"
+        dominantBaseline="middle"
+        fill="#5C3D2E"
+        fontSize={10}
+        fontFamily="Heebo, sans-serif"
+        fontWeight={500}
+        x={-4}
+        y={14}
+      >
+        {display}
+      </text>
+    </g>
+  );
+}
+// ─── Custom YAxis tick: white pill background behind supplier name ──────────
+
+function SupplierYTick({
+  x, y, payload,
+}: {
+  x?: number; y?: number; payload?: { value: string };
+}) {
+  if (!payload || x === undefined || y === undefined) return null;
+  const display = payload.value.length > 13 ? payload.value.slice(0, 12) + '…' : payload.value;
+  const fontSize = 11;
+  const charW = fontSize * 0.56;
+  const textW = display.length * charW;
+  const padX = 5;
+  const padY = 3;
+  const rectW = textW + padX * 2;
+  const rectH = fontSize + padY * 2;
+  return (
+    <g>
+      <rect
+        x={x - rectW}
+        y={y - rectH / 2}
+        width={rectW}
+        height={rectH}
+        rx={3}
+        fill="rgba(255,255,255,0.92)"
+      />
+      <text
+        x={x - padX}
+        y={y}
+        textAnchor="end"
+        dominantBaseline="middle"
+        fill="#5C3D2E"
+        fontSize={fontSize}
+        fontFamily="Heebo, sans-serif"
+        fontWeight={500}
+      >
+        {display}
+      </text>
+    </g>
+  );
+}
 
 // ─── Category Colors ──────────────────────────────────────────
 
@@ -189,89 +275,43 @@ export default function BudgetAnalytics({ tasks }: Props) {
         </Card>
       </motion.div>
 
-      {/* ─── Charts row ─── */}
-      <Box
-        sx={{
-          display: 'grid',
-          gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
-          gap: 3,
-        }}
-      >
-        {/* Pie Chart */}
-        <motion.div custom={5} variants={cardVariants} initial="hidden" animate="visible">
-          <Card sx={{ borderRadius: 3, boxShadow: '0 2px 12px rgba(0,0,0,0.06)' }}>
-            <CardContent>
-              <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 2 }}>הוצאות לפי קטגוריה</Typography>
-              <ResponsiveContainer width="100%" height={280}>
-                <PieChart>
-                  <Pie
-                    data={pieData}
-                    dataKey="value"
-                    nameKey="name"
-                    cx="50%"
-                    cy="50%"
-                    outerRadius={100}
-                    innerRadius={50}
-                    paddingAngle={2}
-                    isAnimationActive
-                    animationDuration={800}
-                    animationEasing="ease-out"
-                  >
-                    {pieData.map((entry, i) => (
-                      <Cell key={i} fill={CAT_COLORS[entry.cat] ?? '#bdbdbd'} />
-                    ))}
-                  </Pie>
-                  <Tooltip content={<CustomTooltip />} />
-                  <Legend
-                    iconType="circle"
-                    iconSize={8}
-                    formatter={(value) => (
-                      <span style={{ fontSize: '0.75rem', color: '#5C3D2E' }}>{value}</span>
-                    )}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        {/* Bar Chart */}
-        <motion.div custom={6} variants={cardVariants} initial="hidden" animate="visible">
-          <Card sx={{ borderRadius: 3, boxShadow: '0 2px 12px rgba(0,0,0,0.06)' }}>
-            <CardContent>
-              <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 2 }}>ספקים מובילים לפי עלות</Typography>
-              <ResponsiveContainer width="100%" height={280}>
-                <BarChart data={barData} layout="vertical" margin={{ left: 8, right: 24 }}>
-                  <XAxis
-                    type="number"
-                    tickFormatter={v => `₪${(v / 1000).toFixed(0)}K`}
-                    tick={{ fontSize: 11 }}
-                    axisLine={false}
-                    tickLine={false}
-                  />
-                  <YAxis
-                    type="category"
-                    dataKey="name"
-                    width={90}
-                    tick={{ fontSize: 11 }}
-                    axisLine={false}
-                    tickLine={false}
-                  />
-                  <Tooltip formatter={(v) => [fmt(Number(v ?? 0)), 'עלות']} />
-                  <Bar dataKey="amount" radius={[0, 6, 6, 0]} isAnimationActive animationDuration={800}>
-                    {barData.map((_, i) => (
-                      <Cell
-                        key={i}
-                        fill={`hsl(${38 + i * 14}, ${70 - i * 3}%, ${55 + i * 2}%)`}
-                      />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        </motion.div>
-      </Box>
+      {/* ─── Pie Chart full width ─── */}
+      <motion.div custom={5} variants={cardVariants} initial="hidden" animate="visible">
+        <Card sx={{ borderRadius: 3, boxShadow: '0 2px 12px rgba(0,0,0,0.06)' }}>
+          <CardContent>
+            <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 2 }}>הוצאות לפי קטגוריה</Typography>
+            <ResponsiveContainer width="100%" height={320}>
+              <PieChart>
+                <Pie
+                  data={pieData}
+                  dataKey="value"
+                  nameKey="name"
+                  cx="50%"
+                  cy="50%"
+                  outerRadius={120}
+                  innerRadius={60}
+                  paddingAngle={2}
+                  isAnimationActive
+                  animationDuration={800}
+                  animationEasing="ease-out"
+                >
+                  {pieData.map((entry, i) => (
+                    <Cell key={i} fill={CAT_COLORS[entry.cat] ?? '#bdbdbd'} />
+                  ))}
+                </Pie>
+                <Tooltip content={<CustomTooltip />} />
+                <Legend
+                  iconType="circle"
+                  iconSize={8}
+                  formatter={(value) => (
+                    <span style={{ fontSize: '0.75rem', color: '#5C3D2E' }}>{value}</span>
+                  )}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      </motion.div>
 
       {/* Bottom spacer */}
       <Stack direction="row" sx={{ mt: 2, mb: 1 }} />

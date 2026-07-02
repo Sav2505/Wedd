@@ -11,7 +11,7 @@ import {
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
 import PhoneAndroidIcon from '@mui/icons-material/PhoneAndroid';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAppDispatch } from '../store';
 import { logout, setGuest } from '../store/authSlice';
 import { login } from '../services/auth.service';
@@ -101,6 +101,7 @@ const cardVariants = {
 
 export default function LoginPage() {
   const dispatch = useAppDispatch();
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const autoCreds = useMemo(() => parseGuestParams(searchParams), [searchParams]);
   const hasAutoParams = Boolean(autoCreds);
@@ -121,15 +122,15 @@ export default function LoginPage() {
     login({ fullName: autoCreds.fullName, lastFourDigits: autoCreds.lastFourDigits })
       .then(({ guest }) => {
         dispatch(setGuest(guest));
-        // Remove credentials from the browser's address bar / history
-        window.history.replaceState({}, '', window.location.pathname);
+        // Route through React Router so auth redirect happens immediately and params are removed.
+        navigate('/', { replace: true });
       })
       .catch((err) => {
-        window.history.replaceState({}, '', window.location.pathname);
+        navigate('/login', { replace: true });
         setError(err instanceof Error ? err.message : 'שגיאה בהתחברות אוטומטית');
       })
       .finally(() => setLoading(false));
-  }, [autoCreds, dispatch]);
+  }, [autoCreds, dispatch, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

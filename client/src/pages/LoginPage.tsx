@@ -105,6 +105,7 @@ export default function LoginPage() {
   const [searchParams] = useSearchParams();
   const autoCreds = useMemo(() => parseGuestParams(searchParams), [searchParams]);
   const hasAutoParams = Boolean(autoCreds);
+  const greetingName = useMemo(() => autoCreds?.fullName.trim().split(/\s+/)[0] ?? '', [autoCreds]);
 
   const [fullName, setFullName]               = useState('');
   const [lastFourDigits, setLastFourDigits]   = useState('');
@@ -297,6 +298,19 @@ export default function LoginPage() {
                   <Typography align="center" sx={{ mt: 0.6, color: '#8A6A2B', fontSize: '0.92rem' }}>
                     מאמתים את פרטי ההזמנה שלך
                   </Typography>
+                  {greetingName && (
+                    <Typography
+                      align="center"
+                      sx={{
+                        mt: 1.1,
+                        color: '#6F5437',
+                        fontWeight: 700,
+                        fontSize: '0.95rem',
+                      }}
+                    >
+                      שלום {greetingName}, עוד רגע ואתם בפנים
+                    </Typography>
+                  )}
 
                   <Box sx={{ mt: 2.1, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 1.5 }}>
                     <motion.div

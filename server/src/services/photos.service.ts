@@ -16,7 +16,7 @@ export async function getAllPhotos(): Promise<(Photo & { url: string })[]> {
   );
   return rows.map((r) => ({
     ...r,
-    url: (r as any).has_binary ? `/api/photos/${r.id}/thumb` : (r.url ?? ''),
+    url: (r as any).has_binary ? `/photos/${r.id}/thumb` : (r.url ?? ''),
   }));
 }
 
@@ -35,7 +35,7 @@ export async function savePhoto(
     [uploaderId, caption ?? null, thumbBuffer, fullBuffer, mimeType],
   );
   const row = rows[0];
-  return { ...row, url: `/api/photos/${row.id}/thumb` };
+  return { ...row, url: `/photos/${row.id}/thumb` };
 }
 
 /** Fetch raw binary data for thumb or full resolution */

@@ -17,6 +17,11 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, ''),
       },
+      // Binary photo endpoints — served directly (no /api prefix)
+      '/photos': {
+        target: 'http://127.0.0.1:5176',
+        changeOrigin: true,
+      },
     },
   }
 })

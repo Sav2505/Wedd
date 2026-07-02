@@ -15,6 +15,11 @@ import { getPhotos, uploadPhoto, deletePhoto } from '../services/photos.service'
 import { Photo } from '../types/domain';
 import { useAppSelector } from '../store';
 
+// Base URL for binary photo endpoints (/photos/:id/thumb|full)
+// On prod these are served by the API server (VITE_API_URL), not the current origin
+const API_BASE = import.meta.env.VITE_API_URL ?? '';
+const photoSrc = (url: string) => (url.startsWith('/photos/') ? `${API_BASE}${url}` : url);
+
 // ─── Types ───────────────────────────────────────────────────
 
 interface QueueItem {
@@ -208,7 +213,7 @@ function PhotoCard({
     >
       <Box
         component="img"
-        src={photo.url}
+        src={photoSrc(photo.url)}
         alt={photo.caption ?? 'תמונה מהחתונה'}
         loading="lazy"
         sx={{
@@ -267,9 +272,9 @@ function Lightbox({ photo, photos, onClose, onNav }: {
   const hasNext = idx < photos.length - 1;
 
   // Use /full endpoint for lightbox if it's a binary photo (url contains /thumb)
-  const fullSrc = photo.url.includes('/thumb')
-    ? photo.url.replace('/thumb', '/full')
-    : photo.url;
+  const fullSrc = photoSrc(
+    photo.url.includes('/thumb') ? photo.url.replace('/thumb', '/full') : photo.url,
+  );
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {

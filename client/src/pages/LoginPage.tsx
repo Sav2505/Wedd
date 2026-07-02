@@ -150,6 +150,7 @@ export default function LoginPage() {
     try {
       const { guest } = await login({ fullName: fullName.trim(), lastFourDigits });
       dispatch(setGuest(guest));
+      navigate('/', { replace: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'שגיאה בהתחברות');
     } finally {

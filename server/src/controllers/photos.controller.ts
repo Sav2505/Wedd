@@ -72,8 +72,8 @@ export async function uploadPhoto(req: Request, res: Response, next: NextFunctio
 export async function deletePhoto(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const { id } = req.params;
-    const requesterId = req.body.requesterId as string | undefined;
-    if (!requesterId) return next(createError('requesterId הוא שדה חובה', 400));
+    // Identity is validated by requireGuest middleware — read from header, never from body
+    const requesterId = (req as Request & { guestId: string }).guestId;
 
     await photosService.deletePhoto(id, requesterId);
     res.status(200).json({ success: true, message: 'התמונה נמחקה בהצלחה' });

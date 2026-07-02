@@ -53,7 +53,8 @@ export async function uploadPhoto(
   return data.data;
 }
 
-export async function deletePhoto(photoId: string, requesterId: string): Promise<void> {
-  await api.delete(`/photos/${photoId}`, { data: { requesterId } });
+export async function deletePhoto(photoId: string): Promise<void> {
+  // X-Guest-ID is attached automatically by the axios interceptor
+  await api.delete(`/photos/${photoId}`);
 }
 

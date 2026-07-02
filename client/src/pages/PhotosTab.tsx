@@ -189,7 +189,7 @@ function PhotoCard({
     if (!window.confirm('למחוק את התמונה?')) return;
     setDeleting(true);
     try {
-      await deletePhoto(photo.id, guestId);
+      await deletePhoto(photo.id);
       onDelete(photo.id);
     } finally {
       setDeleting(false);

@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import multer from 'multer';
 import { getPhotos, uploadPhoto, deletePhoto, getPhotoThumb, getPhotoFull } from '../controllers/photos.controller';
+import { requireGuest } from '../middleware/requireGuest';
 
 // Store files in memory — buffers go straight to Postgres, no disk writes
 const storage = multer.memoryStorage();
@@ -27,6 +28,6 @@ router.get('/', getPhotos);
 router.get('/:id/thumb', getPhotoThumb);
 router.get('/:id/full', getPhotoFull);
 router.post('/', upload.fields([{ name: 'thumb', maxCount: 1 }, { name: 'full', maxCount: 1 }]), uploadPhoto);
-router.delete('/:id', deletePhoto);
+router.delete('/:id', requireGuest, deletePhoto);
 
 export default router;

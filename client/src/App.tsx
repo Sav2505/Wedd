@@ -3,6 +3,7 @@ import LoginPage    from './pages/LoginPage';
 import MainLayout   from './pages/MainLayout';
 import CoupleLayout from './pages/CoupleLayout';
 import { useAppSelector } from './store';
+import { parseGuestParams } from './utils/guestUrl';
 
 export default function App() {
   const isAuthenticated = useAppSelector((s) => s.auth.isAuthenticated);
@@ -11,18 +12,19 @@ export default function App() {
 
   const HomeLayout = role === 'couple' ? <CoupleLayout /> : <MainLayout />;
 
-  // Preserve ?n=&p= params so LoginPage can perform auto-login
+  // When a guest link has params, route through login even if already authenticated.
+  const hasGuestParams = Boolean(parseGuestParams(new URLSearchParams(location.search)));
   const loginRedirect = `/login${location.search}`;
 
   return (
     <Routes>
       <Route
         path="/login"
-        element={isAuthenticated ? <Navigate to="/" replace /> : <LoginPage />}
+        element={isAuthenticated && !hasGuestParams ? <Navigate to="/" replace /> : <LoginPage />}
       />
       <Route
         path="/*"
-        element={isAuthenticated ? HomeLayout : <Navigate to={loginRedirect} replace />}
+        element={isAuthenticated && !hasGuestParams ? HomeLayout : <Navigate to={loginRedirect} replace />}
       />
     </Routes>
   );

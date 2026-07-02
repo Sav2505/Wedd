@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   Box,
   TextField,
@@ -13,7 +13,7 @@ import PhoneAndroidIcon from '@mui/icons-material/PhoneAndroid';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSearchParams } from 'react-router-dom';
 import { useAppDispatch } from '../store';
-import { setGuest } from '../store/authSlice';
+import { logout, setGuest } from '../store/authSlice';
 import { login } from '../services/auth.service';
 import FallingPetals from '../components/FallingPetals';
 import { parseGuestParams } from '../utils/guestUrl';
@@ -102,30 +102,34 @@ const cardVariants = {
 export default function LoginPage() {
   const dispatch = useAppDispatch();
   const [searchParams] = useSearchParams();
+  const autoCreds = useMemo(() => parseGuestParams(searchParams), [searchParams]);
+  const hasAutoParams = Boolean(autoCreds);
 
   const [fullName, setFullName]               = useState('');
   const [lastFourDigits, setLastFourDigits]   = useState('');
   const [error, setError]                     = useState<string | null>(null);
-  const [loading, setLoading]                 = useState(false);
+  const [loading, setLoading]                 = useState(hasAutoParams);
 
   // ─── Auto-login from URL params (?n=<name>&p=<last4>) ──────
   useEffect(() => {
-    const creds = parseGuestParams(searchParams);
-    if (!creds) return;
+    if (!autoCreds) return;
 
+    dispatch(logout());
     setLoading(true);
-    login({ fullName: creds.fullName, lastFourDigits: creds.lastFourDigits })
+    setError(null);
+
+    login({ fullName: autoCreds.fullName, lastFourDigits: autoCreds.lastFourDigits })
       .then(({ guest }) => {
         dispatch(setGuest(guest));
         // Remove credentials from the browser's address bar / history
         window.history.replaceState({}, '', window.location.pathname);
       })
       .catch((err) => {
+        window.history.replaceState({}, '', window.location.pathname);
         setError(err instanceof Error ? err.message : 'שגיאה בהתחברות אוטומטית');
       })
       .finally(() => setLoading(false));
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [autoCreds, dispatch]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -259,114 +263,184 @@ export default function LoginPage() {
               </Box>
             </motion.div>
 
-            {/* Form */}
-            <Box component="form" onSubmit={handleSubmit} noValidate>
-              <motion.div variants={itemVariants}>
-                <TextField
-                  fullWidth
-                  label="שם מלא"
-                  placeholder="לדוגמה: ישראל ישראלי"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  disabled={loading}
-                  autoComplete="name"
-                  InputProps={{
-                    endAdornment: (
-                      <InputAdornment position="end">
-                        <PersonOutlineIcon sx={{ color: 'rgba(201,168,76,0.7)', fontSize: 20 }} />
-                      </InputAdornment>
-                    ),
-                  }}
-                  sx={{ mb: 2.5 }}
-                />
-              </motion.div>
-
-              <motion.div variants={itemVariants}>
-                <TextField
-                  fullWidth
-                  label="4 ספרות אחרונות של הטלפון"
-                  placeholder="לדוגמה: 4567"
-                  value={lastFourDigits}
-                  onChange={(e) =>
-                    setLastFourDigits(e.target.value.replace(/\D/g, '').slice(0, 4))
-                  }
-                  disabled={loading}
-                  inputMode="numeric"
-                  autoComplete="tel"
-                  InputProps={{
-                    endAdornment: (
-                      <InputAdornment position="end">
-                        <PhoneAndroidIcon sx={{ color: 'rgba(201,168,76,0.7)', fontSize: 20 }} />
-                      </InputAdornment>
-                    ),
-                  }}
-                  sx={{ mb: 1 }}
-                />
-              </motion.div>
-
-              {/* Error */}
-              <AnimatePresence>
-                {error && (
-                  <motion.div
-                    key="error"
-                    initial={{ opacity: 0, height: 0, marginBottom: 0 }}
-                    animate={{ opacity: 1, height: 'auto', marginBottom: 16 }}
-                    exit={{ opacity: 0, height: 0, marginBottom: 0 }}
-                    transition={{ duration: 0.25 }}
-                  >
-                    <Alert
-                      severity="error"
-                      sx={{
-                        mt: 1.5,
-                        borderRadius: 3,
-                        '& .MuiAlert-icon': { alignItems: 'center' },
-                      }}
-                    >
-                      {error}
-                    </Alert>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
-              <motion.div variants={itemVariants}>
-                <Button
-                  type="submit"
-                  variant="contained"
-                  color="primary"
-                  fullWidth
-                  size="large"
-                  disabled={loading}
-                  className={loading ? undefined : 'shimmer-btn'}
+            {/* Auto-login loading experience */}
+            {hasAutoParams && loading ? (
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.45, ease: 'easeOut' }}
+              >
+                <Box
                   sx={{
                     mt: 1,
-                    height: 52,
-                    fontSize: '1.05rem',
-                    fontWeight: 600,
-                    letterSpacing: '0.04em',
+                    mb: 1,
+                    p: 2.2,
+                    borderRadius: 3,
+                    background:
+                      'linear-gradient(135deg, rgba(224,201,122,0.20) 0%, rgba(255,255,255,0.82) 45%, rgba(201,168,76,0.16) 100%)',
+                    border: '1px solid rgba(201,168,76,0.26)',
+                    boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.75), 0 8px 24px rgba(154,120,51,0.10)',
                   }}
                 >
-                  {loading ? (
-                    <CircularProgress size={24} sx={{ color: 'rgba(255,255,255,0.85)' }} />
-                  ) : (
-                    'כניסה לחגיגה ✨'
-                  )}
-                </Button>
-              </motion.div>
-            </Box>
+                  <Typography
+                    align="center"
+                    sx={{
+                      fontFamily: "'Frank Ruhl Libre', serif",
+                      fontSize: { xs: '1.1rem', sm: '1.25rem' },
+                      fontWeight: 700,
+                      color: '#2C1810',
+                    }}
+                  >
+                    מיד תחוברו לחוויה
+                  </Typography>
+                  <Typography align="center" sx={{ mt: 0.6, color: '#8A6A2B', fontSize: '0.92rem' }}>
+                    מאמתים את פרטי ההזמנה שלך
+                  </Typography>
 
-            {/* Footer note */}
-            <motion.div variants={itemVariants}>
-              <Typography
-                variant="caption"
-                align="center"
-                display="block"
-                sx={{ mt: 3, color: '#A08070', lineHeight: 1.6 }}
-              >
-                הזינו את שמכם המלא ו-4 הספרות האחרונות של מספר הטלפון
-                <br />
-                כפי שנרשמתם על ידי הזוג המאושר
-              </Typography>
-            </motion.div>
+                  <Box sx={{ mt: 2.1, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 1.5 }}>
+                    <motion.div
+                      animate={{ scale: [1, 1.08, 1], opacity: [0.7, 1, 0.7] }}
+                      transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
+                    >
+                      <CircularProgress size={34} thickness={4.2} sx={{ color: '#C9A84C' }} />
+                    </motion.div>
+                    <motion.div
+                      animate={{ x: [0, 6, 0] }}
+                      transition={{ duration: 1.4, repeat: Infinity, ease: 'easeInOut' }}
+                    >
+                      <Typography sx={{ color: '#A08070', fontWeight: 600, letterSpacing: '0.03em' }}>
+                        מתחברים...
+                      </Typography>
+                    </motion.div>
+                  </Box>
+
+                  <Box sx={{ mt: 2, height: 6, borderRadius: 999, overflow: 'hidden', bgcolor: 'rgba(201,168,76,0.16)' }}>
+                    <motion.div
+                      initial={{ x: '-100%' }}
+                      animate={{ x: '100%' }}
+                      transition={{ duration: 1.8, repeat: Infinity, ease: 'linear' }}
+                      style={{
+                        width: '45%',
+                        height: '100%',
+                        borderRadius: 999,
+                        background: 'linear-gradient(90deg, rgba(201,168,76,0.25), #C9A84C, rgba(201,168,76,0.2))',
+                      }}
+                    />
+                  </Box>
+                </Box>
+              </motion.div>
+            ) : (
+              <>
+                {/* Form */}
+                <Box component="form" onSubmit={handleSubmit} noValidate>
+                  <motion.div variants={itemVariants}>
+                    <TextField
+                      fullWidth
+                      label="שם מלא"
+                      placeholder="לדוגמה: ישראל ישראלי"
+                      value={fullName}
+                      onChange={(e) => setFullName(e.target.value)}
+                      disabled={loading}
+                      autoComplete="name"
+                      InputProps={{
+                        endAdornment: (
+                          <InputAdornment position="end">
+                            <PersonOutlineIcon sx={{ color: 'rgba(201,168,76,0.7)', fontSize: 20 }} />
+                          </InputAdornment>
+                        ),
+                      }}
+                      sx={{ mb: 2.5 }}
+                    />
+                  </motion.div>
+
+                  <motion.div variants={itemVariants}>
+                    <TextField
+                      fullWidth
+                      label="4 ספרות אחרונות של הטלפון"
+                      placeholder="לדוגמה: 4567"
+                      value={lastFourDigits}
+                      onChange={(e) =>
+                        setLastFourDigits(e.target.value.replace(/\D/g, '').slice(0, 4))
+                      }
+                      disabled={loading}
+                      inputMode="numeric"
+                      autoComplete="tel"
+                      InputProps={{
+                        endAdornment: (
+                          <InputAdornment position="end">
+                            <PhoneAndroidIcon sx={{ color: 'rgba(201,168,76,0.7)', fontSize: 20 }} />
+                          </InputAdornment>
+                        ),
+                      }}
+                      sx={{ mb: 1 }}
+                    />
+                  </motion.div>
+
+                  {/* Error */}
+                  <AnimatePresence>
+                    {error && (
+                      <motion.div
+                        key="error"
+                        initial={{ opacity: 0, height: 0, marginBottom: 0 }}
+                        animate={{ opacity: 1, height: 'auto', marginBottom: 16 }}
+                        exit={{ opacity: 0, height: 0, marginBottom: 0 }}
+                        transition={{ duration: 0.25 }}
+                      >
+                        <Alert
+                          severity="error"
+                          sx={{
+                            mt: 1.5,
+                            borderRadius: 3,
+                            '& .MuiAlert-icon': { alignItems: 'center' },
+                          }}
+                        >
+                          {error}
+                        </Alert>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
+                  <motion.div variants={itemVariants}>
+                    <Button
+                      type="submit"
+                      variant="contained"
+                      color="primary"
+                      fullWidth
+                      size="large"
+                      disabled={loading}
+                      className={loading ? undefined : 'shimmer-btn'}
+                      sx={{
+                        mt: 1,
+                        height: 52,
+                        fontSize: '1.05rem',
+                        fontWeight: 600,
+                        letterSpacing: '0.04em',
+                      }}
+                    >
+                      {loading ? (
+                        <CircularProgress size={24} sx={{ color: 'rgba(255,255,255,0.85)' }} />
+                      ) : (
+                        'כניסה לחגיגה ✨'
+                      )}
+                    </Button>
+                  </motion.div>
+                </Box>
+
+                {/* Footer note */}
+                <motion.div variants={itemVariants}>
+                  <Typography
+                    variant="caption"
+                    align="center"
+                    display="block"
+                    sx={{ mt: 3, color: '#A08070', lineHeight: 1.6 }}
+                  >
+                    הזינו את שמכם המלא ו-4 הספרות האחרונות של מספר הטלפון
+                    <br />
+                    כפי שנרשמתם על ידי הזוג המאושר
+                  </Typography>
+                </motion.div>
+              </>
+            )}
           </motion.div>
         </Box>
       </motion.div>

@@ -12,7 +12,7 @@ export type WeddingInfoUpdate = Partial<
     WeddingInfo,
     | 'bride_name' | 'groom_name' | 'wedding_date' | 'wedding_time'
     | 'venue_name' | 'venue_address' | 'venue_lat' | 'venue_lng'
-    | 'dress_code' | 'notes' | 'message'
+    | 'dress_code' | 'notes' | 'message' | 'stage_label'
   >
 >;
 

@@ -24,15 +24,15 @@ import TaskManagementPage from './couple/TaskManagementPage';
 // ─── Tab config ──────────────────────────────────────────────
 
 const TABS = [
-  { label: 'ניהול האירוע',    icon: <EditCalendarOutlinedIcon sx={{ fontSize: 22 }} /> },
-  { label: 'הודעה לאורחים',  icon: <FavoriteBorderIcon sx={{ fontSize: 22 }} /> },
-  { label: 'הושבה',           icon: <TableBarIcon sx={{ fontSize: 22 }} /> },
-  { label: 'רשימת אורחים',   icon: <Groups2Icon sx={{ fontSize: 22 }} /> },
-  { label: 'גלריה',           icon: <PhotoLibraryOutlinedIcon sx={{ fontSize: 22 }} /> },
-  { label: 'משימות והוצאות', icon: <AssignmentOutlinedIcon sx={{ fontSize: 22 }} /> },
+  { label: 'ניהול האירוע', icon: <EditCalendarOutlinedIcon sx={{ fontSize: 22 }} /> },
+  { label: 'הודעה לאורחים', icon: <FavoriteBorderIcon sx={{ fontSize: 22 }} /> },
+  { label: 'מעקב משימות', icon: <AssignmentOutlinedIcon sx={{ fontSize: 22 }} /> },
+  { label: 'רשימת אורחים', icon: <Groups2Icon sx={{ fontSize: 22 }} /> },
+  { label: 'הושבה', icon: <TableBarIcon sx={{ fontSize: 22 }} /> },
+  { label: 'גלריה', icon: <PhotoLibraryOutlinedIcon sx={{ fontSize: 22 }} /> },
 ] as const;
 
-const PANELS = [<WeddingInfoEditor />, <MessageEditor />, <SeatingEditor />, <GuestListEditor />, <PhotosTab />, <TaskManagementPage />];
+const PANELS = [<WeddingInfoEditor />, <MessageEditor />, <TaskManagementPage />, <GuestListEditor />, <SeatingEditor />, <PhotosTab />];
 
 // ─── Panel animation ─────────────────────────────────────────
 

@@ -10,6 +10,7 @@ import StarIcon from '@mui/icons-material/Star';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAppSelector } from '../store';
 import { getAllTables } from '../services/tables.service';
+import { getWeddingInfo } from '../services/info.service';
 import { WeddingTableWithGuests } from '../types/domain';
 import FloorPlanCanvas from '../components/FloorPlanCanvas';
 
@@ -28,19 +29,29 @@ export default function SeatingTab() {
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const stored = window.localStorage.getItem(STAGE_LABEL_STORAGE_KEY);
-      if (stored?.trim()) setStageLabel(stored);
-
       const storedEntrance = window.localStorage.getItem(ENTRANCE_POSITION_STORAGE_KEY);
       if (storedEntrance === 'right' || storedEntrance === 'left' || storedEntrance === 'bottom') {
         setEntrancePosition(storedEntrance);
       }
     }
 
-    getAllTables()
-      .then(setTables)
-      .catch(() => setError('לא ניתן לטעון את מפת הסידור'))
-      .finally(() => setLoading(false));
+    const fetchData = async () => {
+      try {
+        const [tables, info] = await Promise.all([getAllTables(), getWeddingInfo()]);
+        setTables(tables);
+        if (info.stage_label?.trim()) {
+          setStageLabel(info.stage_label);
+        } else if (typeof window !== 'undefined') {
+          const stored = window.localStorage.getItem(STAGE_LABEL_STORAGE_KEY);
+          if (stored?.trim()) setStageLabel(stored);
+        }
+      } catch {
+        setError('לא ניתן לטעון את מפת הסידור');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
   }, []);
 
   // const ownTable = tables.find(t => t.table_number === guest?.table_number) ?? null;

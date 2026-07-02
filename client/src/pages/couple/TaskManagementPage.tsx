@@ -26,15 +26,27 @@ type DialogMode = 'closed' | 'add' | 'edit' | 'delete';
 
 // ─── Component ───────────────────────────────────────────────
 
+const AVG_GIFT_KEY = 'wedding_avg_gift';
+
 export default function TaskManagementPage() {
   const [tasks, setTasks]         = useState<WeddingTask[]>([]);
   const [guestCount, setGuestCount] = useState(300);
+  const [avgGift, setAvgGiftState] = useState<number>(() => {
+    const stored = localStorage.getItem(AVG_GIFT_KEY);
+    return stored ? Number(stored) : 450;
+  });
   const [loading, setLoading]     = useState(true);
   const [error, setError]         = useState<string | null>(null);
   const [toast, setToast]         = useState<string | null>(null);
 
   const [dialogMode, setDialogMode]     = useState<DialogMode>('closed');
   const [selectedTask, setSelectedTask] = useState<WeddingTask | null>(null);
+
+  function handleAvgGiftChange(v: number) {
+    const safe = Math.max(0, v);
+    setAvgGiftState(safe);
+    localStorage.setItem(AVG_GIFT_KEY, String(safe));
+  }
 
   // ─── Load data ───────────────────────────────────────────
 
@@ -107,7 +119,7 @@ export default function TaskManagementPage() {
               variant="h5"
               sx={{ fontFamily: "'Frank Ruhl Libre', serif", fontWeight: 700, lineHeight: 1.15 }}
             >
-              משימות והוצאות
+              מעקב משימות
             </Typography>
             <Typography variant="caption" color="text.secondary">
               ניהול תקציב וכל המשימות לחתונה
@@ -141,7 +153,7 @@ export default function TaskManagementPage() {
       ) : (
         <>
           {/* ─── Summary Cards ─── */}
-          <TaskSummaryCards tasks={tasks} guestCount={guestCount} />
+          <TaskSummaryCards tasks={tasks} guestCount={guestCount} avgGift={avgGift} onAvgGiftChange={handleAvgGiftChange} />
 
           {/* ─── Tasks Table ─── */}
           <motion.div
@@ -200,6 +212,7 @@ export default function TaskManagementPage() {
             open
             mode={dialogMode}
             task={selectedTask}
+            guestCount={guestCount}
             onClose={closeDialog}
             onSave={handleSave}
             onDelete={handleDelete}

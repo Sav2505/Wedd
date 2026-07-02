@@ -1,5 +1,5 @@
-import { useMemo } from 'react';
-import { Box, Card, CardContent, LinearProgress, Typography } from '@mui/material';
+import { useMemo, useState } from 'react';
+import { Box, Card, CardContent, IconButton, InputAdornment, LinearProgress, TextField, Tooltip, Typography } from '@mui/material';
 import { motion } from 'framer-motion';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import PendingActionsIcon from '@mui/icons-material/PendingActions';
@@ -9,6 +9,9 @@ import PaymentsIcon from '@mui/icons-material/Payments';
 import SavingsIcon from '@mui/icons-material/Savings';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import CalculateIcon from '@mui/icons-material/Calculate';
+import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
+import CheckIcon from '@mui/icons-material/Check';
+import CloseIcon from '@mui/icons-material/Close';
 import { WeddingTask } from '../../../types/domain';
 
 // ─── Helpers ─────────────────────────────────────────────────
@@ -86,9 +89,29 @@ function SummaryCard({ label, value, sub, icon, accent = '#C9A84C', delay }: Car
 interface Props {
   tasks: WeddingTask[];
   guestCount: number;
+  avgGift: number;
+  onAvgGiftChange: (v: number) => void;
 }
 
-export default function TaskSummaryCards({ tasks, guestCount }: Props) {
+export default function TaskSummaryCards({ tasks, guestCount, avgGift, onAvgGiftChange }: Props) {
+  const [editing, setEditing] = useState(false);
+  const [draftGift, setDraftGift] = useState<string>('');
+
+  function startEdit() {
+    setDraftGift(String(avgGift));
+    setEditing(true);
+  }
+
+  function confirmEdit() {
+    const v = parseFloat(draftGift);
+    if (!isNaN(v) && v >= 0) onAvgGiftChange(v);
+    setEditing(false);
+  }
+
+  function cancelEdit() {
+    setEditing(false);
+  }
+
   const stats = useMemo(() => {
     const total       = tasks.length;
     const completed   = tasks.filter(t => t.status === 'completed').length;
@@ -97,12 +120,12 @@ export default function TaskSummaryCards({ tasks, guestCount }: Props) {
     const paid        = tasks.reduce((s, t) => s + Number(t.paid_amount), 0);
     const remaining   = budget - paid;
     const deposits    = tasks.reduce((s, t) => s + Number(t.deposit), 0);
-    const income      = guestCount * 450 * 0.9;
+    const income      = guestCount * avgGift * 0.9;
     const profitLoss  = income - budget;
     const paidPct     = budget > 0 ? Math.min(100, (paid / budget) * 100) : 0;
     const completePct = total > 0 ? Math.round((completed / total) * 100) : 0;
     return { total, completed, pending, budget, paid, remaining, deposits, income, profitLoss, paidPct, completePct };
-  }, [tasks, guestCount]);
+  }, [tasks, guestCount, avgGift]);
 
   const isProfitable = stats.profitLoss >= 0;
 
@@ -190,9 +213,36 @@ export default function TaskSummaryCards({ tasks, guestCount }: Props) {
       label: 'הכנסה צפויה',
       value: <>{fmt(stats.income)}</>,
       sub: (
-        <Typography variant="caption" color="text.secondary">
-          {guestCount} אורחים × ₪450 × 90%
-        </Typography>
+        <Box sx={{ mt: 0.5 }}>
+          {editing ? (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.5 }}>
+              <TextField
+                size="small"
+                type="number"
+                value={draftGift}
+                onChange={e => setDraftGift(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') confirmEdit(); if (e.key === 'Escape') cancelEdit(); }}
+                autoFocus
+                inputProps={{ min: 0, step: 10, style: { padding: '3px 6px', fontSize: '0.78rem', width: 64 } }}
+                InputProps={{ startAdornment: <InputAdornment position="start"><Typography variant="caption">₪</Typography></InputAdornment> }}
+                sx={{ '& .MuiOutlinedInput-root': { borderRadius: 1.5 } }}
+              />
+              <IconButton size="small" onClick={confirmEdit} sx={{ color: 'success.main', p: 0.4 }}><CheckIcon sx={{ fontSize: 16 }} /></IconButton>
+              <IconButton size="small" onClick={cancelEdit} sx={{ color: 'text.disabled', p: 0.4 }}><CloseIcon sx={{ fontSize: 16 }} /></IconButton>
+            </Box>
+          ) : (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              <Typography variant="caption" color="text.secondary">
+                {guestCount} אורחים × ₪{avgGift.toLocaleString('he-IL')} × 90%
+              </Typography>
+              <Tooltip title="ערוך סכום מתנה ממוצע">
+                <IconButton size="small" onClick={startEdit} sx={{ p: 0.3, color: 'text.disabled', '&:hover': { color: 'primary.main' } }}>
+                  <EditOutlinedIcon sx={{ fontSize: 13 }} />
+                </IconButton>
+              </Tooltip>
+            </Box>
+          )}
+        </Box>
       ),
       icon: <TrendingUpIcon />,
       accent: '#26a69a',

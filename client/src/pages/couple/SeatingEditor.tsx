@@ -15,10 +15,13 @@ import RadioButtonUncheckedIcon from '@mui/icons-material/RadioButtonUnchecked';
 import CropSquareIcon from '@mui/icons-material/CropSquare';
 import TableRowsIcon from '@mui/icons-material/TableRows';
 import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
+import SaveOutlinedIcon from '@mui/icons-material/SaveOutlined';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import { motion, AnimatePresence } from 'framer-motion';
 
 import FloorPlanCanvas from '../../components/FloorPlanCanvas';
 import { WeddingTableWithGuests } from '../../types/domain';
+import { getWeddingInfo, updateWeddingInfo } from '../../services/info.service';
 import {
     getAllTables,
     createTable,
@@ -52,6 +55,8 @@ export default function SeatingEditor() {
     const [selectedId, setSelectedId] = useState<string | null>(null);
     const [addDialogOpen, setAddDialogOpen] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
+    const [isSavingLabel, setIsSavingLabel] = useState(false);
+    const [labelSaved, setLabelSaved] = useState(false);
     const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
     // ── "Add table" dialog local state ──
@@ -89,7 +94,17 @@ export default function SeatingEditor() {
     }, []);
 
     useEffect(() => {
-        reload().finally(() => setLoading(false));
+        const init = async () => {
+            await reload();
+            try {
+                const info = await getWeddingInfo();
+                if (info.stage_label?.trim()) {
+                    setStageLabel(info.stage_label);
+                    window.localStorage.setItem(STAGE_LABEL_STORAGE_KEY, info.stage_label);
+                }
+            } catch { /* non-critical, localStorage fallback already set */ }
+        };
+        init().finally(() => setLoading(false));
     }, [reload]);
 
     // ── Sync edit fields when selection changes ───────────────
@@ -124,8 +139,21 @@ export default function SeatingEditor() {
 
     function handleStageLabelChange(value: string) {
         setStageLabel(value);
-        if (typeof window === 'undefined') return;
-        window.localStorage.setItem(STAGE_LABEL_STORAGE_KEY, value);
+        setLabelSaved(false);
+    }
+
+    async function handleSaveStageLabelToServer() {
+        setIsSavingLabel(true);
+        try {
+            await updateWeddingInfo({ stage_label: stageLabel.trim() || 'חופה' });
+            window.localStorage.setItem(STAGE_LABEL_STORAGE_KEY, stageLabel.trim() || 'חופה');
+            setLabelSaved(true);
+            setTimeout(() => setLabelSaved(false), 2500);
+        } catch {
+            setError('שגיאה בשמירת הכיתוב');
+        } finally {
+            setIsSavingLabel(false);
+        }
     }
 
     function handleEntrancePositionChange(value: 'right' | 'bottom' | 'left') {
@@ -339,16 +367,43 @@ export default function SeatingEditor() {
             </Box>
 
             {/* ── Floor Plan ─────────────────────────────────── */}
-            <Box sx={{ mb: 2, mt: 3, display: 'flex', justifyContent: 'flex-start', gap: 1.25, flexWrap: 'wrap' }}>
-                <TextField
-                    label="כיתוב על האזור העליון"
-                    value={stageLabel}
-                    onChange={(e) => handleStageLabelChange(e.target.value)}
-                    size="small"
-                    placeholder="למשל: חופה / במה / בר"
-                    inputProps={{ maxLength: 30 }}
-                    sx={{ width: { xs: '100%', sm: 280 } }}
-                />
+            <Box sx={{ mb: 2, mt: 3, display: 'flex', justifyContent: 'flex-start', gap: 1.25, flexWrap: 'wrap', alignItems: 'center' }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+                    <TextField
+                        label="כיתוב על האזור העליון"
+                        value={stageLabel}
+                        onChange={(e) => handleStageLabelChange(e.target.value)}
+                        size="small"
+                        placeholder="למשל: חופה / במה / בר"
+                        inputProps={{ maxLength: 30 }}
+                        sx={{ width: { xs: 210, sm: 240 } }}
+                    />
+                    <Tooltip title={labelSaved ? 'נשמר!' : 'שמור כיתוב'}>
+                        <span>
+                            <IconButton
+                                onClick={handleSaveStageLabelToServer}
+                                disabled={isSavingLabel}
+                                size="small"
+                                sx={{
+                                    color: labelSaved ? '#4caf50' : '#9A7833',
+                                    border: '1px solid',
+                                    borderColor: labelSaved ? 'rgba(76,175,80,0.45)' : 'rgba(201,168,76,0.45)',
+                                    borderRadius: 1.5,
+                                    p: 0.65,
+                                    transition: 'all 0.25s',
+                                    '&:hover': { background: 'rgba(201,168,76,0.12)' },
+                                }}
+                            >
+                                {isSavingLabel
+                                    ? <CircularProgress size={16} sx={{ color: '#C9A84C' }} />
+                                    : labelSaved
+                                        ? <CheckCircleOutlineIcon sx={{ fontSize: 18 }} />
+                                        : <SaveOutlinedIcon sx={{ fontSize: 18 }} />
+                                }
+                            </IconButton>
+                        </span>
+                    </Tooltip>
+                </Box>
 
                 <ToggleButtonGroup
                     value={entrancePosition}

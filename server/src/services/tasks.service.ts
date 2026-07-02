@@ -9,6 +9,8 @@ export interface TaskCreateInput {
   deposit?: number;
   paid_amount?: number;
   total_amount?: number;
+  price_per_plate?: number | null;
+  min_commitment?: number | null;
   due_date?: string | null;
   phone?: string | null;
   website?: string | null;
@@ -36,8 +38,8 @@ export async function createTask(data: TaskCreateInput, coupleId: string): Promi
   const { rows } = await pool.query<WeddingTask>(
     `INSERT INTO wedding_tasks
        (task_name, supplier_name, category, status, deposit, paid_amount, total_amount,
-        due_date, phone, website, notes, created_by)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
+        price_per_plate, min_commitment, due_date, phone, website, notes, created_by)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
      RETURNING *`,
     [
       data.task_name,
@@ -47,6 +49,8 @@ export async function createTask(data: TaskCreateInput, coupleId: string): Promi
       data.deposit ?? 0,
       data.paid_amount ?? 0,
       data.total_amount ?? 0,
+      data.price_per_plate ?? null,
+      data.min_commitment ?? null,
       data.due_date ?? null,
       data.phone ?? null,
       data.website ?? null,
@@ -61,6 +65,7 @@ export async function updateTask(id: string, data: TaskUpdateInput): Promise<Wed
   const allowed: Array<keyof TaskUpdateInput> = [
     'task_name', 'supplier_name', 'category', 'status',
     'deposit', 'paid_amount', 'total_amount',
+    'price_per_plate', 'min_commitment',
     'due_date', 'phone', 'website', 'notes',
   ];
 

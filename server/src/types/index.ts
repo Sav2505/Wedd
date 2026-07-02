@@ -56,6 +56,7 @@ export interface WeddingInfo {
   notes: string | null;
   message: string | null;
   hero_image_url: string | null;
+  stage_label: string | null;
   updated_at: string;
 }
 
@@ -112,6 +113,10 @@ export interface WeddingTask {
   deposit: number;
   paid_amount: number;
   total_amount: number;
+  /** Venue-only: price per guest plate (₪) */
+  price_per_plate: number | null;
+  /** Venue-only: minimum guest commitment */
+  min_commitment: number | null;
   due_date: string | null;
   phone: string | null;
   website: string | null;

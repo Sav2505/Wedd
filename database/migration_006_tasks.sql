@@ -12,7 +12,8 @@ CREATE TABLE IF NOT EXISTS wedding_tasks (
                    CONSTRAINT chk_tasks_category CHECK (category IN (
                      'venue','photographer','dj','dress','suit','rings',
                      'decorations','invitations','transportation','makeup',
-                     'hair','rabbi','flowers','food','alcohol','gifts','other'
+                     'hair','rabbi','flowers','food','alcohol','gifts',
+                     'design','side_event','hotel','attire','other'
                    )),
   status         TEXT          NOT NULL DEFAULT 'not_started'
                    CONSTRAINT chk_tasks_status CHECK (status IN (

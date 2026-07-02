@@ -42,6 +42,10 @@ export const CATEGORY_OPTIONS: { value: TaskCategory; label: string; icon: strin
   { value: 'food',           label: 'קייטרינג',      icon: '🍽️' },
   { value: 'alcohol',        label: 'אלכוהול',       icon: '🥂' },
   { value: 'gifts',          label: 'מתנות',         icon: '🎁' },
+  { value: 'design',         label: 'עיצוב',         icon: '🎨' },
+  { value: 'side_event',     label: 'אירוע נלווה',   icon: '🎉' },
+  { value: 'hotel',          label: 'מלון',           icon: '🏨' },
+  { value: 'attire',         label: 'לבוש',           icon: '👔' },
   { value: 'other',          label: 'אחר',           icon: '📋' },
 ];
 

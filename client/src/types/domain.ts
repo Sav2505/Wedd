@@ -96,7 +96,8 @@ export type TaskStatus = 'not_started' | 'in_progress' | 'waiting' | 'completed'
 export type TaskCategory =
   | 'venue' | 'photographer' | 'dj' | 'dress' | 'suit' | 'rings'
   | 'decorations' | 'invitations' | 'transportation' | 'makeup'
-  | 'hair' | 'rabbi' | 'flowers' | 'food' | 'alcohol' | 'gifts' | 'other';
+  | 'hair' | 'rabbi' | 'flowers' | 'food' | 'alcohol' | 'gifts'
+  | 'design' | 'side_event' | 'hotel' | 'attire' | 'other';
 
 export interface WeddingTask {
   id: string;

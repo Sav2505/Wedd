@@ -8,106 +8,18 @@ import {
   Typography,
 } from '@mui/material';
 import {
-  Bar,
-  BarChart,
   Cell,
-  LabelList,
   Legend,
   Pie,
   PieChart,
   ResponsiveContainer,
   Tooltip,
-  XAxis,
-  YAxis,
 } from 'recharts';
 import { motion } from 'framer-motion';
 import { WeddingTask } from '../../../types/domain';
 import { CATEGORY_OPTIONS } from './TaskDialog';
 
 // ─── Bar colors: green (small) → orange (large) ──────────────────────────────────
-
-function barColor(i: number, total: number): string {
-  // index 0 = largest → orange; last = smallest → green
-  const t = total <= 1 ? 0 : (total - 1 - i) / (total - 1); // 0=green, 1=orange
-  const h = Math.round(120 - t * 90); // 120° green → 30° orange
-  return `hsl(${h}, 72%, 40%)`;
-}
-// ─── Custom XAxis tick: angled supplier name with white pill background ──────────
-
-function SupplierXTick({
-  x, y, payload,
-}: {
-  x?: number; y?: number; payload?: { value: string };
-}) {
-  if (!payload || x === undefined || y === undefined) return null;
-  const display = payload.value.length > 10 ? payload.value.slice(0, 9) + '…' : payload.value;
-  return (
-    <g transform={`translate(${x},${y})`}>
-      <rect
-        x={-30}
-        y={4}
-        width={60}
-        height={18}
-        rx={3}
-        fill="rgba(255,255,255,0.92)"
-      />
-      <text
-        transform="rotate(-35)"
-        textAnchor="end"
-        dominantBaseline="middle"
-        fill="#5C3D2E"
-        fontSize={10}
-        fontFamily="Heebo, sans-serif"
-        fontWeight={500}
-        x={-4}
-        y={14}
-      >
-        {display}
-      </text>
-    </g>
-  );
-}
-// ─── Custom YAxis tick: white pill background behind supplier name ──────────
-
-function SupplierYTick({
-  x, y, payload,
-}: {
-  x?: number; y?: number; payload?: { value: string };
-}) {
-  if (!payload || x === undefined || y === undefined) return null;
-  const display = payload.value.length > 13 ? payload.value.slice(0, 12) + '…' : payload.value;
-  const fontSize = 11;
-  const charW = fontSize * 0.56;
-  const textW = display.length * charW;
-  const padX = 5;
-  const padY = 3;
-  const rectW = textW + padX * 2;
-  const rectH = fontSize + padY * 2;
-  return (
-    <g>
-      <rect
-        x={x - rectW}
-        y={y - rectH / 2}
-        width={rectW}
-        height={rectH}
-        rx={3}
-        fill="rgba(255,255,255,0.92)"
-      />
-      <text
-        x={x - padX}
-        y={y}
-        textAnchor="end"
-        dominantBaseline="middle"
-        fill="#5C3D2E"
-        fontSize={fontSize}
-        fontFamily="Heebo, sans-serif"
-        fontWeight={500}
-      >
-        {display}
-      </text>
-    </g>
-  );
-}
 
 // ─── Category Colors ──────────────────────────────────────────
 
@@ -159,7 +71,7 @@ interface Props {
 }
 
 export default function BudgetAnalytics({ tasks }: Props) {
-  const { pieData, barData, stats, paidPct } = useMemo(() => {
+  const { pieData, stats, paidPct } = useMemo(() => {
     // Pie: expenses by category
     const catMap: Record<string, number> = {};
     tasks.forEach(t => {
@@ -171,19 +83,6 @@ export default function BudgetAnalytics({ tasks }: Props) {
       .map(([cat, value]) => ({ name: getCategoryLabel(cat), value, cat }))
       .sort((a, b) => b.value - a.value);
 
-    // Bar: top 8 suppliers
-    const supplierMap: Record<string, number> = {};
-    tasks.forEach(t => {
-      const key = t.supplier_name?.trim() || 'לא צוין';
-      if (Number(t.total_amount) > 0) {
-        supplierMap[key] = (supplierMap[key] ?? 0) + Number(t.total_amount);
-      }
-    });
-    const barData = Object.entries(supplierMap)
-      .map(([name, amount]) => ({ name, amount }))
-      .sort((a, b) => b.amount - a.amount)
-      .slice(0, 8);
-
     // Stats
     const amounts = tasks.filter(t => Number(t.total_amount) > 0).map(t => Number(t.total_amount));
     const total = tasks.reduce((s, t) => s + Number(t.total_amount), 0);
@@ -194,7 +93,7 @@ export default function BudgetAnalytics({ tasks }: Props) {
     const topCat = pieData[0] ? pieData[0].name : '—';
     const paidPct = total > 0 ? Math.min(100, (paid / total) * 100) : 0;
 
-    return { pieData, barData, stats: { avg, max, min, topCat, total, paid }, paidPct };
+    return { pieData, stats: { avg, max, min, topCat, total, paid }, paidPct };
   }, [tasks]);
 
   const cardVariants = {

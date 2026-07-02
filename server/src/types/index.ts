@@ -37,9 +37,13 @@ export interface Photo {
   id: string;
   uploader_id: string;
   uploader_name?: string; // joined from guests
-  url: string;
+  url: string | null;
   caption: string | null;
   uploaded_at: string;
+  // Binary storage (new photos)
+  thumbnail_data?: Buffer | null;
+  full_data?: Buffer | null;
+  mime_type?: string;
 }
 
 export interface WeddingInfo {
@@ -102,7 +106,8 @@ export type TaskStatus = 'not_started' | 'in_progress' | 'waiting' | 'completed'
 export type TaskCategory =
   | 'venue' | 'photographer' | 'dj' | 'dress' | 'suit' | 'rings'
   | 'decorations' | 'invitations' | 'transportation' | 'makeup'
-  | 'hair' | 'rabbi' | 'flowers' | 'food' | 'alcohol' | 'gifts' | 'other';
+  | 'hair' | 'rabbi' | 'flowers' | 'food' | 'alcohol' | 'gifts'
+  | 'design' | 'side_event' | 'hotel' | 'attire' | 'other';
 
 export interface WeddingTask {
   id: string;

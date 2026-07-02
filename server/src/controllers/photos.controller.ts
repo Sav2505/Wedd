@@ -11,17 +11,55 @@ export async function getPhotos(_req: Request, res: Response, next: NextFunction
   }
 }
 
+/** Serve compressed thumbnail — heavily cached, served for the gallery grid */
+export async function getPhotoThumb(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const result = await photosService.getPhotoData(req.params.id, 'thumb');
+    if (!result) return next(createError('תמונה לא נמצאה', 404));
+    res.set({
+      'Content-Type': result.mimeType,
+      'Cache-Control': 'public, max-age=31536000, immutable',
+    });
+    res.send(result.data);
+  } catch (err) {
+    next(err);
+  }
+}
+
+/** Serve full-resolution image — cached, served only when lightbox opens */
+export async function getPhotoFull(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const result = await photosService.getPhotoData(req.params.id, 'full');
+    if (!result) return next(createError('תמונה לא נמצאה', 404));
+    res.set({
+      'Content-Type': result.mimeType,
+      'Cache-Control': 'public, max-age=31536000, immutable',
+    });
+    res.send(result.data);
+  } catch (err) {
+    next(err);
+  }
+}
+
 export async function uploadPhoto(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const uploaderId = req.body.uploaderId as string | undefined;
     if (!uploaderId) return next(createError('uploaderId הוא שדה חובה', 400));
 
-    const file = req.file;
-    if (!file) return next(createError('קובץ תמונה הוא שדה חובה', 400));
+    const files = req.files as Record<string, Express.Multer.File[]> | undefined;
+    const thumbFile = files?.['thumb']?.[0];
+    const fullFile  = files?.['full']?.[0];
 
+    if (!thumbFile || !fullFile) {
+      return next(createError('שדות thumb ו-full נדרשים', 400));
+    }
+
+    const mimeType = thumbFile.mimetype;
     const photo = await photosService.savePhoto(
       uploaderId,
-      file.filename,
+      thumbFile.buffer,
+      fullFile.buffer,
+      mimeType,
       req.body.caption as string | undefined,
     );
 
@@ -43,3 +81,4 @@ export async function deletePhoto(req: Request, res: Response, next: NextFunctio
     next(err);
   }
 }
+

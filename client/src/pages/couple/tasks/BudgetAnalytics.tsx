@@ -113,7 +113,7 @@ export default function BudgetAnalytics({ tasks }: Props) {
 
   const cardVariants = {
     hidden: { opacity: 0, y: 20 },
-    visible: (i: number) => ({ opacity: 1, y: 0, transition: { delay: i * 0.07, duration: 0.4, ease: 'easeOut' } }),
+    visible: (i: number) => ({ opacity: 1, y: 0, transition: { delay: i * 0.07, duration: 0.4, ease: 'easeOut' as const } }),
   };
 
   if (tasks.length === 0) {
@@ -257,7 +257,7 @@ export default function BudgetAnalytics({ tasks }: Props) {
                     axisLine={false}
                     tickLine={false}
                   />
-                  <Tooltip formatter={(v: number) => [fmt(v), 'עלות']} />
+                  <Tooltip formatter={(v) => [fmt(Number(v ?? 0)), 'עלות']} />
                   <Bar dataKey="amount" radius={[0, 6, 6, 0]} isAnimationActive animationDuration={800}>
                     {barData.map((_, i) => (
                       <Cell

@@ -134,15 +134,15 @@ export default function LoginPage() {
       .finally(() => setLoading(false));
   }, [autoCreds, dispatch, navigate]);
 
-  // Show a 3-second elegant welcome transition after successful auto-login.
+  // Show a 5-second elegant welcome transition after successful auto-login.
   useEffect(() => {
     if (!showWelcomeScreen) return;
 
     setWelcomeExiting(false);
-    const fadeOutTimer = window.setTimeout(() => setWelcomeExiting(true), 2400);
+    const fadeOutTimer = window.setTimeout(() => setWelcomeExiting(true), 4200);
     const navigateTimer = window.setTimeout(() => {
       navigate('/', { replace: true });
-    }, 3000);
+    }, 5000);
 
     return () => {
       window.clearTimeout(fadeOutTimer);
@@ -314,21 +314,8 @@ export default function LoginPage() {
                     מיד תחוברו לחוויה
                   </Typography>
                   <Typography align="center" sx={{ mt: 0.6, color: '#8A6A2B', fontSize: '0.92rem' }}>
-                    מאמתים את פרטי ההזמנה שלך
+                    מאמתים כניסה אישית
                   </Typography>
-                  {greetingName && (
-                    <Typography
-                      align="center"
-                      sx={{
-                        mt: 1.1,
-                        color: '#6F5437',
-                        fontWeight: 700,
-                        fontSize: '0.95rem',
-                      }}
-                    >
-                      שלום {greetingName}, עוד רגע ואתם בפנים
-                    </Typography>
-                  )}
 
                   <Box sx={{ mt: 2.1, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 1.5 }}>
                     <motion.div
@@ -406,7 +393,7 @@ export default function LoginPage() {
                         color: '#2C1810',
                       }}
                     >
-                      שלום {greetingName || 'אהובים'}
+                      שלום {greetingName || 'אורח יקר'}
                     </Typography>
                     <Typography
                       align="center"

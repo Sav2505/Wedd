@@ -47,6 +47,7 @@ function GoldDivider() {
 export default function MainLayout() {
   const dispatch = useAppDispatch();
   const guest    = useAppSelector((s) => s.auth.guest);
+  const isCouple = guest?.role === 'couple';
   const [activeTab, setActiveTab] = useState(0);
 
   return (
@@ -120,20 +121,22 @@ export default function MainLayout() {
               )}
             </Box>
 
-            <Tooltip title="יציאה">
-              <IconButton
-                onClick={() => dispatch(logout())}
-                size="small"
-                sx={{
-                  color: '#A08070',
-                  border: '1px solid rgba(201,168,76,0.25)',
-                  borderRadius: 2, p: 0.75,
-                  '&:hover': { background: 'rgba(201,168,76,0.1)', color: '#9A7833' },
-                }}
-              >
-                <LogoutIcon sx={{ fontSize: 18 }} />
-              </IconButton>
-            </Tooltip>
+            {isCouple && (
+              <Tooltip title="יציאה">
+                <IconButton
+                  onClick={() => dispatch(logout())}
+                  size="small"
+                  sx={{
+                    color: '#A08070',
+                    border: '1px solid rgba(201,168,76,0.25)',
+                    borderRadius: 2, p: 0.75,
+                    '&:hover': { background: 'rgba(201,168,76,0.1)', color: '#9A7833' },
+                  }}
+                >
+                  <LogoutIcon sx={{ fontSize: 18 }} />
+                </IconButton>
+              </Tooltip>
+            )}
           </Box>
 
           {/* Tabs */}

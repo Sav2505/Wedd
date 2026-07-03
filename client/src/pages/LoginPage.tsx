@@ -111,6 +111,8 @@ export default function LoginPage() {
   const [lastFourDigits, setLastFourDigits]   = useState('');
   const [error, setError]                     = useState<string | null>(null);
   const [loading, setLoading]                 = useState(hasAutoParams);
+  const [showWelcomeScreen, setShowWelcomeScreen] = useState(false);
+  const [welcomeExiting, setWelcomeExiting] = useState(false);
 
   // ─── Auto-login from URL params (?n=<name>&p=<last4>) ──────
   useEffect(() => {
@@ -123,8 +125,7 @@ export default function LoginPage() {
     login({ fullName: autoCreds.fullName, lastFourDigits: autoCreds.lastFourDigits })
       .then(({ guest }) => {
         dispatch(setGuest(guest));
-        // Route through React Router so auth redirect happens immediately and params are removed.
-        navigate('/', { replace: true });
+        setShowWelcomeScreen(true);
       })
       .catch((err) => {
         navigate('/login', { replace: true });
@@ -132,6 +133,22 @@ export default function LoginPage() {
       })
       .finally(() => setLoading(false));
   }, [autoCreds, dispatch, navigate]);
+
+  // Show a 3-second elegant welcome transition after successful auto-login.
+  useEffect(() => {
+    if (!showWelcomeScreen) return;
+
+    setWelcomeExiting(false);
+    const fadeOutTimer = window.setTimeout(() => setWelcomeExiting(true), 2400);
+    const navigateTimer = window.setTimeout(() => {
+      navigate('/', { replace: true });
+    }, 3000);
+
+    return () => {
+      window.clearTimeout(fadeOutTimer);
+      window.clearTimeout(navigateTimer);
+    };
+  }, [showWelcomeScreen, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -343,6 +360,71 @@ export default function LoginPage() {
                       }}
                     />
                   </Box>
+                </Box>
+              </motion.div>
+            ) : hasAutoParams && showWelcomeScreen ? (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: welcomeExiting ? 0 : 1, y: welcomeExiting ? -8 : 0 }}
+                transition={{ duration: 0.55, ease: 'easeOut' }}
+              >
+                <Box
+                  sx={{
+                    mt: 1,
+                    mb: 1,
+                    p: { xs: 2.6, sm: 3 },
+                    borderRadius: 3,
+                    background:
+                      'radial-gradient(120% 120% at 0% 0%, rgba(224,201,122,0.28) 0%, rgba(255,255,255,0.90) 48%, rgba(245,237,217,0.88) 100%)',
+                    border: '1px solid rgba(201,168,76,0.24)',
+                    boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.84), 0 12px 30px rgba(154,120,51,0.12)',
+                    position: 'relative',
+                    overflow: 'hidden',
+                  }}
+                >
+                  <Box
+                    sx={{
+                      position: 'absolute',
+                      inset: 0,
+                      pointerEvents: 'none',
+                      background:
+                        'radial-gradient(circle at 15% 22%, rgba(201,168,76,0.20) 0%, transparent 42%), radial-gradient(circle at 85% 75%, rgba(224,201,122,0.22) 0%, transparent 40%)',
+                    }}
+                  />
+
+                  <motion.div
+                    animate={{ scale: [1, 1.03, 1], opacity: [0.85, 1, 0.85] }}
+                    transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
+                    style={{ position: 'relative', zIndex: 1 }}
+                  >
+                    <Typography
+                      align="center"
+                      sx={{
+                        fontFamily: "'Frank Ruhl Libre', serif",
+                        fontSize: { xs: '1.35rem', sm: '1.55rem' },
+                        fontWeight: 700,
+                        color: '#2C1810',
+                      }}
+                    >
+                      שלום {greetingName || 'אהובים'}
+                    </Typography>
+                    <Typography
+                      align="center"
+                      sx={{
+                        mt: 0.7,
+                        fontFamily: "'Frank Ruhl Libre', serif",
+                        fontSize: { xs: '1.05rem', sm: '1.2rem' },
+                        color: '#8A6A2B',
+                        fontWeight: 600,
+                        letterSpacing: '0.01em',
+                      }}
+                    >
+                      ברוכים הבאים לחתונה שלנו
+                    </Typography>
+                    <Typography align="center" sx={{ mt: 1.2, color: '#A08070', fontSize: '0.9rem', fontWeight: 500 }}>
+                      מתכוננים לחוויה מרגשת במיוחד ✨
+                    </Typography>
+                  </motion.div>
                 </Box>
               </motion.div>
             ) : (

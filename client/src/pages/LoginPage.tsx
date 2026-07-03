@@ -307,7 +307,7 @@ export default function LoginPage() {
                     מיד תחוברו לחוויה
                   </Typography>
                   <Typography align="center" sx={{ mt: 0.6, color: '#8A6A2B', fontSize: '0.92rem' }}>
-                    מאמתים כניסה אישית
+                    טוענים את החגיגה ✨
                   </Typography>
 
                   <Box sx={{ mt: 2.1, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 1.5 }}>

@@ -433,7 +433,7 @@ export default function PhotosTab() {
             גלריית התמונות
           </Typography>
           <Typography variant="body2" sx={{ color: '#A08070' }}>
-            {photos.length} תמונות שותפו עד כה
+            {photos.length} תמונות שותפו עד כה, שתפו גם אתם עם עוד תמונות מהאירוע !
           </Typography>
         </Box>
       </motion.div>

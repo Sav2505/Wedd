@@ -118,35 +118,56 @@ function formatRsvpUpdatedAt(ts: string | null): string | null {
   });
 }
 
+function formatWeddingDate(weddingDate: string) {
+  const d = new Date(weddingDate + 'T12:00:00');
+
+  const weekday = d.toLocaleDateString('he-IL', {
+    weekday: 'long',
+  });
+
+  const date = d.toLocaleDateString('he-IL', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  });
+
+  return `${weekday}, ${date}`;
+}
+
 // להחליף את כל הפונקציה buildWhatsAppInviteUrl בזו:
 
-function buildWhatsAppInviteUrl(guest: ManagedGuest, brideAndGroom: string): string {
+function buildWhatsAppInviteUrl(guest: ManagedGuest, brideAndGroom: string, weddingDate: string | undefined): string {
   const digits = guest.phone.replace(/\D/g, '');
   const normalizedPhone = digits.startsWith('0') ? `972${digits.slice(1)}` : digits;
   const personalLink = buildGuestUrl(`${guest.first_name} ${guest.last_name}`, digits.slice(-4));
+  const formattedDate = weddingDate ? formatWeddingDate(weddingDate) : undefined;
 
   const message = [
     `שלום ${guest.first_name} 💛`,
     '',
-    `בשמחה ובהתרגשות אנו מזמינים אותך לחגוג איתנו את יום חתונתינו${brideAndGroom ? ` - ${brideAndGroom}` : ''}. 💍✨`,
+    `אנו נרגשים להזמינך לחגוג איתנו את יום חתונתנו${brideAndGroom ? ` - ${brideAndGroom}` : ''}. 💍✨`,
+    formattedDate ? `📅 מועד האירוע: ${formattedDate}` : '',
     '',
-    'הכנו עבורך הזמנה דיגיטלית אישית באפליקציית החתונה שלנו, שבה מחכים לך כל פרטי האירוע:',
-    '📍 מיקום ושעת האירוע, כמובן קישור לWaze',
-    '🪑 מיקום ישיבתך באולם',
-    '📸 שיתוף תמונות מהאירוע',
+    'הכנו עבורך הזמנה דיגיטלית אישית באפליקציית החתונה שלנו, שבה מחכים לך כל פרטי האירוע במקום אחד:',
+    '',
+    '📍 מיקום האירוע וכמובן קישור ישיר ל-Waze',
+    '🪑 מיקום הישיבה שלך באולם',
+    '📸 העלאה ושיתוף תמונות מהאירוע',
     '✅ אישור הגעה',
-    'וכל מה שצריך לדעת כדי לחגוג איתנו את היום המיוחד בחיינו 🥂',
+    '🎉 וכל מה שצריך לדעת כדי ליהנות מהאירוע',
     '',
     'לכניסה לאפליקציה האישית שלך:',
     '',
     personalLink,
     '',
-    'נשמח אם תיכנס/י ותאשר/י את הגעתך דרך האפליקציה, כדי שנוכל להיערך בהתאם. 🙏',
+    'נשמח אם תיכנס/י לאפליקציה ותאשר/י את הגעתך, כדי שנוכל להיערך בהתאם. 🙏',
     '',
     'מחכים להתרגש, לשמוח ולחגוג איתך את אחד הימים המיוחדים בחיינו. 🥂❤️',
     '',
     brideAndGroom ? `באהבה,\n${brideAndGroom} 💕` : 'באהבה 💕',
-  ].filter(Boolean).join('\n');
+  ]
+    .filter(Boolean)
+    .join('\n');
 
   return `https://wa.me/${normalizedPhone}?text=${encodeURIComponent(message)}`;
 }
@@ -191,7 +212,7 @@ export default function GuestListEditor() {
   const [rsvpListLoadingStatus, setRsvpListLoadingStatus] = useState<RsvpStatus | null>(null);
   const [searchLoading, setSearchLoading] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [info, setInfo] = useState<{ bride_name?: string; groom_name?: string } | null>(null);
+  const [info, setInfo] = useState<{ bride_name?: string; groom_name?: string, wedding_date?: string } | null>(null);
 
   useEffect(() => {
     getWeddingInfo().then(setInfo).catch(() => {/* non-critical */ });
@@ -363,7 +384,7 @@ export default function GuestListEditor() {
   }, []);
 
   const handleSendInvitation = useCallback((guest: ManagedGuest) => {
-    window.open(buildWhatsAppInviteUrl(guest, `${info?.bride_name} & ${info?.groom_name}`), '_blank', 'noopener,noreferrer');
+    window.open(buildWhatsAppInviteUrl(guest, `${info?.bride_name} & ${info?.groom_name}`, info?.wedding_date), '_blank', 'noopener,noreferrer');
   }, []);
 
   function openCreateGroup() {

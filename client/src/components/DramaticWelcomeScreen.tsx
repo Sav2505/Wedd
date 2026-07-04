@@ -14,8 +14,8 @@ export default function DramaticWelcomeScreen({ firstName, onComplete }: Props) 
   const [phase, setPhase] = useState<Phase>('enter');
 
   useEffect(() => {
-    const exitTimer = window.setTimeout(() => setPhase('exit'), 3200);
-    const doneTimer = window.setTimeout(() => onComplete(), 7000);
+    const exitTimer = window.setTimeout(() => setPhase('exit'), 2800);
+    const doneTimer = window.setTimeout(() => onComplete(), 6800);
 
     return () => {
       window.clearTimeout(exitTimer);
@@ -41,6 +41,7 @@ export default function DramaticWelcomeScreen({ firstName, onComplete }: Props) 
     >
       <FallingPetals />
 
+      {/* Ambient glow orbs */}
       <Box
         sx={{
           position: 'absolute',
@@ -69,6 +70,75 @@ export default function DramaticWelcomeScreen({ firstName, onComplete }: Props) 
           pointerEvents: 'none',
         }}
       />
+      <Box
+        sx={{
+          position: 'absolute',
+          top: '30%',
+          right: '-5%',
+          width: 200,
+          height: 200,
+          borderRadius: '50%',
+          opacity: 0.22,
+          filter: 'blur(12px)',
+          background: 'radial-gradient(circle, rgba(255,182,193,0.9) 0%, rgba(255,182,193,0) 70%)',
+          pointerEvents: 'none',
+        }}
+      />
+      <Box
+        sx={{
+          position: 'absolute',
+          bottom: '20%',
+          left: '-4%',
+          width: 180,
+          height: 180,
+          borderRadius: '50%',
+          opacity: 0.20,
+          filter: 'blur(10px)',
+          background: 'radial-gradient(circle, rgba(201,168,76,0.9) 0%, rgba(201,168,76,0) 70%)',
+          pointerEvents: 'none',
+        }}
+      />
+
+      {/* Floating sparkle stars */}
+      {([
+        { left: '8%',  top: '12%', size: '1.3rem', dur: 2.8, delay: 0 },
+        { left: '88%', top: '8%',  size: '1.0rem', dur: 3.2, delay: 0.7 },
+        { left: '5%',  top: '55%', size: '0.9rem', dur: 2.5, delay: 1.2 },
+        { left: '93%', top: '50%', size: '1.1rem', dur: 3.6, delay: 0.3 },
+        { left: '15%', top: '82%', size: '1.0rem', dur: 2.9, delay: 1.8 },
+        { left: '80%', top: '78%', size: '1.2rem', dur: 3.1, delay: 0.9 },
+        { left: '50%', top: '6%',  size: '0.8rem', dur: 2.4, delay: 0.5 },
+        { left: '45%', top: '90%', size: '1.0rem', dur: 3.4, delay: 1.4 },
+        { left: '30%', top: '18%', size: '0.75rem',dur: 2.6, delay: 2.0 },
+        { left: '70%', top: '22%', size: '0.85rem',dur: 3.0, delay: 0.2 },
+      ] as const).map((s, i) => (
+        <motion.div
+          key={i}
+          style={{
+            position: 'absolute',
+            left: s.left,
+            top: s.top,
+            fontSize: s.size,
+            color: i % 3 === 0 ? '#C9A84C' : i % 3 === 1 ? '#E8C97A' : '#D4AF6A',
+            pointerEvents: 'none',
+            zIndex: 0,
+            userSelect: 'none',
+          }}
+          animate={{
+            opacity: [0, 1, 0],
+            scale: [0.4, 1.3, 0.4],
+            y: [0, -10, 0],
+          }}
+          transition={{
+            duration: s.dur,
+            delay: s.delay,
+            repeat: Infinity,
+            ease: 'easeInOut',
+          }}
+        >
+          {i % 4 === 0 ? '✦' : i % 4 === 1 ? '★' : i % 4 === 2 ? '✿' : '✦'}
+        </motion.div>
+      ))}
 
       <motion.div
         initial={{ opacity: 0, y: 22, scale: 0.97, filter: 'blur(6px)' }}
@@ -98,6 +168,11 @@ export default function DramaticWelcomeScreen({ firstName, onComplete }: Props) 
             animate={{ opacity: [0.72, 1, 0.72], scale: [1, 1.02, 1] }}
             transition={{ duration: 2.4, repeat: Infinity, ease: 'easeInOut' }}
           >
+            {/* Decorative rings header */}
+            <Typography sx={{ fontSize: { xs: '1.6rem', sm: '2rem' }, lineHeight: 1, mb: 1, userSelect: 'none' }}>
+              💍&nbsp;✦&nbsp;💍
+            </Typography>
+
             <Typography
               sx={{
                 fontFamily: "'Frank Ruhl Libre', serif",
@@ -109,9 +184,16 @@ export default function DramaticWelcomeScreen({ firstName, onComplete }: Props) 
             >
               שלום {firstName}
             </Typography>
+
+            {/* Golden divider */}
+            <Box sx={{ display: 'flex', alignItems: 'center', mx: { xs: 2, sm: 6 }, my: 1.2 }}>
+              <Box sx={{ flex: 1, height: '1px', background: 'linear-gradient(to right, transparent, rgba(201,168,76,0.7))' }} />
+              <Typography sx={{ mx: 1.2, color: '#C9A84C', fontSize: '1rem', lineHeight: 1, userSelect: 'none' }}>✦</Typography>
+              <Box sx={{ flex: 1, height: '1px', background: 'linear-gradient(to left, transparent, rgba(201,168,76,0.7))' }} />
+            </Box>
+
             <Typography
               sx={{
-                mt: 1.4,
                 fontFamily: "'Frank Ruhl Libre', serif",
                 fontSize: { xs: '1.2rem', sm: '1.65rem' },
                 fontWeight: 600,
@@ -121,8 +203,21 @@ export default function DramaticWelcomeScreen({ firstName, onComplete }: Props) 
             >
               ברוך/ה הבא/ה לחתונה שלנו
             </Typography>
-            <Typography sx={{ mt: 1.6, color: '#A08070', fontSize: { xs: '0.98rem', sm: '1.06rem' }, fontWeight: 500 }}>
+
+            {/* Golden divider */}
+            <Box sx={{ display: 'flex', alignItems: 'center', mx: { xs: 2, sm: 6 }, my: 1.2 }}>
+              <Box sx={{ flex: 1, height: '1px', background: 'linear-gradient(to right, transparent, rgba(201,168,76,0.5))' }} />
+              <Typography sx={{ mx: 1.2, color: '#C9A84C', fontSize: '0.85rem', lineHeight: 1, userSelect: 'none' }}>✿</Typography>
+              <Box sx={{ flex: 1, height: '1px', background: 'linear-gradient(to left, transparent, rgba(201,168,76,0.5))' }} />
+            </Box>
+
+            <Typography sx={{ mt: 0.4, color: '#A08070', fontSize: { xs: '0.98rem', sm: '1.06rem' }, fontWeight: 500 }}>
               אנחנו שמחים שהצטרפתם אלינו לרגעים היפים של הערב
+            </Typography>
+
+            {/* Decorative hearts footer */}
+            <Typography sx={{ mt: 1.4, fontSize: { xs: '1.1rem', sm: '1.3rem' }, lineHeight: 1, userSelect: 'none' }}>
+              🌸&nbsp;♡&nbsp;🌸
             </Typography>
           </motion.div>
         </Box>

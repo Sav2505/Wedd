@@ -384,8 +384,8 @@ export default function GuestListEditor() {
   }, []);
 
   const handleSendInvitation = useCallback((guest: ManagedGuest) => {
-    window.open(buildWhatsAppInviteUrl(guest, `${info?.bride_name} & ${info?.groom_name}`, info?.wedding_date), '_blank', 'noopener,noreferrer');
-  }, []);
+    window.open(buildWhatsAppInviteUrl(guest, `${info?.bride_name ?? "שחר"} & ${info?.groom_name ?? "שחר"}`, info?.wedding_date ?? "יום שני, 7 בדצמבר 2026"), '_blank', 'noopener,noreferrer');
+  }, [info]);
 
   function openCreateGroup() {
     setEditingGroup(null);

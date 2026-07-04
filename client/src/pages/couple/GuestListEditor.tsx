@@ -553,11 +553,11 @@ export default function GuestListEditor() {
           </Stack>
         </Stack>
 
-        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} mt={1}>
+        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} mt={2}>
           <TextField
             select
             size="small"
-            label="סינון סטטוס הגעה"
+            label="סינון לפי סטטוס הגעה"
             value={rsvpFilter}
             onChange={(e) => setRsvpFilter(e.target.value as RsvpFilter)}
             sx={{ minWidth: { xs: '100%', sm: 180 } }}
@@ -569,7 +569,7 @@ export default function GuestListEditor() {
           </TextField>
         </Stack>
 
-        <Stack direction="row" spacing={1} mt={1} ml={1} flexWrap="wrap">
+        <Stack direction="row" spacing={0} mt={1.2} gap={1} ml={1} mb={0.2} flexWrap="wrap">
           <Chip size="small" label={`${processedGuests.length} מוצגים`} sx={{ bgcolor: 'rgba(201,168,76,0.18)', color: '#8A6A2B' }} />
           {processedGuests.length !== allGuests.length && (
             <Chip size="small" label={`מתוך ${allGuests.length} אורחים`} sx={{ bgcolor: 'rgba(201,168,76,0.11)', color: '#9A7833' }} />
@@ -586,9 +586,7 @@ export default function GuestListEditor() {
           <Chip
             size="small"
             label={
-              rsvpListLoadingStatus === 'COMING'
-                ? <CircularProgress size={14} thickness={5} sx={{ color: '#2E8B57 !important' }} />
-                : `${rsvpSummary.coming} אישרו`
+              `${rsvpSummary.coming} אישרו`
             }
             sx={{ bgcolor: 'rgba(46,139,87,0.14)', color: '#2E8B57', border: '1px solid rgba(46,139,87,0.3)', fontWeight: 700 }}
             onClick={() => handleOpenRsvpList('COMING')}
@@ -597,9 +595,7 @@ export default function GuestListEditor() {
           <Chip
             size="small"
             label={
-              rsvpListLoadingStatus === 'NOT_COMING'
-                ? <CircularProgress size={14} thickness={5} sx={{ color: '#B9473D !important' }} />
-                : `${rsvpSummary.notComing} סירבו`
+              `${rsvpSummary.notComing} סירבו`
             }
             sx={{ bgcolor: 'rgba(185,71,61,0.13)', color: '#B9473D', border: '1px solid rgba(185,71,61,0.3)', fontWeight: 700 }}
             onClick={() => handleOpenRsvpList('NOT_COMING')}
@@ -607,10 +603,7 @@ export default function GuestListEditor() {
           />
           <Chip
             size="small"
-            label={
-              rsvpListLoadingStatus === 'PENDING'
-                ? <CircularProgress size={14} thickness={5} sx={{ color: '#6C6C6C !important' }} />
-                : `${rsvpSummary.pending} טרם אישרו`
+            label={`${rsvpSummary.pending} טרם אישרו`
             }
             sx={{ bgcolor: 'rgba(140,140,140,0.14)', color: '#6C6C6C', border: '1px solid rgba(140,140,140,0.3)', fontWeight: 700 }}
             onClick={() => handleOpenRsvpList('PENDING')}

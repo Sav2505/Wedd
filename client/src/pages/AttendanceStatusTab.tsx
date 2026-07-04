@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
   Box,
@@ -18,7 +18,6 @@ import PeopleAltIcon from '@mui/icons-material/PeopleAlt';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import CelebrationIcon from '@mui/icons-material/Celebration';
 import SentimentSatisfiedAltIcon from '@mui/icons-material/SentimentSatisfiedAlt';
-import MarkEmailReadIcon from '@mui/icons-material/MarkEmailRead';
 import { motion } from 'framer-motion';
 import { useAppDispatch, useAppSelector } from '../store';
 import { setGuest } from '../store/authSlice';
@@ -118,6 +117,20 @@ export default function AttendanceStatusTab({ onSaved }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [saveOutcome, setSaveOutcome] = useState<SaveOutcome>(null);
+  const autoNavRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (saveOutcome === 'COMING') {
+      autoNavRef.current = setTimeout(() => {
+        setSaveOutcome(null);
+        setSuccess('שמחנו לקבל את אישור ההגעה שלכם ❤️');
+        onSaved?.('COMING');
+      }, 3000);
+    }
+    return () => {
+      if (autoNavRef.current) clearTimeout(autoNavRef.current);
+    };
+  }, [saveOutcome]);
 
   useEffect(() => {
     getMyRsvp()
@@ -283,25 +296,9 @@ export default function AttendanceStatusTab({ onSaved }: Props) {
 
               <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.1} justifyContent="center" sx={{ mt: 2.2 }}>
                 {isComing ? (
-                  <Button
-                    variant="contained"
-                    startIcon={<MarkEmailReadIcon />}
-                    onClick={() => {
-                      setSaveOutcome(null);
-                      setSuccess('שמחנו לקבל את אישור ההגעה שלכם ❤️');
-                      onSaved?.('COMING');
-                    }}
-                    sx={{
-                      borderRadius: 999,
-                      px: 3,
-                      py: 1,
-                      fontWeight: 800,
-                      background: 'linear-gradient(135deg, #41A86A, #2E8B57)',
-                      '&:hover': { background: 'linear-gradient(135deg, #4CB777, #359E63)' },
-                    }}
-                  >
-                    איזה כיף, תודה!
-                  </Button>
+                  <Typography variant="caption" sx={{ color: '#8A6A2B', opacity: 0.8 }}>
+                    עוברים לדף הראשי בעוד רגע...
+                  </Typography>
                 ) : (
                   <Button
                     variant="contained"
@@ -358,7 +355,7 @@ export default function AttendanceStatusTab({ onSaved }: Props) {
           <Stack spacing={1.2}>
             <StatusCard
               selected={status === 'COMING'}
-              title="מגיעים ❤️"
+              title="אגיע ❤️"
               subtitle="איזה כיף, מחכים לכם"
               icon={<DoneAllIcon sx={{ fontSize: 19 }} />}
               onClick={() => setStatus('COMING')}
@@ -366,7 +363,7 @@ export default function AttendanceStatusTab({ onSaved }: Props) {
             />
             <StatusCard
               selected={status === 'NOT_COMING'}
-              title="לא מגיעים 😔"
+              title="לא אגיע 😔"
               subtitle="נתגעגע ונשמח לחגוג איתכם בהמשך"
               icon={<HeartBrokenIcon sx={{ fontSize: 19 }} />}
               onClick={() => setStatus('NOT_COMING')}
@@ -374,7 +371,7 @@ export default function AttendanceStatusTab({ onSaved }: Props) {
             />
             <StatusCard
               selected={status === 'PENDING'}
-              title="עדיין מתלבטים"
+              title="עדיין לא יודע/ת להגיד.. ⏳"
               subtitle="אפשר לשמור גם החלטה זמנית"
               icon={<HourglassTopIcon sx={{ fontSize: 19 }} />}
               onClick={() => setStatus('PENDING')}
@@ -386,7 +383,7 @@ export default function AttendanceStatusTab({ onSaved }: Props) {
         {status === 'COMING' && (
           <GoldCard delay={0.08} sx={{ mb: 2.2 }}>
             <Typography sx={{ color: '#2C1810', fontWeight: 700, mb: 1.1 }}>
-              כמה אנשים יגיעו?
+             כמה אנשים יגיעו איתך? (כולל אתכם)
             </Typography>
 
             <Box

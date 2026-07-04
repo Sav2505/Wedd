@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, memo } from 'react';
 import { useAppSelector } from '../../store';
 import {
   Alert,
@@ -13,6 +13,7 @@ import {
   IconButton,
   InputAdornment,
   MenuItem,
+  Skeleton,
   Snackbar,
   Stack,
   TextField,
@@ -34,9 +35,9 @@ import RemoveCircleOutlineIcon from '@mui/icons-material/RemoveCircleOutline';
 import PeopleAltIcon from '@mui/icons-material/PeopleAlt';
 import LinkIcon from '@mui/icons-material/Link';
 import WhatsAppIcon from '@mui/icons-material/WhatsApp';
-import { AnimatePresence, motion } from 'framer-motion';
+import CloseIcon from '@mui/icons-material/Close';
 import { buildGuestUrl } from '../../utils/guestUrl';
-import { getEffectivePartySize, getEffectivePlusCount } from '../../utils/effectiveAttendance';
+import { getEffectivePartySize, getEffectivePlusCount, getInvitedPartySize } from '../../utils/effectiveAttendance';
 
 import { GuestGroup, ManagedGuest, RsvpStatus } from '../../types/domain';
 import {
@@ -71,13 +72,6 @@ const EMPTY_FORM: GuestForm = {
 };
 
 type RsvpFilter = 'ALL' | RsvpStatus;
-type SortBy = 'name' | 'rsvp' | 'updated';
-
-const RSVP_ORDER: Record<RsvpStatus, number> = {
-  COMING: 0,
-  PENDING: 1,
-  NOT_COMING: 2,
-};
 
 function getRsvpMeta(status: RsvpStatus, numberOfGuests: number): {
   label: string;
@@ -87,7 +81,7 @@ function getRsvpMeta(status: RsvpStatus, numberOfGuests: number): {
 } {
   if (status === 'COMING') {
     return {
-      label: `מגיע${numberOfGuests > 1 ? ` (+${numberOfGuests -1})` : ''}`,
+      label: `מגיע${numberOfGuests > 1 ? ` (+${numberOfGuests - 1})` : ''}`,
       bg: 'rgba(46,139,87,0.13)',
       color: '#2E8B57',
       border: 'rgba(46,139,87,0.35)',
@@ -145,16 +139,30 @@ function buildWhatsAppInviteUrl(guest: ManagedGuest): string {
   return `https://wa.me/${normalizedPhone}?text=${encodeURIComponent(message)}`;
 }
 
+function computeGroupChipLabel(items: ManagedGuest[]) {
+  const total = items.reduce((s, g) => s + getEffectivePartySize(g), 0);
+  if (total > items.length) {
+    return (
+      <Box component="span" sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', fontSize: '0.65rem', lineHeight: 1.5, padding: '2px 4px' }}>
+        <span>{items.length} רשומים</span>
+        <span>{total} בסה"כ</span>
+      </Box>
+    );
+  }
+  return `${items.length} אורחים`;
+}
+
+const UNGROUPED_KEY = '__ungrouped__';
+
 export default function GuestListEditor() {
   const currentUser = useAppSelector((state) => state.auth.guest);
   const [groups, setGroups] = useState<GuestGroup[]>([]);
-  const [guests, setGuests] = useState<ManagedGuest[]>([]);
+  const [allGuests, setAllGuests] = useState<ManagedGuest[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const [search, setSearch] = useState('');
   const [rsvpFilter, setRsvpFilter] = useState<RsvpFilter>('ALL');
-  const [sortBy, setSortBy] = useState<SortBy>('name');
 
   const [groupDialogOpen, setGroupDialogOpen] = useState(false);
   const [editingGroup, setEditingGroup] = useState<GuestGroup | null>(null);
@@ -166,13 +174,23 @@ export default function GuestListEditor() {
 
   const [deleteGuestId, setDeleteGuestId] = useState<string | null>(null);
   const [deleteGroupId, setDeleteGroupId] = useState<string | null>(null);
+  const [rsvpListStatus, setRsvpListStatus] = useState<RsvpStatus | null>(null);
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
+  const [rsvpListLoadingStatus, setRsvpListLoadingStatus] = useState<RsvpStatus | null>(null);
+  const [searchLoading, setSearchLoading] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  async function reload() {
-    const [nextGroups, nextGuests] = await Promise.all([getGuestGroups(), getGuests(search)]);
+  const searchRef = useRef(search);
+  useEffect(() => { searchRef.current = search; }, [search]);
+
+  const currentUserRef = useRef(currentUser);
+  useEffect(() => { currentUserRef.current = currentUser; }, [currentUser]);
+
+  const reload = useCallback(async () => {
+    const [nextGroups, nextGuests] = await Promise.all([getGuestGroups(), getGuests()]);
     setGroups(nextGroups);
-    setGuests(nextGuests);
-  }
+    setAllGuests(nextGuests);
+  }, []);
 
   useEffect(() => {
     reload()
@@ -181,62 +199,55 @@ export default function GuestListEditor() {
   }, []);
 
   useEffect(() => {
-    const t = setTimeout(() => {
-      getGuests(search)
-        .then(setGuests)
-        .catch(() => setError('שגיאה בסינון רשימת אורחים'));
-    }, 250);
-
+    if (!search.trim()) {
+      setSearchLoading(false);
+      return;
+    }
+    setSearchLoading(true);
+    const t = setTimeout(() => setSearchLoading(false), 1500);
     return () => clearTimeout(t);
   }, [search]);
 
   useEffect(() => {
     const interval = setInterval(() => {
-      reload().catch(() => {
-        // Keep UI quiet for background sync errors
-      });
-    }, 3000);
-
+      reload().catch(() => { });
+    }, 120000);
     return () => clearInterval(interval);
-  }, [search]);
+  }, [reload]);
 
   const processedGuests = useMemo(() => {
-    const filtered = rsvpFilter === 'ALL'
-      ? guests
-      : guests.filter((guest) => guest.rsvp_status === rsvpFilter);
-
-    const sorted = [...filtered].sort((a, b) => {
-      if (sortBy === 'rsvp') {
-        const byStatus = RSVP_ORDER[a.rsvp_status] - RSVP_ORDER[b.rsvp_status];
-        if (byStatus !== 0) return byStatus;
-      }
-
-      if (sortBy === 'updated') {
-        const aTs = a.rsvp_updated_at ? new Date(a.rsvp_updated_at).getTime() : 0;
-        const bTs = b.rsvp_updated_at ? new Date(b.rsvp_updated_at).getTime() : 0;
-        if (aTs !== bTs) return bTs - aTs;
-      }
-
-      return a.full_name.localeCompare(b.full_name, 'he');
-    });
-
-    return sorted;
-  }, [guests, rsvpFilter, sortBy]);
+    const q = search.trim().toLowerCase();
+    const bySearch = q
+      ? allGuests.filter((g) =>
+        g.full_name.toLowerCase().includes(q) ||
+        g.phone.includes(q) ||
+        (g.group_name ?? '').toLowerCase().includes(q)
+      )
+      : allGuests;
+    return rsvpFilter === 'ALL'
+      ? bySearch
+      : bySearch.filter((g) => g.rsvp_status === rsvpFilter);
+  }, [allGuests, search, rsvpFilter]);
 
   const rsvpSummary = useMemo(() => {
-    const coming = guests
-      .filter((g) => g.rsvp_status === 'COMING')
-      .reduce((sum, g) => sum + getEffectivePartySize(g), 0);
-    const notComing = guests
-      .filter((g) => g.rsvp_status === 'NOT_COMING')
-      .reduce((sum, g) => sum + getEffectivePartySize(g), 0);
-    const pending = guests
-      .filter((g) => g.rsvp_status === 'PENDING')
-      .reduce((sum, g) => sum + getEffectivePartySize(g), 0);
-    const effectiveTotalPeople = guests.reduce((sum, g) => sum + getEffectivePartySize(g), 0);
-
+    let coming = 0, notComing = 0, pending = 0, effectiveTotalPeople = 0;
+    for (const g of allGuests) {
+      if (g.rsvp_status === 'COMING') {
+        const size = getEffectivePartySize(g);
+        coming += size;
+        effectiveTotalPeople += size;
+      } else if (g.rsvp_status === 'NOT_COMING') {
+        const size = getInvitedPartySize(g);
+        notComing += size;
+        effectiveTotalPeople += size;
+      } else {
+        const size = getInvitedPartySize(g);
+        pending += size;
+        effectiveTotalPeople += size;
+      }
+    }
     return { coming, notComing, pending, effectiveTotalPeople };
-  }, [guests]);
+  }, [allGuests]);
 
   const grouped = useMemo(() => {
     const map = new Map<string, ManagedGuest[]>();
@@ -257,44 +268,67 @@ export default function GuestListEditor() {
     return { map, ungrouped };
   }, [groups, processedGuests]);
 
-  function openCreateGroup() {
-    setEditingGroup(null);
-    setGroupName('');
-    setGroupDialogOpen(true);
-  }
+  const groupedRef = useRef(grouped);
+  useEffect(() => { groupedRef.current = grouped; }, [grouped]);
 
-  function openEditGroup(group: GuestGroup) {
-    setEditingGroup(group);
-    setGroupName(group.name);
-    setGroupDialogOpen(true);
-  }
-
-  async function handleSaveGroup() {
-    if (!groupName.trim()) return;
-    setSaving(true);
-    try {
-      if (editingGroup) {
-        await updateGuestGroup(editingGroup.id, groupName.trim());
-      } else {
-        await createGuestGroup(groupName.trim());
-      }
-      setGroupDialogOpen(false);
-      await reload();
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'שגיאה בשמירת קבוצה');
-    } finally {
-      setSaving(false);
+  useEffect(() => {
+    const isFiltering = search.trim() !== '' || rsvpFilter !== 'ALL';
+    if (!isFiltering) {
+      // לא מסננים - לא נוגעים ב-expandedGroups בכלל, כדי לא לסגור קבוצות
+      // שהמשתמש פתח ידנית (כולל אחרי reload מ-save).
+      return;
     }
+    const current = groupedRef.current;
+    const next = new Set<string>();
+    for (const [groupId, items] of current.map.entries()) {
+      if (items.length > 0) next.add(groupId);
+    }
+    if (current.ungrouped.length > 0) next.add(UNGROUPED_KEY);
+    setExpandedGroups(next);
+  }, [search, rsvpFilter]);
+
+  const toggleGroup = useCallback((id: string) => {
+    setExpandedGroups((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+
+  const rsvpListGuests = useMemo(() => {
+    if (!rsvpListStatus) return [];
+    return allGuests
+      .filter((g) => g.rsvp_status === rsvpListStatus)
+      .sort((a, b) => a.full_name.localeCompare(b.full_name, 'he'));
+  }, [allGuests, rsvpListStatus]);
+
+  const rsvpListPeopleCount = useMemo(() => {
+    return rsvpListGuests.reduce((sum, g) => {
+      const size = rsvpListStatus === 'COMING' ? getEffectivePartySize(g) : getInvitedPartySize(g);
+      return sum + size;
+    }, 0);
+  }, [rsvpListGuests, rsvpListStatus]);
+
+  const rsvpListTitle = useMemo(() => {
+    if (rsvpListStatus === 'COMING') return 'רשימת מאשרים';
+    if (rsvpListStatus === 'NOT_COMING') return 'רשימת מסרבים';
+    if (rsvpListStatus === 'PENDING') return 'רשימת טרם אישרו';
+    return '';
+  }, [rsvpListStatus]);
+
+  function handleOpenRsvpList(status: RsvpStatus) {
+    if (rsvpListLoadingStatus) return;
+    setRsvpListLoadingStatus(status);
+
+    // Small defer lets the loading state render before heavy dialog content mounts.
+    window.setTimeout(() => {
+      setRsvpListStatus(status);
+      setRsvpListLoadingStatus(null);
+    }, 140);
   }
 
-  function openCreateGuest(groupId: string | null = null) {
-    setEditingGuest(null);
-    const defaultSide: SideOption = currentUser?.side === 'חתן' ? 'חתן' : currentUser?.side === 'כלה' ? 'כלה' : null;
-    setGuestForm({ ...EMPTY_FORM, guest_group_id: groupId, side: defaultSide });
-    setGuestDialogOpen(true);
-  }
-
-  function openEditGuest(guest: ManagedGuest) {
+  const handleEditGuestOpen = useCallback((guest: ManagedGuest) => {
     setEditingGuest(guest);
     setGuestForm({
       first_name: guest.first_name ?? '',
@@ -305,7 +339,55 @@ export default function GuestListEditor() {
       plus_count: guest.plus_count ?? 0,
     });
     setGuestDialogOpen(true);
+  }, []);
+
+  const handleDeleteGuestOpen = useCallback((id: string) => {
+    setDeleteGuestId(id);
+  }, []);
+
+  const handleSendInvitation = useCallback((guest: ManagedGuest) => {
+    window.open(buildWhatsAppInviteUrl(guest), '_blank', 'noopener,noreferrer');
+  }, []);
+
+  function openCreateGroup() {
+    setEditingGroup(null);
+    setGroupName('');
+    setGroupDialogOpen(true);
   }
+
+  const openEditGroup = useCallback((group: GuestGroup) => {
+    setEditingGroup(group);
+    setGroupName(group.name);
+    setGroupDialogOpen(true);
+  }, []);
+
+  async function handleSaveGroup() {
+    if (!groupName.trim()) return;
+    setSaving(true);
+    try {
+      if (editingGroup) {
+        await updateGuestGroup(editingGroup.id, groupName.trim());
+      } else {
+        await createGuestGroup(groupName.trim());
+      }
+      await reload();
+      setGroupDialogOpen(false);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'שגיאה בשמירת קבוצה');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  const openCreateGuest = useCallback((groupId: string | null = null) => {
+    setEditingGuest(null);
+    const cu = currentUserRef.current;
+    const defaultSide: SideOption = cu?.side === 'חתן' ? 'חתן' : cu?.side === 'כלה' ? 'כלה' : null;
+    setGuestForm({ ...EMPTY_FORM, guest_group_id: groupId, side: defaultSide });
+    setGuestDialogOpen(true);
+  }, []);
+
+  // 1) שמירת מודל אורח פתוח בזמן השמירה + spinner בתוך כפתור השמירה
 
   async function handleSaveGuest() {
     if (!guestForm.first_name.trim() || !guestForm.last_name.trim() || !guestForm.phone.trim()) return;
@@ -331,8 +413,8 @@ export default function GuestListEditor() {
           plus_count: guestForm.plus_count,
         });
       }
-      setGuestDialogOpen(false);
       await reload();
+      setGuestDialogOpen(false);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'שגיאה בשמירת אורח');
     } finally {
@@ -353,6 +435,10 @@ export default function GuestListEditor() {
       setSaving(false);
     }
   }
+
+  const openDeleteGroup = useCallback((id: string) => {
+    setDeleteGroupId(id);
+  }, []);
 
   async function handleDeleteGroup() {
     if (!deleteGroupId) return;
@@ -409,6 +495,13 @@ export default function GuestListEditor() {
                   <SearchIcon sx={{ color: '#A08070' }} />
                 </InputAdornment>
               ),
+              endAdornment: search ? (
+                <InputAdornment position="end">
+                  <IconButton size="small" onClick={() => setSearch('')} edge="end" sx={{ color: '#A08070', '&:hover': { color: '#2C1810' } }}>
+                    <CloseIcon sx={{ fontSize: 16 }} />
+                  </IconButton>
+                </InputAdornment>
+              ) : undefined,
             }}
           />
 
@@ -447,7 +540,7 @@ export default function GuestListEditor() {
           <TextField
             select
             size="small"
-            label="סינון RSVP"
+            label="סינון סטטוס הגעה"
             value={rsvpFilter}
             onChange={(e) => setRsvpFilter(e.target.value as RsvpFilter)}
             sx={{ minWidth: { xs: '100%', sm: 180 } }}
@@ -457,28 +550,15 @@ export default function GuestListEditor() {
             <MenuItem value="COMING">מגיעים</MenuItem>
             <MenuItem value="NOT_COMING">לא מגיעים</MenuItem>
           </TextField>
-
-          <TextField
-            select
-            size="small"
-            label="מיון"
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value as SortBy)}
-            sx={{ minWidth: { xs: '100%', sm: 180 } }}
-          >
-            <MenuItem value="name">לפי שם</MenuItem>
-            <MenuItem value="rsvp">לפי סטטוס RSVP</MenuItem>
-            <MenuItem value="updated">לפי עדכון אחרון</MenuItem>
-          </TextField>
         </Stack>
 
         <Stack direction="row" spacing={1} mt={1} ml={1} flexWrap="wrap">
           <Chip size="small" label={`${processedGuests.length} מוצגים`} sx={{ bgcolor: 'rgba(201,168,76,0.18)', color: '#8A6A2B' }} />
-          {processedGuests.length !== guests.length && (
-            <Chip size="small" label={`מתוך ${guests.length} אורחים`} sx={{ bgcolor: 'rgba(201,168,76,0.11)', color: '#9A7833' }} />
+          {processedGuests.length !== allGuests.length && (
+            <Chip size="small" label={`מתוך ${allGuests.length} אורחים`} sx={{ bgcolor: 'rgba(201,168,76,0.11)', color: '#9A7833' }} />
           )}
           <Chip size="small" label={`${groups.length} קבוצות`} sx={{ bgcolor: 'rgba(154,120,51,0.13)', color: '#8A6A2B' }} />
-          {rsvpSummary.effectiveTotalPeople > guests.length && (
+          {rsvpSummary.effectiveTotalPeople > allGuests.length && (
             <Chip
               size="small"
               icon={<PeopleAltIcon sx={{ fontSize: 14 }} />}
@@ -488,192 +568,97 @@ export default function GuestListEditor() {
           )}
           <Chip
             size="small"
-            label={`${rsvpSummary.coming} אישרו`}
+            label={
+              rsvpListLoadingStatus === 'COMING'
+                ? <CircularProgress size={14} thickness={5} sx={{ color: '#2E8B57 !important' }} />
+                : `${rsvpSummary.coming} אישרו`
+            }
             sx={{ bgcolor: 'rgba(46,139,87,0.14)', color: '#2E8B57', border: '1px solid rgba(46,139,87,0.3)', fontWeight: 700 }}
+            onClick={() => handleOpenRsvpList('COMING')}
+            clickable
           />
           <Chip
             size="small"
-            label={`${rsvpSummary.notComing} סירבו`}
+            label={
+              rsvpListLoadingStatus === 'NOT_COMING'
+                ? <CircularProgress size={14} thickness={5} sx={{ color: '#B9473D !important' }} />
+                : `${rsvpSummary.notComing} סירבו`
+            }
             sx={{ bgcolor: 'rgba(185,71,61,0.13)', color: '#B9473D', border: '1px solid rgba(185,71,61,0.3)', fontWeight: 700 }}
+            onClick={() => handleOpenRsvpList('NOT_COMING')}
+            clickable
           />
           <Chip
             size="small"
-            label={`${rsvpSummary.pending} טרם אישרו`}
+            label={
+              rsvpListLoadingStatus === 'PENDING'
+                ? <CircularProgress size={14} thickness={5} sx={{ color: '#6C6C6C !important' }} />
+                : `${rsvpSummary.pending} טרם אישרו`
+            }
             sx={{ bgcolor: 'rgba(140,140,140,0.14)', color: '#6C6C6C', border: '1px solid rgba(140,140,140,0.3)', fontWeight: 700 }}
+            onClick={() => handleOpenRsvpList('PENDING')}
+            clickable
           />
         </Stack>
       </Box>
 
-      <AnimatePresence>
-        {groups.map((group) => {
-          const items = grouped.map.get(group.id) ?? [];
-          return (
-            <motion.div
-              key={group.id}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.22, ease: 'easeOut' }}
+      {searchLoading ? (
+        <Box sx={{ mt: 1 }}>
+          {[...Array(5)].map((_, i) => (
+            <Box
+              key={i}
+              sx={{
+                mb: 1.5,
+                borderRadius: '14px',
+                overflow: 'hidden',
+                border: '1px solid rgba(201,168,76,0.2)',
+              }}
             >
-              <Accordion
-                disableGutters
-                sx={{
-                  mb: 1.5,
-                  borderRadius: '14px !important',
-                  overflow: 'hidden',
-                  border: '1px solid rgba(201,168,76,0.26)',
-                  boxShadow: '0 4px 14px rgba(154,120,51,0.08)',
-                }}
-              >
-                <AccordionSummary
-                  expandIcon={<ExpandMoreIcon sx={{ fontSize: 18, color: '#9A7833' }} />}
-                  sx={{ '& .MuiAccordionSummary-content': { minWidth: 0, my: '10px' } }}
-                >
-                  <Box sx={{ display: 'flex', alignItems: 'center', width: '100%', minWidth: 0, gap: 0.75 }}>
-                    {/* Info */}
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flex: '1 1 auto', minWidth: 0 }}>
-                      <Typography sx={{
-                        color: '#2C1810', fontWeight: 700,
-                        fontSize: { xs: '0.8rem', sm: '0.9rem' },
-                        width: { xs: 110, sm: 170 },
-                        flexShrink: 0,
-                        wordBreak: 'break-word', lineHeight: 1.3,
-                      }}>{group.name}</Typography>
-                      <Chip
-                        size="small"
-                        label={(() => {
-                          const total = items.reduce((s, g) => s + getEffectivePartySize(g), 0);
-                          if (total > items.length) {
-                            return (
-                              <Box component="span" sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', fontSize: '0.65rem', lineHeight: 1.5, padding: "2px 4px" }}>
-                                <span>{items.length} רשומים</span>
-                                <span>{total} בסה"כ</span>
-                              </Box>
-                            );
-                          }
-                          return `${items.length} אורחים`;
-                        })()}
-                        sx={{ bgcolor: 'rgba(201,168,76,0.14)', color: '#9A7833', height: 'auto', flexShrink: 0, '& .MuiChip-label': { py: 0.25, px: 0.75 } }}
-                      />
-                    </Box>
-                    {/* Actions */}
-                    <Box sx={{ display: 'flex', alignItems: 'center', flexShrink: 0, width: 118, justifyContent: 'flex-end' }}>
-                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        <Tooltip title="עריכת שם קבוצה">
-                          <IconButton size="small" onClick={(e) => { e.stopPropagation(); openEditGroup(group); }}>
-                            <EditIcon sx={{ fontSize: 14, color: '#A08070' }} />
-                          </IconButton>
-                        </Tooltip>
-                        <Tooltip title="מחיקת קבוצה">
-                          <IconButton size="small" onClick={(e) => { e.stopPropagation(); setDeleteGroupId(group.id); }}>
-                            <DeleteOutlineIcon sx={{ fontSize: 14, color: '#C04040' }} />
-                          </IconButton>
-                        </Tooltip>
-                      </Box>
-                      <Box sx={{ width: '1px', height: 18, bgcolor: 'rgba(201,168,76,0.35)', mx: 1, flexShrink: 0 }} />
-                      <Button
-                        size="small"
-                        onClick={(e) => { e.stopPropagation(); openCreateGuest(group.id); }}
-                        sx={{ color: '#9A7833', fontWeight: 700, fontSize: '0.7rem', minWidth: 0, px: 0.5, lineHeight: 1 }}
-                      >
-                        + אורח
-                      </Button>
-                    </Box>
-                  </Box>
-                </AccordionSummary>
-                <AccordionDetails sx={{ pt: 0.5 }}>
-                  {items.length === 0 ? (
-                    <Typography variant="body2" sx={{ color: '#A08070', fontStyle: 'italic', py: 0.75 }}>
-                      אין אורחים בקבוצה הזו עדיין.
-                    </Typography>
-                  ) : (
-                    <Stack spacing={0.8}>
-                      {items.map((guest) => (
-                        <GuestRow
-                          key={guest.id}
-                          guest={guest}
-                          onEdit={() => openEditGuest(guest)}
-                          onDelete={() => setDeleteGuestId(guest.id)}
-                          onSendInvitation={() => window.open(buildWhatsAppInviteUrl(guest), '_blank', 'noopener,noreferrer')}
-                        />
-                      ))}
-                    </Stack>
-                  )}
-                </AccordionDetails>
-              </Accordion>
-            </motion.div>
-          );
-        })}
-      </AnimatePresence>
-
-      <Accordion
-        disableGutters
-        sx={{
-          mb: 1.25,
-          borderRadius: '14px !important',
-          overflow: 'hidden',
-          border: '1px solid rgba(201,168,76,0.2)',
-          boxShadow: '0 3px 10px rgba(154,120,51,0.06)',
-        }}
-      >
-        <AccordionSummary
-          expandIcon={<ExpandMoreIcon sx={{ fontSize: 18, color: '#9A7833' }} />}
-          sx={{ '& .MuiAccordionSummary-content': { minWidth: 0, my: '10px' } }}
-        >
-          <Box sx={{ display: 'flex', alignItems: 'center', width: '100%', minWidth: 0, gap: 0.75 }}>
-            {/* Info */}
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flex: '1 1 auto', minWidth: 0 }}>
-              <Typography sx={{
-                color: '#2C1810', fontWeight: 700,
-                fontSize: { xs: '0.8rem', sm: '0.9rem' },
-                width: { xs: 110, sm: 170 },
-                flexShrink: 0,
-                wordBreak: 'break-word', lineHeight: 1.3,
-              }}>ללא קבוצה</Typography>
-              <Chip
-                size="small"
-                label={(() => {
-                  const total = grouped.ungrouped.reduce((s, g) => s + getEffectivePartySize(g), 0);
-                  if (total > grouped.ungrouped.length) {
-                    return (
-                      <Box component="span" sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', fontSize: '0.63rem', lineHeight: 1.3 }}>
-                        <span>{grouped.ungrouped.length} רשומים</span>
-                        <span>{total} בסה"כ</span>
-                      </Box>
-                    );
-                  }
-                  return `${grouped.ungrouped.length} אורחים`;
-                })()}
-                sx={{ bgcolor: 'rgba(201,168,76,0.10)', color: '#9A7833', height: 'auto', flexShrink: 0, '& .MuiChip-label': { py: 0.25, px: 0.75 } }}
-              />
+              <Box sx={{ px: 1.5, py: 1.2, display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                <Skeleton variant="text" width={120 + i * 18} height={22} sx={{ borderRadius: 1 }} />
+                <Skeleton variant="rounded" width={60} height={20} sx={{ borderRadius: 10 }} />
+              </Box>
             </Box>
-            {/* Actions */}
-            <Box sx={{ display: 'flex', alignItems: 'center', flexShrink: 0, width: 118, justifyContent: 'flex-end' }}>
-              <Button size="small" onClick={(e) => { e.stopPropagation(); openCreateGuest(null); }} sx={{ color: '#9A7833', fontWeight: 700, fontSize: '0.7rem', minWidth: 0, px: 0.5, lineHeight: 1 }}>
-                + אורח
-              </Button>
-            </Box>
+          ))}
+          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2, gap: 1, alignItems: 'center' }}>
+            <CircularProgress size={16} thickness={4} sx={{ color: '#C9A84C' }} />
+            <Typography variant="caption" sx={{ color: '#A08070' }}>מחפש אורחים...</Typography>
           </Box>
-        </AccordionSummary>
-        <AccordionDetails sx={{ pt: 0.5 }}>
-          {grouped.ungrouped.length === 0 ? (
-            <Typography variant="body2" sx={{ color: '#A08070', fontStyle: 'italic', py: 0.75 }}>
-              כל האורחים משויכים לקבוצות.
-            </Typography>
-          ) : (
-            <Stack spacing={0.8}>
-              {grouped.ungrouped.map((guest) => (
-                <GuestRow
-                  key={guest.id}
-                  guest={guest}
-                  onEdit={() => openEditGuest(guest)}
-                  onDelete={() => setDeleteGuestId(guest.id)}
-                  onSendInvitation={() => window.open(buildWhatsAppInviteUrl(guest), '_blank', 'noopener,noreferrer')}
-                />
-              ))}
-            </Stack>
-          )}
-        </AccordionDetails>
-      </Accordion>
+        </Box>
+      ) : (
+        <>
+          {groups.map((group) => (
+            <GroupAccordionItem
+              key={group.id}
+              groupId={group.id}
+              name={group.name}
+              items={grouped.map.get(group.id) ?? []}
+              expanded={expandedGroups.has(group.id)}
+              onToggle={toggleGroup}
+              group={group}
+              onEditGroup={openEditGroup}
+              onDeleteGroup={openDeleteGroup}
+              onCreateGuest={openCreateGuest}
+              onEditGuest={handleEditGuestOpen}
+              onDeleteGuest={handleDeleteGuestOpen}
+              onSendInvitation={handleSendInvitation}
+            />
+          ))}
+
+          <GroupAccordionItem
+            groupId={UNGROUPED_KEY}
+            name="ללא קבוצה"
+            items={grouped.ungrouped}
+            expanded={expandedGroups.has(UNGROUPED_KEY)}
+            onToggle={toggleGroup}
+            isUngrouped
+            onCreateGuest={openCreateGuest}
+            onEditGuest={handleEditGuestOpen}
+            onDeleteGuest={handleDeleteGuestOpen}
+            onSendInvitation={handleSendInvitation}
+          />
+        </>
+      )}
 
       <Dialog open={groupDialogOpen} onClose={() => setGroupDialogOpen(false)} maxWidth="xs" fullWidth>
         <DialogTitle sx={{ fontFamily: "'Frank Ruhl Libre', serif", fontWeight: 700 }}>
@@ -692,8 +677,8 @@ export default function GuestListEditor() {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setGroupDialogOpen(false)} sx={{ color: '#A08070' }}>ביטול</Button>
-          <Button onClick={handleSaveGroup} disabled={saving || !groupName.trim()} sx={{ color: '#9A7833', fontWeight: 700 }}>
-            שמירה
+          <Button onClick={handleSaveGroup} disabled={saving || !groupName.trim()} sx={{ color: '#9A7833', fontWeight: 700, minWidth: 84 }}>
+            {saving ? <CircularProgress size={18} thickness={5} sx={{ color: '#9A7833' }} /> : 'שמירה'}
           </Button>
         </DialogActions>
       </Dialog>
@@ -767,7 +752,7 @@ export default function GuestListEditor() {
             }}>
               <PeopleAltIcon sx={{ color: '#9A7833', fontSize: 20 }} />
               <Typography variant="body2" sx={{ color: '#6B5240', flex: 1, fontWeight: 600 }}>
-                מגיע עם אורחים נוספים:
+                צפוי להגיע עם אורחים נוספים:
               </Typography>
               <IconButton
                 size="small"
@@ -798,9 +783,9 @@ export default function GuestListEditor() {
           <Button
             onClick={handleSaveGuest}
             disabled={saving || !guestForm.first_name.trim() || !guestForm.last_name.trim() || !guestForm.phone.trim()}
-            sx={{ color: '#9A7833', fontWeight: 700 }}
+            sx={{ color: '#9A7833', fontWeight: 700, minWidth: 84 }}
           >
-            שמירה
+            {saving ? <CircularProgress size={18} thickness={5} sx={{ color: '#9A7833' }} /> : 'שמירה'}
           </Button>
         </DialogActions>
       </Dialog>
@@ -831,20 +816,220 @@ export default function GuestListEditor() {
           <Button onClick={handleDeleteGroup} sx={{ color: '#C04040', fontWeight: 700 }} disabled={saving}>מחק</Button>
         </DialogActions>
       </Dialog>
+
+      <Dialog open={rsvpListStatus !== null} onClose={() => setRsvpListStatus(null)} maxWidth="sm" fullWidth>
+        <DialogTitle sx={{ fontFamily: "'Frank Ruhl Libre', serif", fontWeight: 700 }}>
+          {rsvpListTitle}
+        </DialogTitle>
+        <DialogContent>
+          <Typography variant="caption" sx={{ color: '#8A7565', display: 'block', mb: 1.1 }}>
+            {rsvpListGuests.length} אורחים · {rsvpListPeopleCount} אנשים
+          </Typography>
+
+          {rsvpListGuests.length === 0 ? (
+            <Typography variant="body2" sx={{ color: '#A08070', fontStyle: 'italic' }}>
+              אין אורחים להצגה כרגע.
+            </Typography>
+          ) : (
+            <Stack spacing={0.8}>
+              {rsvpListGuests.map((guest) => {
+                const plus = getEffectivePlusCount(guest);
+                return (
+                  <Box
+                    key={guest.id}
+                    sx={{
+                      border: '1px solid rgba(201,168,76,0.2)',
+                      borderRadius: 2,
+                      px: 1.2,
+                      py: 0.85,
+                      background: 'rgba(255,255,255,0.72)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: 1,
+                    }}
+                  >
+                    <Box>
+                      <Typography sx={{ color: '#2C1810', fontWeight: 700, lineHeight: 1.2 }}>
+                        {guest.first_name} {guest.last_name}
+                      </Typography>
+                      <Typography variant="caption" sx={{ color: '#8E7460' }}>
+                        {guest.phone}
+                      </Typography>
+                    </Box>
+
+                    {plus > 0 ? (
+                      <Chip
+                        size="small"
+                        label={`+${plus}`}
+                        sx={{
+                          height: 22,
+                          fontSize: '0.7rem',
+                          bgcolor: 'rgba(154,120,51,0.15)',
+                          color: '#7A5C1E',
+                          fontWeight: 700,
+                        }}
+                      />
+                    ) : null}
+                  </Box>
+                );
+              })}
+            </Stack>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setRsvpListStatus(null)} sx={{ color: '#A08070' }}>
+            סגירה
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }
 
-function GuestRow({
+/**
+ * Memoized so that toggling one accordion (which updates `expandedGroups` in the
+ * parent) doesn't force every other group's guest rows / chip labels to recompute.
+ * `items` comes from the already-memoized `grouped` map, so its reference stays
+ * stable across re-renders that don't actually change membership.
+ */
+const GroupAccordionItem = memo(function GroupAccordionItem({
+  groupId,
+  name,
+  items,
+  expanded,
+  onToggle,
+  isUngrouped,
+  group,
+  onEditGroup,
+  onDeleteGroup,
+  onCreateGuest,
+  onEditGuest,
+  onDeleteGuest,
+  onSendInvitation,
+}: {
+  groupId: string;
+  name: string;
+  items: ManagedGuest[];
+  expanded: boolean;
+  onToggle: (id: string) => void;
+  isUngrouped?: boolean;
+  group?: GuestGroup;
+  onEditGroup?: (group: GuestGroup) => void;
+  onDeleteGroup?: (id: string) => void;
+  onCreateGuest: (groupId: string | null) => void;
+  onEditGuest: (guest: ManagedGuest) => void;
+  onDeleteGuest: (id: string) => void;
+  onSendInvitation: (guest: ManagedGuest) => void;
+}) {
+  const handleChange = useCallback(() => onToggle(groupId), [onToggle, groupId]);
+  const handleCreateGuest = useCallback(
+    (e: React.MouseEvent) => { e.stopPropagation(); onCreateGuest(isUngrouped ? null : groupId); },
+    [onCreateGuest, isUngrouped, groupId]
+  );
+
+  return (
+    <Accordion
+      disableGutters
+      expanded={expanded}
+      onChange={handleChange}
+      TransitionProps={{ timeout: 180 }}
+      sx={{
+        mb: isUngrouped ? 1.25 : 1.5,
+        borderRadius: '14px !important',
+        overflow: 'hidden',
+        border: `1px solid rgba(201,168,76,${isUngrouped ? 0.2 : 0.26})`,
+        boxShadow: `0 ${isUngrouped ? 3 : 4}px ${isUngrouped ? 10 : 14}px rgba(154,120,51,${isUngrouped ? 0.06 : 0.08})`,
+      }}
+    >
+      <AccordionSummary
+        expandIcon={<ExpandMoreIcon sx={{ fontSize: 18, color: '#9A7833' }} />}
+        sx={{ '& .MuiAccordionSummary-content': { minWidth: 0, my: '10px' } }}
+      >
+        <Box sx={{ display: 'flex', alignItems: 'center', width: '100%', minWidth: 0, gap: 0.75 }}>
+          {/* Info */}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flex: '1 1 auto', minWidth: 0 }}>
+            <Typography sx={{
+              color: '#2C1810', fontWeight: 700,
+              fontSize: { xs: '0.8rem', sm: '0.9rem' },
+              width: { xs: 110, sm: 170 },
+              flexShrink: 0,
+              wordBreak: 'break-word', lineHeight: 1.3,
+            }}>{name}</Typography>
+            <Chip
+              size="small"
+              label={computeGroupChipLabel(items)}
+              sx={{
+                bgcolor: `rgba(201,168,76,${isUngrouped ? 0.10 : 0.14})`,
+                color: '#9A7833',
+                height: 'auto',
+                flexShrink: 0,
+                '& .MuiChip-label': { py: 0.25, px: 0.75 },
+              }}
+            />
+          </Box>
+          {/* Actions */}
+          <Box sx={{ display: 'flex', alignItems: 'center', flexShrink: 0, width: 118, justifyContent: 'flex-end' }}>
+            {!isUngrouped && group && (
+              <>
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                  <Tooltip title="עריכת שם קבוצה">
+                    <IconButton size="small" onClick={(e) => { e.stopPropagation(); onEditGroup?.(group); }}>
+                      <EditIcon sx={{ fontSize: 14, color: '#A08070' }} />
+                    </IconButton>
+                  </Tooltip>
+                  <Tooltip title="מחיקת קבוצה">
+                    <IconButton size="small" onClick={(e) => { e.stopPropagation(); onDeleteGroup?.(groupId); }}>
+                      <DeleteOutlineIcon sx={{ fontSize: 14, color: '#C04040' }} />
+                    </IconButton>
+                  </Tooltip>
+                </Box>
+                <Box sx={{ width: '1px', height: 18, bgcolor: 'rgba(201,168,76,0.35)', mx: 1, flexShrink: 0 }} />
+              </>
+            )}
+            <Button
+              size="small"
+              onClick={handleCreateGuest}
+              sx={{ color: '#9A7833', fontWeight: 700, fontSize: '0.7rem', minWidth: 0, px: 0.5, lineHeight: 1 }}
+            >
+              + אורח
+            </Button>
+          </Box>
+        </Box>
+      </AccordionSummary>
+      <AccordionDetails sx={{ pt: 0.5 }}>
+        {items.length === 0 ? (
+          <Typography variant="body2" sx={{ color: '#A08070', fontStyle: 'italic', py: 0.75 }}>
+            {isUngrouped ? 'כל האורחים משויכים לקבוצות.' : 'אין אורחים בקבוצה הזו עדיין.'}
+          </Typography>
+        ) : (
+          <Stack spacing={0.8}>
+            {items.map((guest) => (
+              <GuestRow
+                key={guest.id}
+                guest={guest}
+                onEdit={onEditGuest}
+                onDelete={onDeleteGuest}
+                onSendInvitation={onSendInvitation}
+              />
+            ))}
+          </Stack>
+        )}
+      </AccordionDetails>
+    </Accordion>
+  );
+});
+
+const GuestRow = memo(function GuestRow({
   guest,
   onEdit,
   onDelete,
   onSendInvitation,
 }: {
   guest: ManagedGuest;
-  onEdit: () => void;
-  onDelete: () => void;
-  onSendInvitation: () => void;
+  onEdit: (guest: ManagedGuest) => void;
+  onDelete: (id: string) => void;
+  onSendInvitation: (guest: ManagedGuest) => void;
 }) {
   const [copied, setCopied] = useState(false);
 
@@ -876,10 +1061,10 @@ function GuestRow({
           <Stack direction="row" spacing={0.8} alignItems="center" flexWrap="wrap" mt={0.35}>
             <Typography variant="caption" sx={{ color: '#8E7460' }}>{guest.phone}</Typography>
             {guest.side && <Chip size="small" label={guest.side} sx={{ height: 20, fontSize: '0.68rem' }} />}
-            {guest.rsvp_status === 'PENDING' && getEffectivePlusCount(guest) > 0 && (
+            {(guest.rsvp_status === 'PENDING' || guest.rsvp_status === 'NOT_COMING') && getInvitedPartySize(guest) - 1 > 0 && (
               <Chip
                 size="small"
-                label={`+${getEffectivePlusCount(guest)}`}
+                label={`+${getInvitedPartySize(guest) - 1}`}
                 sx={{ height: 20, fontSize: '0.68rem', bgcolor: 'rgba(154,120,51,0.15)', color: '#7A5C1E', fontWeight: 700 }}
               />
             )}
@@ -917,7 +1102,7 @@ function GuestRow({
               size="small"
               variant="outlined"
               startIcon={<WhatsAppIcon sx={{ fontSize: 16 }} />}
-              onClick={onSendInvitation}
+              onClick={() => onSendInvitation(guest)}
               sx={{
                 minWidth: 0,
                 px: 1,
@@ -941,12 +1126,12 @@ function GuestRow({
             </IconButton>
           </Tooltip>
           <Tooltip title="עריכה">
-            <IconButton size="small" onClick={onEdit}>
+            <IconButton size="small" onClick={() => onEdit(guest)}>
               <EditIcon sx={{ fontSize: 17, color: '#A08070' }} />
             </IconButton>
           </Tooltip>
           <Tooltip title="מחיקה">
-            <IconButton size="small" onClick={onDelete}>
+            <IconButton size="small" onClick={() => onDelete(guest.id)}>
               <DeleteOutlineIcon sx={{ fontSize: 17, color: '#C04040' }} />
             </IconButton>
           </Tooltip>
@@ -962,4 +1147,4 @@ function GuestRow({
       />
     </Box>
   );
-}
+});

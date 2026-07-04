@@ -1,6 +1,13 @@
 import { pool } from '../db/pool';
 import { createError } from '../middleware/errorHandler';
-import { GuestGroup, ManagedGuest } from '../types';
+import { GuestGroup, ManagedGuest, RsvpStatus } from '../types';
+
+export interface GuestRsvpDetails {
+  id: string;
+  rsvp_status: RsvpStatus;
+  number_of_guests: number;
+  rsvp_updated_at: string | null;
+}
 
 function compactName(firstName: string, lastName: string): string {
   return `${firstName.trim()} ${lastName.trim()}`.replace(/\s+/g, ' ').trim();
@@ -87,6 +94,9 @@ export async function listGuests(query?: string): Promise<ManagedGuest[]> {
       g.guest_group_id,
       gg.name AS group_name,
       g.plus_count,
+      g.rsvp_status,
+      g.number_of_guests,
+      g.rsvp_updated_at,
       g.created_at
     FROM guests g
     LEFT JOIN guest_groups gg ON gg.id = g.guest_group_id
@@ -131,6 +141,9 @@ export async function createGuest(payload: {
       guest_group_id,
       NULL::text AS group_name,
       plus_count,
+        rsvp_status,
+        number_of_guests,
+        rsvp_updated_at,
       created_at
   `, [fullName, firstName, lastName, phone, payload.side ?? null, payload.guest_group_id ?? null, plusCount]);
 
@@ -194,6 +207,9 @@ export async function updateGuest(id: string, payload: {
       guest_group_id,
       NULL::text AS group_name,
       plus_count,
+        rsvp_status,
+        number_of_guests,
+        rsvp_updated_at,
       created_at
   `, [firstName, lastName, fullName, phone, side ?? null, groupId ?? null, plusCount ?? null, id]);
 
@@ -208,6 +224,53 @@ export async function deleteGuest(id: string): Promise<void> {
   );
 
   if (!rowCount) throw createError('אורח לא נמצא', 404);
+}
+
+export async function getGuestRsvpById(guestId: string): Promise<GuestRsvpDetails> {
+  const { rows } = await pool.query<GuestRsvpDetails>(
+    `
+      SELECT
+        id,
+        rsvp_status,
+        number_of_guests,
+        rsvp_updated_at
+      FROM guests
+      WHERE id = $1
+        AND role = 'guest'
+      LIMIT 1
+    `,
+    [guestId],
+  );
+
+  if (rows.length === 0) throw createError('אורח לא נמצא', 404);
+  return rows[0];
+}
+
+export async function updateGuestRsvpById(
+  guestId: string,
+  payload: {
+    rsvp_status: RsvpStatus;
+    number_of_guests: number;
+  },
+): Promise<GuestRsvpDetails> {
+  const normalizedCount = payload.rsvp_status === 'COMING' ? payload.number_of_guests : 1;
+
+  const { rows } = await pool.query<GuestRsvpDetails>(
+    `
+      UPDATE guests
+      SET
+        rsvp_status = $1,
+        number_of_guests = $2,
+        rsvp_updated_at = NOW()
+      WHERE id = $3
+        AND role = 'guest'
+      RETURNING id, rsvp_status, number_of_guests, rsvp_updated_at
+    `,
+    [payload.rsvp_status, normalizedCount, guestId],
+  );
+
+  if (rows.length === 0) throw createError('אורח לא נמצא', 404);
+  return rows[0];
 }
 
 function splitFirst(fullName: string): string {

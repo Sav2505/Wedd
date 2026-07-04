@@ -33,10 +33,12 @@ import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import RemoveCircleOutlineIcon from '@mui/icons-material/RemoveCircleOutline';
 import PeopleAltIcon from '@mui/icons-material/PeopleAlt';
 import LinkIcon from '@mui/icons-material/Link';
+import WhatsAppIcon from '@mui/icons-material/WhatsApp';
 import { AnimatePresence, motion } from 'framer-motion';
 import { buildGuestUrl } from '../../utils/guestUrl';
+import { getEffectivePartySize, getEffectivePlusCount } from '../../utils/effectiveAttendance';
 
-import { GuestGroup, ManagedGuest } from '../../types/domain';
+import { GuestGroup, ManagedGuest, RsvpStatus } from '../../types/domain';
 import {
   createGuest,
   createGuestGroup,
@@ -68,6 +70,81 @@ const EMPTY_FORM: GuestForm = {
   plus_count: 0,
 };
 
+type RsvpFilter = 'ALL' | RsvpStatus;
+type SortBy = 'name' | 'rsvp' | 'updated';
+
+const RSVP_ORDER: Record<RsvpStatus, number> = {
+  COMING: 0,
+  PENDING: 1,
+  NOT_COMING: 2,
+};
+
+function getRsvpMeta(status: RsvpStatus, numberOfGuests: number): {
+  label: string;
+  bg: string;
+  color: string;
+  border: string;
+} {
+  if (status === 'COMING') {
+    return {
+      label: `מגיע${numberOfGuests > 1 ? ` (+${numberOfGuests -1})` : ''}`,
+      bg: 'rgba(46,139,87,0.13)',
+      color: '#2E8B57',
+      border: 'rgba(46,139,87,0.35)',
+    };
+  }
+
+  if (status === 'NOT_COMING') {
+    return {
+      label: 'לא מגיע',
+      bg: 'rgba(185,71,61,0.12)',
+      color: '#B9473D',
+      border: 'rgba(185,71,61,0.35)',
+    };
+  }
+
+  return {
+    label: 'ממתין',
+    bg: 'rgba(140,140,140,0.14)',
+    color: '#6C6C6C',
+    border: 'rgba(140,140,140,0.35)',
+  };
+}
+
+function formatRsvpUpdatedAt(ts: string | null): string | null {
+  if (!ts) return null;
+  const d = new Date(ts);
+  if (Number.isNaN(d.getTime())) return null;
+  return d.toLocaleString('he-IL', {
+    day: '2-digit',
+    month: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
+function buildWhatsAppInviteUrl(guest: ManagedGuest): string {
+  const digits = guest.phone.replace(/\D/g, '');
+  const normalizedPhone = digits.startsWith('0') ? `972${digits.slice(1)}` : digits;
+  const personalLink = buildGuestUrl(`${guest.first_name} ${guest.last_name}`, digits.slice(-4));
+
+  const message = [
+    `Hi ${guest.first_name}! ❤️`,
+    '',
+    'We are excited to invite you to our wedding!',
+    '',
+    'To view all wedding details and confirm your attendance please enter through your personal invitation:',
+    '',
+    personalLink,
+    '',
+    "We can't wait to celebrate with you!",
+    '',
+    '❤️',
+  ].join('\n');
+
+  return `https://wa.me/${normalizedPhone}?text=${encodeURIComponent(message)}`;
+}
+
 export default function GuestListEditor() {
   const currentUser = useAppSelector((state) => state.auth.guest);
   const [groups, setGroups] = useState<GuestGroup[]>([]);
@@ -76,6 +153,8 @@ export default function GuestListEditor() {
   const [error, setError] = useState<string | null>(null);
 
   const [search, setSearch] = useState('');
+  const [rsvpFilter, setRsvpFilter] = useState<RsvpFilter>('ALL');
+  const [sortBy, setSortBy] = useState<SortBy>('name');
 
   const [groupDialogOpen, setGroupDialogOpen] = useState(false);
   const [editingGroup, setEditingGroup] = useState<GuestGroup | null>(null);
@@ -111,6 +190,54 @@ export default function GuestListEditor() {
     return () => clearTimeout(t);
   }, [search]);
 
+  useEffect(() => {
+    const interval = setInterval(() => {
+      reload().catch(() => {
+        // Keep UI quiet for background sync errors
+      });
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [search]);
+
+  const processedGuests = useMemo(() => {
+    const filtered = rsvpFilter === 'ALL'
+      ? guests
+      : guests.filter((guest) => guest.rsvp_status === rsvpFilter);
+
+    const sorted = [...filtered].sort((a, b) => {
+      if (sortBy === 'rsvp') {
+        const byStatus = RSVP_ORDER[a.rsvp_status] - RSVP_ORDER[b.rsvp_status];
+        if (byStatus !== 0) return byStatus;
+      }
+
+      if (sortBy === 'updated') {
+        const aTs = a.rsvp_updated_at ? new Date(a.rsvp_updated_at).getTime() : 0;
+        const bTs = b.rsvp_updated_at ? new Date(b.rsvp_updated_at).getTime() : 0;
+        if (aTs !== bTs) return bTs - aTs;
+      }
+
+      return a.full_name.localeCompare(b.full_name, 'he');
+    });
+
+    return sorted;
+  }, [guests, rsvpFilter, sortBy]);
+
+  const rsvpSummary = useMemo(() => {
+    const coming = guests
+      .filter((g) => g.rsvp_status === 'COMING')
+      .reduce((sum, g) => sum + getEffectivePartySize(g), 0);
+    const notComing = guests
+      .filter((g) => g.rsvp_status === 'NOT_COMING')
+      .reduce((sum, g) => sum + getEffectivePartySize(g), 0);
+    const pending = guests
+      .filter((g) => g.rsvp_status === 'PENDING')
+      .reduce((sum, g) => sum + getEffectivePartySize(g), 0);
+    const effectiveTotalPeople = guests.reduce((sum, g) => sum + getEffectivePartySize(g), 0);
+
+    return { coming, notComing, pending, effectiveTotalPeople };
+  }, [guests]);
+
   const grouped = useMemo(() => {
     const map = new Map<string, ManagedGuest[]>();
 
@@ -119,7 +246,7 @@ export default function GuestListEditor() {
     }
 
     const ungrouped: ManagedGuest[] = [];
-    for (const guest of guests) {
+    for (const guest of processedGuests) {
       if (guest.guest_group_id && map.has(guest.guest_group_id)) {
         map.get(guest.guest_group_id)!.push(guest);
       } else {
@@ -128,7 +255,7 @@ export default function GuestListEditor() {
     }
 
     return { map, ungrouped };
-  }, [groups, guests]);
+  }, [groups, processedGuests]);
 
   function openCreateGroup() {
     setEditingGroup(null);
@@ -316,20 +443,64 @@ export default function GuestListEditor() {
           </Stack>
         </Stack>
 
+        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} mt={1}>
+          <TextField
+            select
+            size="small"
+            label="סינון RSVP"
+            value={rsvpFilter}
+            onChange={(e) => setRsvpFilter(e.target.value as RsvpFilter)}
+            sx={{ minWidth: { xs: '100%', sm: 180 } }}
+          >
+            <MenuItem value="ALL">הכל</MenuItem>
+            <MenuItem value="PENDING">ממתינים</MenuItem>
+            <MenuItem value="COMING">מגיעים</MenuItem>
+            <MenuItem value="NOT_COMING">לא מגיעים</MenuItem>
+          </TextField>
+
+          <TextField
+            select
+            size="small"
+            label="מיון"
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value as SortBy)}
+            sx={{ minWidth: { xs: '100%', sm: 180 } }}
+          >
+            <MenuItem value="name">לפי שם</MenuItem>
+            <MenuItem value="rsvp">לפי סטטוס RSVP</MenuItem>
+            <MenuItem value="updated">לפי עדכון אחרון</MenuItem>
+          </TextField>
+        </Stack>
+
         <Stack direction="row" spacing={1} mt={1} ml={1} flexWrap="wrap">
-          <Chip size="small" label={`${guests.length} אורחים רשומים`} sx={{ bgcolor: 'rgba(201,168,76,0.18)', color: '#8A6A2B' }} />
+          <Chip size="small" label={`${processedGuests.length} מוצגים`} sx={{ bgcolor: 'rgba(201,168,76,0.18)', color: '#8A6A2B' }} />
+          {processedGuests.length !== guests.length && (
+            <Chip size="small" label={`מתוך ${guests.length} אורחים`} sx={{ bgcolor: 'rgba(201,168,76,0.11)', color: '#9A7833' }} />
+          )}
           <Chip size="small" label={`${groups.length} קבוצות`} sx={{ bgcolor: 'rgba(154,120,51,0.13)', color: '#8A6A2B' }} />
-          {(() => {
-            const total = guests.reduce((s, g) => s + 1 + (g.plus_count ?? 0), 0);
-            return total > guests.length ? (
-              <Chip
-                size="small"
-                icon={<PeopleAltIcon sx={{ fontSize: 14 }} />}
-                label={`סה"כ ${total} אנשים`}
-                sx={{ bgcolor: 'rgba(79,134,247,0.13)', color: '#3A6AD4', fontWeight: 700 }}
-              />
-            ) : null;
-          })()}
+          {rsvpSummary.effectiveTotalPeople > guests.length && (
+            <Chip
+              size="small"
+              icon={<PeopleAltIcon sx={{ fontSize: 14 }} />}
+              label={`סה"כ ${rsvpSummary.effectiveTotalPeople} אנשים`}
+              sx={{ bgcolor: 'rgba(79,134,247,0.13)', color: '#3A6AD4', fontWeight: 700 }}
+            />
+          )}
+          <Chip
+            size="small"
+            label={`${rsvpSummary.coming} אישרו`}
+            sx={{ bgcolor: 'rgba(46,139,87,0.14)', color: '#2E8B57', border: '1px solid rgba(46,139,87,0.3)', fontWeight: 700 }}
+          />
+          <Chip
+            size="small"
+            label={`${rsvpSummary.notComing} סירבו`}
+            sx={{ bgcolor: 'rgba(185,71,61,0.13)', color: '#B9473D', border: '1px solid rgba(185,71,61,0.3)', fontWeight: 700 }}
+          />
+          <Chip
+            size="small"
+            label={`${rsvpSummary.pending} טרם אישרו`}
+            sx={{ bgcolor: 'rgba(140,140,140,0.14)', color: '#6C6C6C', border: '1px solid rgba(140,140,140,0.3)', fontWeight: 700 }}
+          />
         </Stack>
       </Box>
 
@@ -370,7 +541,7 @@ export default function GuestListEditor() {
                       <Chip
                         size="small"
                         label={(() => {
-                          const total = items.reduce((s, g) => s + 1 + (g.plus_count ?? 0), 0);
+                          const total = items.reduce((s, g) => s + getEffectivePartySize(g), 0);
                           if (total > items.length) {
                             return (
                               <Box component="span" sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', fontSize: '0.65rem', lineHeight: 1.5, padding: "2px 4px" }}>
@@ -422,6 +593,7 @@ export default function GuestListEditor() {
                           guest={guest}
                           onEdit={() => openEditGuest(guest)}
                           onDelete={() => setDeleteGuestId(guest.id)}
+                          onSendInvitation={() => window.open(buildWhatsAppInviteUrl(guest), '_blank', 'noopener,noreferrer')}
                         />
                       ))}
                     </Stack>
@@ -460,7 +632,7 @@ export default function GuestListEditor() {
               <Chip
                 size="small"
                 label={(() => {
-                  const total = grouped.ungrouped.reduce((s, g) => s + 1 + (g.plus_count ?? 0), 0);
+                  const total = grouped.ungrouped.reduce((s, g) => s + getEffectivePartySize(g), 0);
                   if (total > grouped.ungrouped.length) {
                     return (
                       <Box component="span" sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', fontSize: '0.63rem', lineHeight: 1.3 }}>
@@ -495,6 +667,7 @@ export default function GuestListEditor() {
                   guest={guest}
                   onEdit={() => openEditGuest(guest)}
                   onDelete={() => setDeleteGuestId(guest.id)}
+                  onSendInvitation={() => window.open(buildWhatsAppInviteUrl(guest), '_blank', 'noopener,noreferrer')}
                 />
               ))}
             </Stack>
@@ -666,10 +839,12 @@ function GuestRow({
   guest,
   onEdit,
   onDelete,
+  onSendInvitation,
 }: {
   guest: ManagedGuest;
   onEdit: () => void;
   onDelete: () => void;
+  onSendInvitation: () => void;
 }) {
   const [copied, setCopied] = useState(false);
 
@@ -679,6 +854,9 @@ function GuestRow({
     const url = buildGuestUrl(`${guest.first_name} ${guest.last_name}`, last4);
     navigator.clipboard.writeText(url).then(() => setCopied(true));
   }
+
+  const rsvpMeta = getRsvpMeta(guest.rsvp_status, guest.number_of_guests);
+  const updatedAtLabel = formatRsvpUpdatedAt(guest.rsvp_updated_at);
 
   return (
     <Box
@@ -698,13 +876,25 @@ function GuestRow({
           <Stack direction="row" spacing={0.8} alignItems="center" flexWrap="wrap" mt={0.35}>
             <Typography variant="caption" sx={{ color: '#8E7460' }}>{guest.phone}</Typography>
             {guest.side && <Chip size="small" label={guest.side} sx={{ height: 20, fontSize: '0.68rem' }} />}
-            {guest.plus_count > 0 && (
+            {guest.rsvp_status === 'PENDING' && getEffectivePlusCount(guest) > 0 && (
               <Chip
                 size="small"
-                label={`+${guest.plus_count}`}
+                label={`+${getEffectivePlusCount(guest)}`}
                 sx={{ height: 20, fontSize: '0.68rem', bgcolor: 'rgba(154,120,51,0.15)', color: '#7A5C1E', fontWeight: 700 }}
               />
             )}
+            <Chip
+              size="small"
+              label={rsvpMeta.label}
+              sx={{
+                height: 20,
+                fontSize: '0.68rem',
+                bgcolor: rsvpMeta.bg,
+                color: rsvpMeta.color,
+                border: `1px solid ${rsvpMeta.border}`,
+                fontWeight: 800,
+              }}
+            />
             {guest.table_number && (
               <Chip
                 size="small"
@@ -713,10 +903,38 @@ function GuestRow({
                 sx={{ height: 20, fontSize: '0.68rem' }}
               />
             )}
+            {updatedAtLabel && (
+              <Typography variant="caption" sx={{ color: '#9D8A7A' }}>
+                עודכן: {updatedAtLabel}
+              </Typography>
+            )}
           </Stack>
         </Box>
 
         <Stack direction="row" spacing={0.3}>
+          <Tooltip title="שליחת הזמנה">
+            <Button
+              size="small"
+              variant="outlined"
+              startIcon={<WhatsAppIcon sx={{ fontSize: 16 }} />}
+              onClick={onSendInvitation}
+              sx={{
+                minWidth: 0,
+                px: 1,
+                borderRadius: 2,
+                borderColor: 'rgba(37,211,102,0.55)',
+                color: '#1f9f51',
+                fontWeight: 700,
+                fontSize: '0.67rem',
+                '&:hover': {
+                  borderColor: '#1f9f51',
+                  background: 'rgba(37,211,102,0.08)',
+                },
+              }}
+            >
+              שליחת הזמנה
+            </Button>
+          </Tooltip>
           <Tooltip title="העתק קישור כניסה">
             <IconButton size="small" onClick={handleCopyLink}>
               <LinkIcon sx={{ fontSize: 17, color: copied ? '#4caf50' : '#A08070' }} />

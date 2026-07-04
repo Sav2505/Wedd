@@ -1,6 +1,9 @@
 import { Request, Response, NextFunction } from 'express';
 import { createError } from '../middleware/errorHandler';
 import * as guestsService from '../services/guests.service';
+import { RsvpStatus } from '../types';
+
+const RSVP_MAX_GUESTS = Number(process.env.RSVP_MAX_GUESTS ?? 10);
 
 export async function getGuestGroups(_req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
@@ -106,6 +109,45 @@ export async function deleteGuest(req: Request, res: Response, next: NextFunctio
   try {
     await guestsService.deleteGuest(req.params.id);
     res.json({ success: true, message: 'האורח נמחק' });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function getMyRsvp(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const guestId = (req as Request & { guestId: string }).guestId;
+    const rsvp = await guestsService.getGuestRsvpById(guestId);
+    res.json({ success: true, data: rsvp });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function updateMyRsvp(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const guestId = (req as Request & { guestId: string }).guestId;
+    const payload = req.body as {
+      rsvp_status?: RsvpStatus;
+      number_of_guests?: number;
+    };
+
+    const status = payload.rsvp_status;
+    if (!status || !['PENDING', 'COMING', 'NOT_COMING'].includes(status)) {
+      return next(createError('סטטוס אישור הגעה לא תקין', 400));
+    }
+
+    const count = Number(payload.number_of_guests ?? 1);
+    if (!Number.isInteger(count) || count < 1 || count > RSVP_MAX_GUESTS) {
+      return next(createError(`מספר משתתפים חייב להיות בין 1 ל-${RSVP_MAX_GUESTS}`, 400));
+    }
+
+    const updated = await guestsService.updateGuestRsvpById(guestId, {
+      rsvp_status: status,
+      number_of_guests: count,
+    });
+
+    res.json({ success: true, data: updated });
   } catch (err) {
     next(err);
   }

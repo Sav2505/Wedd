@@ -19,6 +19,7 @@ import TaskSummaryCards from './tasks/TaskSummaryCards';
 import TaskTable from './tasks/TaskTable';
 import TaskDialog from './tasks/TaskDialog';
 import BudgetAnalytics from './tasks/BudgetAnalytics';
+import { getEffectivePartySize } from '../../utils/effectiveAttendance';
 
 // ─── Dialog mode ─────────────────────────────────────────────
 
@@ -58,7 +59,7 @@ export default function TaskManagementPage() {
       ]);
       setTasks(fetchedTasks);
       if (guests.length > 0) {
-        const count = guests.reduce((sum, g) => sum + 1 + (g.plus_count ?? 0), 0);
+        const count = guests.reduce((sum, g) => sum + getEffectivePartySize(g), 0);
         setGuestCount(count);
       }
     } catch (err: unknown) {

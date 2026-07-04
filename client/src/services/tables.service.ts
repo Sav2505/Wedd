@@ -58,8 +58,26 @@ export async function unassignGuest(guestId: string): Promise<void> {
   await api.delete(`/tables/guests/${guestId}`);
 }
 
-export async function getUnassignedGuests(): Promise<{ id: string; full_name: string; side: string | null; plus_count: number }[]> {
-  const { data } = await api.get<ApiResponse<{ id: string; full_name: string; side: string | null; plus_count: number }[]>>('/tables/unassigned');
+export async function getUnassignedGuests(): Promise<Array<{
+  id: string;
+  full_name: string;
+  side: string | null;
+  plus_count: number;
+  rsvp_status?: 'PENDING' | 'COMING' | 'NOT_COMING';
+  number_of_guests?: number;
+  effective_plus_count?: number;
+  effective_party_size?: number;
+}>> {
+  const { data } = await api.get<ApiResponse<Array<{
+    id: string;
+    full_name: string;
+    side: string | null;
+    plus_count: number;
+    rsvp_status?: 'PENDING' | 'COMING' | 'NOT_COMING';
+    number_of_guests?: number;
+    effective_plus_count?: number;
+    effective_party_size?: number;
+  }>>>('/tables/unassigned');
   if (!data.success || !data.data) return [];
   return data.data;
 }

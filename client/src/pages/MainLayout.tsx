@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Box, Tab, Tabs, Typography, IconButton, Tooltip } from '@mui/material';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import PhotoLibraryOutlinedIcon from '@mui/icons-material/PhotoLibraryOutlined';
 import TableBarIcon from '@mui/icons-material/TableBar';
 import FavoriteIcon from '@mui/icons-material/Favorite';
+import HowToRegIcon from '@mui/icons-material/HowToReg';
 import LogoutIcon from '@mui/icons-material/LogoutOutlined';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useAppDispatch, useAppSelector } from '../store';
@@ -12,6 +13,7 @@ import InfoTab    from './InfoTab';
 import PhotosTab  from './PhotosTab';
 import SeatingTab from './SeatingTab';
 import MessageTab from './MessageTab';
+import AttendanceStatusTab from './AttendanceStatusTab';
 
 // ─── Tab config ──────────────────────────────────────────────
 
@@ -20,6 +22,7 @@ const TABS = [
   { label: 'גלריה',         icon: <PhotoLibraryOutlinedIcon sx={{ fontSize: 22 }} />, component: <PhotosTab /> },
   { label: 'הושבה',         icon: <TableBarIcon sx={{ fontSize: 22 }} />,             component: <SeatingTab /> },
   { label: 'מאיתנו אליכם',   icon: <FavoriteIcon sx={{ fontSize: 22 }} />,             component: <MessageTab /> },
+  { label: 'סטטוס הגעה',    icon: <HowToRegIcon sx={{ fontSize: 22 }} />,              component: <AttendanceStatusTab /> },
 ] as const;
 
 // ─── Tab panel ───────────────────────────────────────────────
@@ -49,6 +52,16 @@ export default function MainLayout() {
   const guest    = useAppSelector((s) => s.auth.guest);
   const isCouple = guest?.role === 'couple';
   const [activeTab, setActiveTab] = useState(0);
+
+  useEffect(() => {
+    if (!guest || guest.role !== 'guest' || guest.rsvp_status !== 'PENDING') return;
+
+    const forceRsvpGuestId = sessionStorage.getItem('wedding.forceRsvpGuestId');
+    if (forceRsvpGuestId === guest.id) {
+      setActiveTab(TABS.length - 1);
+      sessionStorage.removeItem('wedding.forceRsvpGuestId');
+    }
+  }, [guest]);
 
   return (
     <Box
@@ -181,7 +194,13 @@ export default function MainLayout() {
             animate="center"
             exit="exit"
           >
-            {TABS[activeTab].component}
+            {activeTab === TABS.length - 1
+              ? <AttendanceStatusTab onSaved={(nextStatus) => {
+                if (nextStatus === 'COMING') {
+                  setActiveTab(0);
+                }
+              }} />
+              : TABS[activeTab].component}
           </motion.div>
         </AnimatePresence>
       </Box>

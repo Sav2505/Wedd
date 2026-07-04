@@ -13,6 +13,7 @@ import { getAllTables } from '../services/tables.service';
 import { getWeddingInfo } from '../services/info.service';
 import { WeddingTableWithGuests } from '../types/domain';
 import FloorPlanCanvas from '../components/FloorPlanCanvas';
+import { getEffectivePartySize } from '../utils/effectiveAttendance';
 
 const STAGE_LABEL_STORAGE_KEY = 'wedding.floorPlan.stageLabel';
 const ENTRANCE_POSITION_STORAGE_KEY = 'wedding.floorPlan.entrancePosition';
@@ -244,7 +245,7 @@ export default function SeatingTab() {
                   מוזמנים בשולחן
                 </Typography>
                 <Typography variant="body2" sx={{ fontWeight: 600, color: '#2C1810' }}>
-                  {dialogTable.guests.length} / {dialogTable.capacity}
+                  {dialogTable.guests.reduce((sum, g) => sum + getEffectivePartySize(g), 0)} / {dialogTable.capacity}
                 </Typography>
               </Box>
 

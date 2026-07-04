@@ -32,6 +32,7 @@ import {
     unassignGuest,
     getUnassignedGuests,
 } from '../../services/tables.service';
+import { getEffectivePartySize, getEffectivePlusCount } from '../../utils/effectiveAttendance';
 
 const STAGE_LABEL_STORAGE_KEY = 'wedding.floorPlan.stageLabel';
 const ENTRANCE_POSITION_STORAGE_KEY = 'wedding.floorPlan.entrancePosition';
@@ -43,6 +44,10 @@ interface UnassignedGuest {
     full_name: string;
     side: string | null;
     plus_count: number;
+    rsvp_status?: 'PENDING' | 'COMING' | 'NOT_COMING';
+    number_of_guests?: number;
+    effective_plus_count?: number;
+    effective_party_size?: number;
 }
 
 // ─── Component ───────────────────────────────────────────────
@@ -310,8 +315,8 @@ export default function SeatingEditor() {
         );
     }
 
-    const totalGuests = tables.reduce((s, t) => s + t.guests.reduce((gs, g) => gs + 1 + (g.plus_count ?? 0), 0), 0);
-    const unassignedCount = unassigned.reduce((s, g) => s + 1 + (g.plus_count ?? 0), 0);
+    const totalGuests = tables.reduce((s, t) => s + t.guests.reduce((gs, g) => gs + getEffectivePartySize(g), 0), 0);
+    const unassignedCount = unassigned.reduce((s, g) => s + getEffectivePartySize(g), 0);
 
     return (
         <Box sx={{ p: { xs: 1.5, sm: 2.5 } }}>
@@ -621,7 +626,7 @@ export default function SeatingEditor() {
                                 )}
                                 <Box>
                                     <Typography variant="body2" sx={{ color: '#A08070', mb: 1, fontWeight: 600 }}>
-                                        מוזמנים ({selectedTable.guests.reduce((s, g) => s + 1 + (g.plus_count ?? 0), 0)}/{selectedTable.capacity})
+                                        מוזמנים ({selectedTable.guests.reduce((s, g) => s + getEffectivePartySize(g), 0)}/{selectedTable.capacity})
                                     </Typography>
 
                                     {selectedTable.guests.length === 0 ? (
@@ -633,7 +638,11 @@ export default function SeatingEditor() {
                                             {selectedTable.guests.map(g => (
                                                 <Chip
                                                     key={g.id}
-                                                    label={g.plus_count > 0 ? `${g.full_name} (+${g.plus_count})` : g.full_name}
+                                                    label={(() => {
+                                                        const plus = getEffectivePlusCount(g);
+                                                        if (getEffectivePartySize(g) === 0) return `${g.full_name} (לא מגיע)`;
+                                                        return plus > 0 ? `${g.full_name} (+${plus})` : g.full_name;
+                                                    })()}
                                                     size="small"
                                                     onDelete={() => handleUnassignGuest(g.id)}
                                                     sx={{
@@ -650,11 +659,15 @@ export default function SeatingEditor() {
                                 </Box>
 
                                 {/* Add guest autocomplete */}
-                                {selectedTable.guests.reduce((s, g) => s + 1 + (g.plus_count ?? 0), 0) < selectedTable.capacity && unassigned.length > 0 && (
+                                {selectedTable.guests.reduce((s, g) => s + getEffectivePartySize(g), 0) < selectedTable.capacity && unassigned.length > 0 && (
                                     <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-start' }}>
                                         <Autocomplete<UnassignedGuest>
                                             options={unassigned}
-                                            getOptionLabel={o => o.plus_count > 0 ? `${o.full_name} (+${o.plus_count})` : o.full_name}
+                                            getOptionLabel={o => {
+                                                const plus = getEffectivePlusCount(o);
+                                                if (getEffectivePartySize(o) === 0) return `${o.full_name} (לא מגיע)`;
+                                                return plus > 0 ? `${o.full_name} (+${plus})` : o.full_name;
+                                            }}
                                             value={guestToAdd}
                                             onChange={(_, v) => setGuestToAdd(v)}
                                             size="small"
@@ -683,7 +696,7 @@ export default function SeatingEditor() {
                                     </Box>
                                 )}
 
-                                {unassigned.length === 0 && selectedTable.guests.reduce((s, g) => s + 1 + (g.plus_count ?? 0), 0) < selectedTable.capacity && (
+                                {unassigned.length === 0 && selectedTable.guests.reduce((s, g) => s + getEffectivePartySize(g), 0) < selectedTable.capacity && (
                                     <Typography variant="caption" sx={{ color: '#B8A898', fontStyle: 'italic' }}>
                                         כל המוזמנים שובצו לשולחן 🎉
                                     </Typography>

@@ -1,5 +1,12 @@
 import api from './api';
-import { ApiResponse, GuestGroup, ManagedGuest } from '../types/domain';
+import { ApiResponse, GuestGroup, ManagedGuest, RsvpStatus } from '../types/domain';
+
+export interface GuestRsvpDetails {
+  id: string;
+  rsvp_status: RsvpStatus;
+  number_of_guests: number;
+  rsvp_updated_at: string | null;
+}
 
 export async function getGuestGroups(): Promise<GuestGroup[]> {
   const { data } = await api.get<ApiResponse<GuestGroup[]>>('/guests/groups');
@@ -62,4 +69,19 @@ export async function updateGuest(
 
 export async function deleteGuest(id: string): Promise<void> {
   await api.delete(`/guests/${id}`);
+}
+
+export async function getMyRsvp(): Promise<GuestRsvpDetails> {
+  const { data } = await api.get<ApiResponse<GuestRsvpDetails>>('/guests/me/rsvp');
+  if (!data.success || !data.data) throw new Error(data.message ?? 'שגיאה בטעינת סטטוס אישור הגעה');
+  return data.data;
+}
+
+export async function updateMyRsvp(payload: {
+  rsvp_status: RsvpStatus;
+  number_of_guests: number;
+}): Promise<GuestRsvpDetails> {
+  const { data } = await api.put<ApiResponse<GuestRsvpDetails>>('/guests/me/rsvp', payload);
+  if (!data.success || !data.data) throw new Error(data.message ?? 'שגיאה בשמירת אישור ההגעה');
+  return data.data;
 }

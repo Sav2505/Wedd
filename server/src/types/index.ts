@@ -1,5 +1,7 @@
 // ─── Domain Types ────────────────────────────────────────────
 
+export type RsvpStatus = 'PENDING' | 'COMING' | 'NOT_COMING';
+
 export interface Guest {
   id: string;
   full_name: string;
@@ -10,6 +12,9 @@ export interface Guest {
   side: 'חתן' | 'כלה' | 'שניהם' | null;
   guest_group_id?: string | null;
   role: 'guest' | 'couple';
+  rsvp_status: RsvpStatus;
+  number_of_guests: number;
+  rsvp_updated_at: string | null;
   created_at: string;
 }
 
@@ -30,6 +35,9 @@ export interface ManagedGuest {
   guest_group_id: string | null;
   group_name: string | null;
   plus_count: number;
+  rsvp_status: RsvpStatus;
+  number_of_guests: number;
+  rsvp_updated_at: string | null;
   created_at: string;
 }
 
@@ -73,7 +81,7 @@ export interface ApiResponse<T = undefined> {
 }
 
 export interface AuthResponse {
-  guest: Pick<Guest, 'id' | 'full_name' | 'table_number' | 'side' | 'role'>;
+  guest: Pick<Guest, 'id' | 'full_name' | 'table_number' | 'side' | 'role' | 'rsvp_status' | 'number_of_guests' | 'rsvp_updated_at'>;
 }
 
 // ─── Seating ──────────────────────────────────────────────────
@@ -96,6 +104,10 @@ export interface WeddingTableWithGuests extends WeddingTable {
     full_name: string;
     side: 'חתן' | 'כלה' | 'שניהם' | null;
     plus_count: number;
+    rsvp_status: RsvpStatus;
+    number_of_guests: number;
+    effective_plus_count: number;
+    effective_party_size: number;
   }>;
 }
 

@@ -10,12 +10,12 @@ import { createError } from '../middleware/errorHandler';
 export async function loginGuest(
   fullName: string,
   lastFourDigits: string,
-): Promise<Pick<Guest, 'id' | 'full_name' | 'table_number' | 'side' | 'role'>> {
+): Promise<Pick<Guest, 'id' | 'full_name' | 'table_number' | 'side' | 'role' | 'rsvp_status' | 'number_of_guests' | 'rsvp_updated_at'>> {
   const code = lastFourDigits.trim();
 
   // Try couple first (password = last 4 chars of UUID, letters a-f mapped to 1-6)
   const coupleResult = await pool.query<Guest>(
-    `SELECT id, full_name, table_number, side, role
+    `SELECT id, full_name, table_number, side, role, rsvp_status, number_of_guests, rsvp_updated_at
        FROM guests
       WHERE full_name = $1
         AND role = 'couple'
@@ -27,7 +27,7 @@ export async function loginGuest(
 
   // Then try guest (password = last 4 digits of phone)
   const guestResult = await pool.query<Guest>(
-    `SELECT id, full_name, table_number, side, role
+    `SELECT id, full_name, table_number, side, role, rsvp_status, number_of_guests, rsvp_updated_at
        FROM guests
       WHERE full_name = $1
         AND role = 'guest'

@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { requireCouple } from '../middleware/requireCouple';
+import { requireGuest } from '../middleware/requireGuest';
 import {
   getGuests,
   createGuest,
@@ -9,9 +10,14 @@ import {
   createGuestGroup,
   updateGuestGroup,
   deleteGuestGroup,
+  getMyRsvp,
+  updateMyRsvp,
 } from '../controllers/guests.controller';
 
 const router = Router();
+
+router.get('/me/rsvp', requireGuest, getMyRsvp);
+router.put('/me/rsvp', requireGuest, updateMyRsvp);
 
 router.use(requireCouple);
 

@@ -14,7 +14,7 @@ export default function DramaticWelcomeScreen({ firstName, onComplete }: Props) 
   const [phase, setPhase] = useState<Phase>('enter');
 
   useEffect(() => {
-    const exitTimer = window.setTimeout(() => setPhase('exit'), 2800);
+    const exitTimer = window.setTimeout(() => setPhase('exit'), 2000);
     const doneTimer = window.setTimeout(() => onComplete(), 6800);
 
     return () => {

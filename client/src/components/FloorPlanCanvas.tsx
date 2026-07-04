@@ -20,6 +20,8 @@ export interface FloorPlanCanvasProps {
   onSelectTable?: (id: string) => void;
   /** Fired once when drag ends with final percentage position */
   onDragEnd?: (id: string, posX: number, posY: number) => void;
+  /** Table ids containing at least one guest who declined (couple editor only) */
+  warningTableIds?: Set<string>;
 }
 
 // ─── Helpers ─────────────────────────────────────────────────
@@ -37,6 +39,7 @@ export default function FloorPlanCanvas({
   editable = false,
   onSelectTable,
   onDragEnd,
+  warningTableIds,
 }: FloorPlanCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -54,14 +57,14 @@ export default function FloorPlanCanvas({
     if (!editable) return;
     e.preventDefault();
 
-    const el       = e.currentTarget as HTMLDivElement;
-    const startCx  = e.clientX;
-    const startCy  = e.clientY;
+    const el = e.currentTarget as HTMLDivElement;
+    const startCx = e.clientX;
+    const startCy = e.clientY;
     const startPosX = Number.isFinite(Number(table.pos_x)) ? Number(table.pos_x) : 50;
     const startPosY = Number.isFinite(Number(table.pos_y)) ? Number(table.pos_y) : 50;
-    let latestX    = startPosX;
-    let latestY    = startPosY;
-    let hasMoved   = false;
+    let latestX = startPosX;
+    let latestY = startPosY;
+    let hasMoved = false;
     didDragRef.current = false;
 
     // Capture so browser won't fire scroll/pan on touch
@@ -70,10 +73,10 @@ export default function FloorPlanCanvas({
     const onMove = (me: PointerEvent) => {
       if (!containerRef.current) return;
       const rect = containerRef.current.getBoundingClientRect();
-      const dx   = ((me.clientX - startCx) / rect.width)  * 100;
-      const dy   = ((me.clientY - startCy) / rect.height) * 100;
-      latestX    = clamp(startPosX + dx, 5,  95);
-      latestY    = clamp(startPosY + dy, 14, 87);
+      const dx = ((me.clientX - startCx) / rect.width) * 100;
+      const dy = ((me.clientY - startCy) / rect.height) * 100;
+      latestX = clamp(startPosX + dx, 5, 95);
+      latestY = clamp(startPosY + dy, 14, 87);
 
       if (Math.abs(dx) > 0.8 || Math.abs(dy) > 0.8) {
         hasMoved = true;
@@ -81,12 +84,12 @@ export default function FloorPlanCanvas({
       }
 
       el.style.left = `${latestX}%`;
-      el.style.top  = `${latestY}%`;
+      el.style.top = `${latestY}%`;
     };
 
     const cleanup = () => {
       window.removeEventListener('pointermove', onMove);
-      window.removeEventListener('pointerup',   onUp);
+      window.removeEventListener('pointerup', onUp);
       window.removeEventListener('pointercancel', onCancel);
     };
 
@@ -103,7 +106,7 @@ export default function FloorPlanCanvas({
     };
 
     window.addEventListener('pointermove', onMove);
-    window.addEventListener('pointerup',   onUp);
+    window.addEventListener('pointerup', onUp);
     window.addEventListener('pointercancel', onCancel);
   }
 
@@ -114,28 +117,28 @@ export default function FloorPlanCanvas({
     entrancePosition === 'right'
       ? 'כניסה ←'
       : entrancePosition === 'left'
-      ? 'כניסה →'
-      : 'כניסה ↓';
+        ? 'כניסה →'
+        : 'כניסה ↓';
 
   const entranceContainerSx =
     entrancePosition === 'right'
       ? { right: 6, top: '50%', transform: 'translateY(-50%)' }
       : entrancePosition === 'left'
-      ? { left: 6, top: '50%', transform: 'translateY(-50%)' }
-      : { bottom: 5, left: '50%', transform: 'translateX(-50%)' };
+        ? { left: 6, top: '50%', transform: 'translateY(-50%)' }
+        : { bottom: 5, left: '50%', transform: 'translateX(-50%)' };
 
   const entranceLineSx =
     entrancePosition === 'bottom'
       ? {
-          width: 36,
-          height: '1.5px',
-          background: 'linear-gradient(90deg, transparent, rgba(201,168,76,0.5), transparent)',
-        }
+        width: 36,
+        height: '1.5px',
+        background: 'linear-gradient(90deg, transparent, rgba(201,168,76,0.5), transparent)',
+      }
       : {
-          width: '1.5px',
-          height: 30,
-          background: 'linear-gradient(to bottom, transparent, rgba(201,168,76,0.5), transparent)',
-        };
+        width: '1.5px',
+        height: 30,
+        background: 'linear-gradient(to bottom, transparent, rgba(201,168,76,0.5), transparent)',
+      };
 
   return (
     <Box
@@ -208,8 +211,9 @@ export default function FloorPlanCanvas({
 
       {/* ── Tables ── */}
       {tables.map(table => {
-        const isOwn      = table.table_number === ownTableNumber;
+        const isOwn = table.table_number === ownTableNumber;
         const isSelected = table.id === selectedId;
+        const isWarning = warningTableIds?.has(table.id) ?? false;
         const safeLeft = Number.isFinite(Number(table.pos_x)) ? Number(table.pos_x) : 50;
         const safeTop = Number.isFinite(Number(table.pos_y)) ? Number(table.pos_y) : 50;
         const isRect = table.shape === 'rect';
@@ -222,47 +226,68 @@ export default function FloorPlanCanvas({
             onClick={() => { if (!didDragRef.current) onSelectTable?.(table.id); }}
             style={{ left: `${safeLeft}%`, top: `${safeTop}%` }}
             sx={{
-              position:     'absolute',
-              transform:    'translate(-50%, -50%)',
-              width:        isRect ? (isPortrait ? 'min(36px, 6.5%)' : 'min(100px, 18%)') : 'min(58px, 10.5%)',
-              height:       isRect ? (isPortrait ? 'min(100px, 18%)' : 'min(36px, 6.5%)') : undefined,
-              minWidth:     isRect ? (isPortrait ? 22 : 54) : 38,
-              aspectRatio:  isRect ? 'unset' : '1 / 1',
+              position: 'absolute',
+              transform: 'translate(-50%, -50%)',
+              width: isRect ? (isPortrait ? 'min(36px, 6.5%)' : 'min(100px, 18%)') : 'min(58px, 10.5%)',
+              height: isRect ? (isPortrait ? 'min(100px, 18%)' : 'min(36px, 6.5%)') : undefined,
+              minWidth: isRect ? (isPortrait ? 22 : 54) : 38,
+              aspectRatio: isRect ? 'unset' : '1 / 1',
               borderRadius: isRect ? '8px' : table.shape === 'square' ? '18%' : '50%',
               background: isOwn
                 ? 'linear-gradient(135deg, #E0C97A 0%, #C9A84C 100%)'
-                : 'rgba(255,255,253,0.93)',
+                : isWarning
+                  ? 'linear-gradient(145deg, rgba(255,255,253,0.94), rgba(211,80,70,0.08))'
+                  : 'rgba(255,255,253,0.93)',
               border: isSelected
                 ? '2.5px solid #4F86F7'
                 : isOwn
-                ? '2px solid #9A7833'
-                : '1.5px solid rgba(201,168,76,0.55)',
+                  ? '2px solid #9A7833'
+                  : isWarning
+                    ? '1.5px solid rgba(196,60,50,0.6)'
+                    : '1.5px solid rgba(201,168,76,0.55)',
               boxShadow: isOwn
                 ? '0 0 0 5px rgba(201,168,76,0.18), 0 4px 14px rgba(201,168,76,0.35)'
                 : isSelected
-                ? '0 0 0 3px rgba(79,134,247,0.22)'
-                : '0 2px 8px rgba(0,0,0,0.1)',
-              display:        'flex',
-              flexDirection:  'column',
-              alignItems:     'center',
+                  ? '0 0 0 3px rgba(79,134,247,0.22)'
+                  : isWarning
+                    ? '0 0 0 3px rgba(196,60,50,0.16), 0 2px 8px rgba(196,60,50,0.18)'
+                    : '0 2px 8px rgba(0,0,0,0.1)',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
               justifyContent: 'center',
-              gap:    '2px',
+              gap: '2px',
               cursor: editable ? 'grab' : 'pointer',
               zIndex: isOwn ? 4 : isSelected ? 3 : 2,
               touchAction: 'none',
-              transition:  editable ? 'box-shadow 0.15s' : 'transform 0.15s, box-shadow 0.15s',
+              transition: editable ? 'box-shadow 0.15s' : 'transform 0.15s, box-shadow 0.15s',
               '&:hover': editable
-                ? { boxShadow: '0 0 0 4px rgba(201,168,76,0.3)', cursor: 'grab' }
+                ? { boxShadow: isWarning ? '0 0 0 4px rgba(196,60,50,0.28)' : '0 0 0 4px rgba(201,168,76,0.3)', cursor: 'grab' }
                 : { transform: 'translate(-50%, -50%) scale(1.1)', zIndex: 5 },
               '&:active': { cursor: editable ? 'grabbing' : 'pointer' },
             }}
           >
+            {/* Small warning dot — declined guest seated here */}
+            {isWarning && !isOwn && (
+              <Box sx={{
+                position: 'absolute',
+                top: -4,
+                insetInlineEnd: -4,
+                width: 10,
+                height: 10,
+                borderRadius: '50%',
+                background: '#C43C32',
+                border: '1.5px solid #FDFAF3',
+                boxShadow: '0 1px 4px rgba(196,60,50,0.5)',
+              }} />
+            )}
+
             {/* Table number */}
             <Typography sx={{
-              fontSize:   'clamp(0.62rem, 1.8vw, 0.84rem)',
-              fontWeight:  800,
-              color:       isOwn ? '#FAF7F2' : '#2C1810',
-              lineHeight:  1,
+              fontSize: 'clamp(0.62rem, 1.8vw, 0.84rem)',
+              fontWeight: 800,
+              color: isOwn ? '#FAF7F2' : isWarning ? '#a3392f' : '#2C1810',
+              lineHeight: 1,
               fontFamily: "'Frank Ruhl Libre', serif",
             }}>
               {table.table_number}
@@ -271,8 +296,8 @@ export default function FloorPlanCanvas({
             {/* Seat fill ratio — shown on regular tables that have guests */}
             {!isOwn && table.capacity > 0 && (
               <Typography sx={{
-                fontSize:  'clamp(0.4rem, 1vw, 0.46rem)',
-                color:     'rgba(154,120,51,0.65)',
+                fontSize: 'clamp(0.4rem, 1vw, 0.46rem)',
+                color: isWarning ? 'rgba(163,57,47,0.75)' : 'rgba(154,120,51,0.65)',
                 lineHeight: 1,
               }}>
                 {table.guests.reduce((s, g) => s + getEffectivePartySize(g), 0)}/{table.capacity}
@@ -282,8 +307,8 @@ export default function FloorPlanCanvas({
             {/* Star for own table */}
             {isOwn && (
               <Typography sx={{
-                fontSize:  'clamp(0.44rem, 1.1vw, 0.52rem)',
-                color:     '#FAF7F2',
+                fontSize: 'clamp(0.44rem, 1.1vw, 0.52rem)',
+                color: '#FAF7F2',
                 lineHeight: 1,
               }}>
                 ★

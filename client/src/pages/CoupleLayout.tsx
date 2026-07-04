@@ -24,7 +24,7 @@ import TaskManagementPage from './couple/TaskManagementPage';
 // ─── Tab config ──────────────────────────────────────────────
 
 const TABS = [
-  { label: 'ניהול האירוע', icon: <EditCalendarOutlinedIcon sx={{ fontSize: 22 }} /> },
+  { label: 'פרטי האירוע', icon: <EditCalendarOutlinedIcon sx={{ fontSize: 22 }} /> },
   { label: 'הודעה לאורחים', icon: <FavoriteBorderIcon sx={{ fontSize: 22 }} /> },
   { label: 'מעקב משימות', icon: <AssignmentOutlinedIcon sx={{ fontSize: 22 }} /> },
   { label: 'רשימת אורחים', icon: <Groups2Icon sx={{ fontSize: 22 }} /> },

@@ -50,6 +50,7 @@ import {
   updateGuest,
   updateGuestGroup,
 } from '../../services/guests.service';
+import { getWeddingInfo } from '../../services/info.service';
 
 type SideOption = 'חתן' | 'כלה' | 'שניהם' | null;
 
@@ -117,24 +118,35 @@ function formatRsvpUpdatedAt(ts: string | null): string | null {
   });
 }
 
-function buildWhatsAppInviteUrl(guest: ManagedGuest): string {
+// להחליף את כל הפונקציה buildWhatsAppInviteUrl בזו:
+
+function buildWhatsAppInviteUrl(guest: ManagedGuest, brideAndGroom: string): string {
   const digits = guest.phone.replace(/\D/g, '');
   const normalizedPhone = digits.startsWith('0') ? `972${digits.slice(1)}` : digits;
   const personalLink = buildGuestUrl(`${guest.first_name} ${guest.last_name}`, digits.slice(-4));
 
   const message = [
-    `Hi ${guest.first_name}! ❤️`,
+    `שלום ${guest.first_name} 💛`,
     '',
-    'We are excited to invite you to our wedding!',
+    `בשמחה ובהתרגשות אנו מזמינים אותך לחגוג איתנו את יום חתונתינו${brideAndGroom ? ` - ${brideAndGroom}` : ''}. 💍✨`,
     '',
-    'To view all wedding details and confirm your attendance please enter through your personal invitation:',
+    'הכנו עבורך הזמנה דיגיטלית אישית באפליקציית החתונה שלנו, שבה מחכים לך כל פרטי האירוע:',
+    '📍 מיקום ושעת האירוע, כמובן קישור לWaze',
+    '🪑 מיקום ישיבתך באולם',
+    '📸 שיתוף תמונות מהאירוע',
+    '✅ אישור הגעה',
+    'וכל מה שצריך לדעת כדי לחגוג איתנו את היום המיוחד בחיינו 🥂',
+    '',
+    'לכניסה לאפליקציה האישית שלך:',
     '',
     personalLink,
     '',
-    "We can't wait to celebrate with you!",
+    'נשמח אם תיכנס/י ותאשר/י את הגעתך דרך האפליקציה, כדי שנוכל להיערך בהתאם. 🙏',
     '',
-    '❤️',
-  ].join('\n');
+    'מחכים להתרגש, לשמוח ולחגוג איתך את אחד הימים המיוחדים בחיינו. 🥂❤️',
+    '',
+    brideAndGroom ? `באהבה,\n${brideAndGroom} 💕` : 'באהבה 💕',
+  ].filter(Boolean).join('\n');
 
   return `https://wa.me/${normalizedPhone}?text=${encodeURIComponent(message)}`;
 }
@@ -179,6 +191,11 @@ export default function GuestListEditor() {
   const [rsvpListLoadingStatus, setRsvpListLoadingStatus] = useState<RsvpStatus | null>(null);
   const [searchLoading, setSearchLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [info, setInfo] = useState<{ bride_name?: string; groom_name?: string } | null>(null);
+
+  useEffect(() => {
+    getWeddingInfo().then(setInfo).catch(() => {/* non-critical */ });
+  }, []);
 
   const searchRef = useRef(search);
   useEffect(() => { searchRef.current = search; }, [search]);
@@ -346,7 +363,7 @@ export default function GuestListEditor() {
   }, []);
 
   const handleSendInvitation = useCallback((guest: ManagedGuest) => {
-    window.open(buildWhatsAppInviteUrl(guest), '_blank', 'noopener,noreferrer');
+    window.open(buildWhatsAppInviteUrl(guest, `${info?.bride_name} & ${info?.groom_name}`), '_blank', 'noopener,noreferrer');
   }, []);
 
   function openCreateGroup() {

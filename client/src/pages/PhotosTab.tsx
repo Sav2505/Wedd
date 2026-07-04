@@ -430,7 +430,7 @@ export default function PhotosTab() {
             variant="h5"
             sx={{ fontFamily: "'Frank Ruhl Libre', serif", fontWeight: 700, color: '#2C1810' }}
           >
-            גלריית התמונות
+            גלריית התמונות - שתפו אותנו :)
           </Typography>
           <Typography variant="body2" sx={{ color: '#A08070' }}>
             {photos.length} תמונות שותפו עד כה, שתפו גם אתם עם עוד תמונות מהאירוע !

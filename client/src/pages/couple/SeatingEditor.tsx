@@ -50,6 +50,33 @@ interface UnassignedGuest {
     effective_party_size?: number;
 }
 
+// פונקציית עזר חדשה - סטיילינג לפי סטטוס RSVP, בשימוש רק במסך העריכה (חתן/כלה)
+
+function getGuestChipStyle(rsvpStatus?: 'PENDING' | 'COMING' | 'NOT_COMING') {
+    if (rsvpStatus === 'COMING') {
+        return {
+            background: 'rgba(46,139,87,0.12)',
+            border: '1px solid rgba(46,139,87,0.35)',
+            color: '#1f6b42',
+            '& .MuiChip-deleteIcon': { color: '#4a8f68' },
+        };
+    }
+    if (rsvpStatus === 'NOT_COMING') {
+        return {
+            background: 'rgba(185,71,61,0.1)',
+            border: '1px solid rgba(185,71,61,0.35)',
+            color: '#a3392f',
+            '& .MuiChip-deleteIcon': { color: '#c05a4f' },
+        };
+    }
+    return {
+        background: 'rgba(201,168,76,0.12)',
+        border: '1px solid rgba(201,168,76,0.3)',
+        color: '#2C1810',
+        '& .MuiChip-deleteIcon': { color: '#A08070' },
+    };
+}
+
 // ─── Component ───────────────────────────────────────────────
 
 export default function SeatingEditor() {
@@ -317,6 +344,16 @@ export default function SeatingEditor() {
 
     const totalGuests = tables.reduce((s, t) => s + t.guests.reduce((gs, g) => gs + getEffectivePartySize(g), 0), 0);
     const unassignedCount = unassigned.reduce((s, g) => s + getEffectivePartySize(g), 0);
+    const unassignedConfirmedCount = unassigned
+        .filter(g => g.rsvp_status === 'COMING')
+        .reduce((s, g) => s + getEffectivePartySize(g), 0);
+    const decliningAssignedCount = tables.reduce(
+        (s, t) => s + t.guests.filter(g => g.rsvp_status === 'NOT_COMING').length,
+        0
+    );
+    const tableIdsWithDeclinedGuest = new Set(
+        tables.filter(t => t.guests.some(g => g.rsvp_status === 'NOT_COMING')).map(t => t.id)
+    );
 
     return (
         <Box sx={{ p: { xs: 1.5, sm: 2.5 } }}>
@@ -342,8 +379,24 @@ export default function SeatingEditor() {
                         {tables.length} שולחנות · {totalGuests} מוזמנים משובצים
                     </Typography>
                 </Box>
+                <Button
+                    variant="contained"
+                    startIcon={<AddIcon />}
+                    onClick={openAddDialog}
+                    size="small"
+                    sx={{
+                        background: 'linear-gradient(135deg, #E0C97A, #C9A84C)',
+                        color: '#2C1810',
+                        fontWeight: 700,
+                        borderRadius: 2,
+                        boxShadow: '0 3px 10px rgba(201,168,76,0.35)',
+                        '&:hover': { background: 'linear-gradient(135deg, #E8D490, #D4A855)' },
+                    }}
+                >
+                    הוסף שולחן
+                </Button>
 
-                <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+                <Box sx={{ display: 'flex', gap: 1, mt: 0.5, mb: 0.5, alignItems: 'center' }}>
                     {unassignedCount > 0 && (
                         <Chip
                             icon={<PeopleOutlineIcon sx={{ fontSize: 16 }} />}
@@ -352,22 +405,22 @@ export default function SeatingEditor() {
                             sx={{ background: 'rgba(220,80,80,0.1)', color: '#B03030', border: '1px solid rgba(220,80,80,0.25)', fontWeight: 600 }}
                         />
                     )}
-                    <Button
-                        variant="contained"
-                        startIcon={<AddIcon />}
-                        onClick={openAddDialog}
-                        size="small"
-                        sx={{
-                            background: 'linear-gradient(135deg, #E0C97A, #C9A84C)',
-                            color: '#2C1810',
-                            fontWeight: 700,
-                            borderRadius: 2,
-                            boxShadow: '0 3px 10px rgba(201,168,76,0.35)',
-                            '&:hover': { background: 'linear-gradient(135deg, #E8D490, #D4A855)' },
-                        }}
-                    >
-                        הוסף שולחן
-                    </Button>
+                    {(
+                        <Chip
+                            icon={<PeopleOutlineIcon sx={{ fontSize: 16 }} />}
+                            label={unassignedConfirmedCount > 0 ? `${unassignedConfirmedCount} שאישרו ללא שולחן` : "כל המוזמנים שאישרו משובצים"}
+                            size="small"
+                            sx={{ background: 'rgba(46,139,87,0.12)', color: '#1f6b42', border: '1px solid rgba(46,139,87,0.3)', fontWeight: 600 }}
+                        />
+                    )}
+                    {decliningAssignedCount > 0 && (
+                        <Chip
+                            icon={<PeopleOutlineIcon sx={{ fontSize: 16 }} />}
+                            label={`${decliningAssignedCount} סירבו אך משובצים`}
+                            size="small"
+                            sx={{ background: 'rgba(185,71,61,0.1)', color: '#a3392f', border: '1px solid rgba(185,71,61,0.3)', fontWeight: 600 }}
+                        />
+                    )}
                 </Box>
             </Box>
 
@@ -447,6 +500,7 @@ export default function SeatingEditor() {
                     selectedId={selectedId}
                     onSelectTable={setSelectedId}
                     onDragEnd={handleDragEnd}
+                    warningTableIds={tableIdsWithDeclinedGuest}
                 />
             </motion.div>
 
@@ -646,11 +700,8 @@ export default function SeatingEditor() {
                                                     size="small"
                                                     onDelete={() => handleUnassignGuest(g.id)}
                                                     sx={{
-                                                        background: 'rgba(201,168,76,0.12)',
-                                                        border: '1px solid rgba(201,168,76,0.3)',
                                                         fontWeight: 500,
-                                                        color: '#2C1810',
-                                                        '& .MuiChip-deleteIcon': { color: '#A08070' },
+                                                        ...getGuestChipStyle(g.rsvp_status),
                                                     }}
                                                 />
                                             ))}

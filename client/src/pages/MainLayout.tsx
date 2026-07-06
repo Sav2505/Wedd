@@ -50,7 +50,6 @@ function GoldDivider() {
 export default function MainLayout() {
   const dispatch = useAppDispatch();
   const guest    = useAppSelector((s) => s.auth.guest);
-  const isCouple = guest?.role === 'couple';
   const [activeTab, setActiveTab] = useState(0);
 
   useEffect(() => {

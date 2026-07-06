@@ -5,9 +5,9 @@ import { getEffectivePartySize } from '../utils/effectiveAttendance';
 
 // ─── Types ───────────────────────────────────────────────────
 
-const TABLE_MIN_WIDTH = 38;
-const TABLE_RECT_MIN_WIDTH = 78;
-const TABLE_RECT_MIN_HEIGHT = 30;
+const TABLE_WIDTH = '38px';
+const TABLE_RECT_WIDTH = '78px';
+const TABLE_RECT_HEIGHT = '30px';
 
 export interface FloorPlanCanvasProps {
   tables: WeddingTableWithGuests[];
@@ -79,8 +79,8 @@ export default function FloorPlanCanvas({
       const rect = containerRef.current.getBoundingClientRect();
       const dx = ((me.clientX - startCx) / rect.width) * 100;
       const dy = ((me.clientY - startCy) / rect.height) * 100;
-      const deltaStartX = table.shape === 'rect' ? table.orientation === 'v' ? -1.5 : 5.5 : -0.5;
-      const deltaEndX = table.shape === 'rect' ? table.orientation === 'v' ? 2 : -18.5 : 0;
+      const deltaStartX = table.shape === 'rect' ? table.orientation === 'v' ? 1 : -3 : -2;
+      const deltaEndX = table.shape === 'rect' ? table.orientation === 'v' ? -8 : 5 : 3;
       latestX = clamp(startPosX + dx, -4 - deltaStartX, 85 + deltaEndX);
       latestY = clamp(startPosY + dy, 14, 87);
 
@@ -234,9 +234,13 @@ export default function FloorPlanCanvas({
             sx={{
               position: 'absolute',
               transform: 'translate(-50%, -50%)',
-              width: isRect ? (isPortrait ? `min(${TABLE_RECT_MIN_HEIGHT}px, 10%)` : `min(${TABLE_RECT_MIN_WIDTH}px, 20%)`) : `min(${TABLE_MIN_WIDTH}px, 10%)`,
-              height: isRect ? (isPortrait ? `min(${TABLE_RECT_MIN_WIDTH}px, 20%)` : `min(${TABLE_RECT_MIN_HEIGHT}px, 10%)`) : undefined,
-              minWidth: isRect ? (isPortrait ? 22 : `max(${TABLE_RECT_MIN_WIDTH}px, 20%)`) : `min(${TABLE_MIN_WIDTH}px, 10%)`,
+              width: isRect ? (isPortrait ? `max(12%, ${TABLE_RECT_WIDTH})` : '5%') : `max(6%, ${TABLE_WIDTH})`,
+              height: isRect ? (isPortrait ? '5%' : `max(12%, ${TABLE_RECT_WIDTH})`) : `max(6%, ${TABLE_WIDTH})`,
+              minHeight: isRect ? (isPortrait ? TABLE_RECT_HEIGHT : `max(5%, ${TABLE_RECT_WIDTH})`) : TABLE_WIDTH,
+              minWidth: isRect ? (isPortrait ? TABLE_RECT_WIDTH : `${TABLE_RECT_HEIGHT}`) : TABLE_WIDTH,
+              // width: isRect ? (isPortrait ? `min(${TABLE_RECT_MIN_HEIGHT}px, 10%)` : `min(${TABLE_RECT_MIN_WIDTH}px, 20%)`) : `min(${TABLE_MIN_WIDTH}px, 10%)`,
+              // height: isRect ? (isPortrait ? `min(${TABLE_RECT_MIN_WIDTH}px, 20%)` : `min(${TABLE_RECT_MIN_HEIGHT}px, 10%)`) : undefined,
+              // minWidth: isRect ? (isPortrait ? 22 : `max(${TABLE_RECT_MIN_WIDTH}px, 20%)`) : `min(${TABLE_MIN_WIDTH}px, 10%)`,
               aspectRatio: isRect ? 'unset' : '1 / 1',
               borderRadius: isRect ? '7px' : table.shape === 'square' ? '16%' : '50%',
               background: isOwn

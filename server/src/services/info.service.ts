@@ -68,3 +68,11 @@ export async function updateHeroImage(filename: string): Promise<WeddingInfo> {
   );
   return rows[0];
 }
+
+export async function updatePublishTables(toPublishTables: boolean): Promise<WeddingInfo> {
+  const { rows } = await pool.query<WeddingInfo>(
+    `UPDATE wedding_info SET is_tables_published = $1, updated_at = NOW() WHERE id = 1 RETURNING *`,
+    [toPublishTables],
+  );
+  return rows[0];
+}

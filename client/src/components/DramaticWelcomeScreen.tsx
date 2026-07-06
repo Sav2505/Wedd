@@ -14,8 +14,8 @@ export default function DramaticWelcomeScreen({ firstName, onComplete }: Props) 
   const [phase, setPhase] = useState<Phase>('enter');
 
   useEffect(() => {
-    const exitTimer = window.setTimeout(() => setPhase('exit'), 2000);
-    const doneTimer = window.setTimeout(() => onComplete(), 6200);
+    const exitTimer = window.setTimeout(() => setPhase('exit'), 2800);
+    const doneTimer = window.setTimeout(() => onComplete(), 4600);
 
     return () => {
       window.clearTimeout(exitTimer);
@@ -212,7 +212,11 @@ export default function DramaticWelcomeScreen({ firstName, onComplete }: Props) 
             </Box>
 
             <Typography sx={{ mt: 0.4, color: '#A08070', fontSize: { xs: '0.98rem', sm: '1.06rem' }, fontWeight: 500 }}>
-              אנחנו שמחים שהצטרפתם אלינו לרגעים היפים של הערב
+              אנחנו שמחים ונרגשים לחגוג איתך את היום המיוחד בחיינו! ✨
+            </Typography>
+
+            <Typography sx={{ mt: 0.4, color: '#A08070', fontSize: { xs: '0.68rem', sm: '0.86rem' }, fontWeight: 400 }}>
+              מיד תועבר/י לאפליקציה...
             </Typography>
 
             {/* Decorative hearts footer */}

@@ -20,12 +20,12 @@ const ENTRANCE_POSITION_STORAGE_KEY = 'wedding.floorPlan.entrancePosition';
 
 export default function SeatingTab() {
   const guest = useAppSelector((s) => s.auth.guest);
-
-  const [tables,        setTables]        = useState<WeddingTableWithGuests[]>([]);
-  const [loading,       setLoading]       = useState(true);
-  const [error,         setError]         = useState<string | null>(null);
-  const [dialogTable,   setDialogTable]   = useState<WeddingTableWithGuests | null>(null);
-  const [stageLabel,    setStageLabel]    = useState('חופה');
+  const [isTablesPublished, setIsTablesPublished] = useState(true);
+  const [tables, setTables] = useState<WeddingTableWithGuests[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [dialogTable, setDialogTable] = useState<WeddingTableWithGuests | null>(null);
+  const [stageLabel, setStageLabel] = useState('חופה');
   const [entrancePosition, setEntrancePosition] = useState<'right' | 'bottom' | 'left'>('bottom');
 
   useEffect(() => {
@@ -42,6 +42,7 @@ export default function SeatingTab() {
         setTables(tables);
         if (info.stage_label?.trim()) {
           setStageLabel(info.stage_label);
+          setIsTablesPublished(!!info.is_tables_published);
         } else if (typeof window !== 'undefined') {
           const stored = window.localStorage.getItem(STAGE_LABEL_STORAGE_KEY);
           if (stored?.trim()) setStageLabel(stored);
@@ -99,12 +100,12 @@ export default function SeatingTab() {
                 icon={<StarIcon sx={{ fontSize: 14, color: '#FAF7F2 !important' }} />}
                 label={`שולחן ${guest.table_number}`}
                 sx={{
-                  background:    'linear-gradient(135deg, #E0C97A, #C9A84C)',
-                  color:         '#FAF7F2',
-                  fontWeight:    700,
-                  px:            0.5,
-                  height:        34,
-                  boxShadow:     '0 3px 12px rgba(201,168,76,0.35)',
+                  background: 'linear-gradient(135deg, #E0C97A, #C9A84C)',
+                  color: '#FAF7F2',
+                  fontWeight: 700,
+                  px: 0.5,
+                  height: 34,
+                  boxShadow: '0 3px 12px rgba(201,168,76,0.35)',
                   '& .MuiChip-icon': { ml: 0.5 },
                 }}
               />
@@ -129,25 +130,118 @@ export default function SeatingTab() {
           <Alert severity="error" sx={{ borderRadius: 2, mb: 2 }}>{error}</Alert>
         )}
 
-        {/* ── Floor plan ─────────────────────────────────── */}
+        {/* ── Floor plan / Not published state ─────────────────────────────── */}
         {!loading && !error && (
-          <AnimatePresence mode="wait">
+          isTablesPublished ? (
+            <AnimatePresence mode="wait">
+              <motion.div
+                key="floorplan"
+                initial={{ opacity: 0, scale: 0.98 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.45, ease: 'easeOut' }}
+              >
+                <FloorPlanCanvas
+                  tables={tables}
+                  stageLabel={stageLabel}
+                  entrancePosition={entrancePosition}
+                  ownTableNumber={guest?.table_number ?? null}
+                  editable={false}
+                  onSelectTable={handleSelectTable}
+                />
+              </motion.div>
+            </AnimatePresence>
+          ) : (
             <motion.div
-              key="floorplan"
-              initial={{ opacity: 0, scale: 0.98 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.45, ease: 'easeOut' }}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, ease: 'easeOut' }}
             >
-              <FloorPlanCanvas
-                tables={tables}
-                stageLabel={stageLabel}
-                entrancePosition={entrancePosition}
-                ownTableNumber={guest?.table_number ?? null}
-                editable={false}
-                onSelectTable={handleSelectTable}
-              />
+              <Box
+                sx={{
+                  mt: 4,
+                  py: 7,
+                  px: 3,
+                  borderRadius: 4,
+                  textAlign: 'center',
+                  position: 'relative',
+                  overflow: 'hidden',
+                  background: 'linear-gradient(145deg, #FDFAF3, #F6EEDB)',
+                  border: '1.5px solid rgba(201,168,76,0.28)',
+                  boxShadow: '0 10px 30px rgba(201,168,76,0.08)',
+                }}
+              >
+                {/* glow effect */}
+                <Box
+                  sx={{
+                    position: 'absolute',
+                    top: -60,
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    width: 220,
+                    height: 220,
+                    background:
+                      'radial-gradient(circle, rgba(201,168,76,0.18), transparent 70%)',
+                    filter: 'blur(12px)',
+                  }}
+                />
+
+                <Typography
+                  variant="h6"
+                  sx={{
+                    fontFamily: "'Frank Ruhl Libre', serif",
+                    fontWeight: 700,
+                    color: '#2C1810',
+                    mb: 1,
+                    position: 'relative',
+                  }}
+                >
+                  סידורי ההושבה עדיין לא פורסמו
+                </Typography>
+
+                {/* badge */}
+                <Box
+                  sx={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 0.5,
+                    px: 1.5,
+                    py: 0.5,
+                    borderRadius: 999,
+                    background: 'rgba(201,168,76,0.12)',
+                    border: '1px solid rgba(201,168,76,0.25)',
+                    mb: 2,
+                    position: 'relative',
+                  }}
+                >
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      color: '#9A7833',
+                      fontWeight: 600,
+                      letterSpacing: 0.3,
+                    }}
+                  >
+                    עובדים על זה באהבה 💛
+                  </Typography>
+                </Box>
+
+                <Typography
+                  variant="body2"
+                  sx={{
+                    color: '#A08070',
+                    maxWidth: 420,
+                    mx: 'auto',
+                    lineHeight: 1.9,
+                    fontSize: '0.95rem',
+                    position: 'relative',
+                  }}
+                >
+                  החתן והכלה עדיין מסדרים את השולחנות 💛<br />
+                  אנחנו נעדכן אותך ברגע שזה מוכן :)
+                </Typography>
+              </Box>
             </motion.div>
-          </AnimatePresence>
+          )
         )}
 
         {/* ── Legend ─────────────────────────────────────── */}
@@ -162,11 +256,11 @@ export default function SeatingTab() {
             ].map(item => (
               <Box key={item.label} sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
                 <Box sx={{
-                  width:        14, height: 14,
+                  width: 14, height: 14,
                   borderRadius: '50%',
-                  background:   item.color,
-                  border:       item.border,
-                  flexShrink:   0,
+                  background: item.color,
+                  border: item.border,
+                  flexShrink: 0,
                 }} />
                 <Typography variant="caption" sx={{ color: '#A08070' }}>
                   {item.label}

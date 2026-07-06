@@ -37,6 +37,7 @@ export interface WeddingInfo {
   message: string | null;
   hero_image_url: string | null;
   stage_label: string | null;
+  is_tables_published: boolean;
 }
 
 export interface ApiResponse<T = undefined> {

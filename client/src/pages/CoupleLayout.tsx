@@ -192,7 +192,7 @@ function OrnamentalHeader({
             </Typography>
           </Box>
 
-          <Tooltip title="יציאה">
+          <Tooltip title="התנתקות">
             <IconButton
               onClick={onLogout} size="small"
               sx={{

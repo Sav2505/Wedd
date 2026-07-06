@@ -20,6 +20,15 @@ export async function updateInfo(req: Request, res: Response, next: NextFunction
   }
 }
 
+export async function updatePublishTables(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const updated = await infoService.updatePublishTables(req.body.is_published_tables as boolean);
+    res.status(200).json({ success: true, data: updated });
+  } catch (err) {
+    next(err);
+  }
+}
+
 export async function uploadHero(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const file = req.file;

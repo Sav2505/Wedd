@@ -56,6 +56,7 @@ CREATE TABLE IF NOT EXISTS wedding_info (
   notes           TEXT        DEFAULT NULL,
   message         TEXT        DEFAULT NULL,   -- Tab 4: message from couple
   hero_image_url  TEXT        DEFAULT NULL,   -- couple-uploaded header background
+  is_tables_published BOOLEAN   NOT NULL DEFAULT FALSE, -- Tab 3: seating tables published
   updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   CONSTRAINT single_row CHECK (id = 1)
 );

@@ -436,14 +436,14 @@ export default function AttendanceStatusTab({ onSaved }: Props) {
             onClick={handleSave}
             disabled={saving}
             variant="contained"
-            startIcon={<FavoriteIcon />}
+            endIcon={<FavoriteIcon />}
             sx={{
               px: 3.5,
               py: 1.1,
               borderRadius: 999,
               fontWeight: 800,
-              background: 'linear-gradient(135deg, #E0C97A, #C9A84C)',
-              color: '#2C1810',
+              background: 'linear-gradient(135deg, #dcc16a, #caa02e)',
+              color: '#ffffff',
               boxShadow: '0 8px 22px rgba(201,168,76,0.35)',
               '&:hover': { background: 'linear-gradient(135deg, #E8D490, #D5AD57)' },
             }}

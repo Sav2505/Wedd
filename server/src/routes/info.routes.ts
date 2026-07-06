@@ -2,7 +2,7 @@ import { Router } from 'express';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
-import { getInfo, updateInfo, uploadHero } from '../controllers/info.controller';
+import { getInfo, updateInfo, uploadHero, updatePublishTables } from '../controllers/info.controller';
 import { requireCouple } from '../middleware/requireCouple';
 
 const UPLOAD_DIR = process.env.UPLOAD_DIR ?? 'uploads';
@@ -31,8 +31,9 @@ const upload = multer({ storage, fileFilter, limits: { fileSize: 15 * 1024 * 102
 
 const router = Router();
 
-router.get('/',              getInfo);
-router.put('/',              requireCouple, updateInfo);
-router.post('/hero',         requireCouple, upload.single('hero'), uploadHero);
+router.get('/', getInfo);
+router.put('/', requireCouple, updateInfo);
+router.put('/update-publish-tables', requireCouple, updatePublishTables);
+router.post('/hero', requireCouple, upload.single('hero'), uploadHero);
 
 export default router;

@@ -87,7 +87,7 @@ const containerVariants = {
 
 const itemVariants = {
   hidden: { opacity: 0, y: 24 },
-  show:   { opacity: 1, y: 0, transition: { duration: 0.55, ease: 'easeOut' as const } },
+  show: { opacity: 1, y: 0, transition: { duration: 0.55, ease: 'easeOut' as const } },
 };
 
 const cardVariants = {
@@ -108,10 +108,10 @@ export default function LoginPage() {
   const hasAutoParams = Boolean(autoCreds);
   const greetingName = useMemo(() => autoCreds?.fullName.trim().split(/\s+/)[0] ?? '', [autoCreds]);
 
-  const [fullName, setFullName]               = useState('');
-  const [lastFourDigits, setLastFourDigits]   = useState('');
-  const [error, setError]                     = useState<string | null>(null);
-  const [loading, setLoading]                 = useState(hasAutoParams);
+  const [fullName, setFullName] = useState('');
+  const [lastFourDigits, setLastFourDigits] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(hasAutoParams);
   const [showWelcomeScreen, setShowWelcomeScreen] = useState(false);
 
   // ─── Auto-login from URL params (?n=<name>&p=<last4>) ──────
@@ -193,10 +193,10 @@ export default function LoginPage() {
       <FallingPetals />
 
       {/* Decorative floral blobs */}
-      <FloralDecor top="-80px"   right="-80px"  size={320} opacity={0.14} />
-      <FloralDecor bottom="-60px" left="-60px"  size={280} opacity={0.12} />
-      <FloralDecor top="40%"     right="-40px"  size={180} opacity={0.08} />
-      <FloralDecor top="20%"     left="-50px"   size={200} opacity={0.09} rotate={45} />
+      <FloralDecor top="-80px" right="-80px" size={320} opacity={0.14} />
+      <FloralDecor bottom="-60px" left="-60px" size={280} opacity={0.12} />
+      <FloralDecor top="40%" right="-40px" size={180} opacity={0.08} />
+      <FloralDecor top="20%" left="-50px" size={200} opacity={0.09} rotate={45} />
 
       {/* Card */}
       <motion.div
@@ -291,6 +291,7 @@ export default function LoginPage() {
                     mt: 1,
                     mb: 1,
                     p: 2.2,
+                    direction: 'rtl',
                     borderRadius: 3,
                     background:
                       'linear-gradient(135deg, rgba(224,201,122,0.20) 0%, rgba(255,255,255,0.82) 45%, rgba(201,168,76,0.16) 100%)',
@@ -310,10 +311,10 @@ export default function LoginPage() {
                     מיד תחוברו לחוויה
                   </Typography>
                   <Typography align="center" sx={{ mt: 0.6, color: '#8A6A2B', fontSize: '0.92rem' }}>
-                    טוענים את החגיגה ✨
+                    ✨ טוענים את החגיגה
                   </Typography>
 
-                  <Box sx={{ mt: 2.1, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 1.5 }}>
+                  <Box sx={{ mt: 2.1, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 1.5, dir: "rtl" }}>
                     <motion.div
                       animate={{ scale: [1, 1.08, 1], opacity: [0.7, 1, 0.7] }}
                       transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
@@ -325,15 +326,15 @@ export default function LoginPage() {
                       transition={{ duration: 1.4, repeat: Infinity, ease: 'easeInOut' }}
                     >
                       <Typography sx={{ color: '#A08070', fontWeight: 600, letterSpacing: '0.03em' }}>
-                        מתחברים...
+                       ..מתחברים
                       </Typography>
                     </motion.div>
                   </Box>
 
                   <Box sx={{ mt: 2, height: 6, borderRadius: 999, overflow: 'hidden', bgcolor: 'rgba(201,168,76,0.16)' }}>
                     <motion.div
-                      initial={{ x: '-100%' }}
-                      animate={{ x: '100%' }}
+                      initial={{ x: '100%' }}
+                      animate={{ x: '-100%' }}
                       transition={{ duration: 1.8, repeat: Infinity, ease: 'linear' }}
                       style={{
                         width: '45%',

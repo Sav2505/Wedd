@@ -1,7 +1,12 @@
 import { useMemo, useState } from 'react';
 import {
   Box,
+  Button,
   Chip,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   IconButton,
   InputAdornment,
   MenuItem,
@@ -51,18 +56,18 @@ interface Props {
 
 const STATUS_COLOR: Record<TaskStatus, 'default' | 'info' | 'warning' | 'success' | 'error'> = {
   not_started: 'default',
-  in_progress:  'info',
-  waiting:      'warning',
-  completed:    'success',
-  cancelled:    'error',
+  in_progress: 'info',
+  waiting: 'warning',
+  completed: 'success',
+  cancelled: 'error',
 };
 
 const STATUS_LABEL: Record<TaskStatus, string> = {
   not_started: 'טרם התחיל',
-  in_progress:  'בתהליך',
-  waiting:      'ממתין',
-  completed:    'הושלם',
-  cancelled:    'בוטל',
+  in_progress: 'בתהליך',
+  waiting: 'ממתין',
+  completed: 'הושלם',
+  cancelled: 'בוטל',
 };
 
 const PAGE_SIZES = [10, 25, 50];
@@ -70,13 +75,14 @@ const PAGE_SIZES = [10, 25, 50];
 // ─── Component ───────────────────────────────────────────────
 
 export default function TaskTable({ tasks, onEdit, onDelete }: Props) {
-  const [search, setSearch]           = useState('');
+  const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<TaskStatus | 'all'>('all');
   const [categoryFilter, setCategoryFilter] = useState<TaskCategory | 'all'>('all');
-  const [sortKey, setSortKey]         = useState<SortKey>('task_name');
-  const [sortDir, setSortDir]         = useState<SortDir>('asc');
-  const [page, setPage]               = useState(1);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [sortKey, setSortKey] = useState<SortKey>('task_name');
+  const [sortDir, setSortDir] = useState<SortDir>('asc');
+  const [page, setPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(PAGE_SIZES[1]);
+  const [openNotes, setOpenNotes] = useState<string | null>(null);
 
   // Filter + sort
   const filtered = useMemo(() => {
@@ -94,20 +100,20 @@ export default function TaskTable({ tasks, onEdit, onDelete }: Props) {
 
     return [...list].sort((a, b) => {
       let av: string | number = '', bv: string | number = '';
-      if (sortKey === 'task_name')     { av = a.task_name.toLowerCase(); bv = b.task_name.toLowerCase(); }
+      if (sortKey === 'task_name') { av = a.task_name.toLowerCase(); bv = b.task_name.toLowerCase(); }
       if (sortKey === 'supplier_name') { av = (a.supplier_name ?? '').toLowerCase(); bv = (b.supplier_name ?? '').toLowerCase(); }
-      if (sortKey === 'category')      { av = a.category; bv = b.category; }
-      if (sortKey === 'status')        { av = a.status;   bv = b.status; }
-      if (sortKey === 'total_amount')  { av = Number(a.total_amount); bv = Number(b.total_amount); }
-      if (sortKey === 'due_date')      { av = a.due_date ?? '9999'; bv = b.due_date ?? '9999'; }
+      if (sortKey === 'category') { av = a.category; bv = b.category; }
+      if (sortKey === 'status') { av = a.status; bv = b.status; }
+      if (sortKey === 'total_amount') { av = Number(a.total_amount); bv = Number(b.total_amount); }
+      if (sortKey === 'due_date') { av = a.due_date ?? '9999'; bv = b.due_date ?? '9999'; }
       if (av < bv) return sortDir === 'asc' ? -1 : 1;
-      if (av > bv) return sortDir === 'asc' ?  1 : -1;
+      if (av > bv) return sortDir === 'asc' ? 1 : -1;
       return 0;
     });
   }, [tasks, search, statusFilter, categoryFilter, sortKey, sortDir]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / rowsPerPage));
-  const paginated  = filtered.slice((page - 1) * rowsPerPage, page * rowsPerPage);
+  const paginated = filtered.slice((page - 1) * rowsPerPage, page * rowsPerPage);
 
   function handleSort(key: SortKey) {
     if (sortKey === key) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
@@ -176,7 +182,7 @@ export default function TaskTable({ tasks, onEdit, onDelete }: Props) {
           value={rowsPerPage}
           onChange={e => { setRowsPerPage(Number(e.target.value)); setPage(1); }}
           sx={{ minWidth: 100 }}
-          label="שורות"
+          label="שורות בעמוד"
         >
           {PAGE_SIZES.map(s => <MenuItem key={s} value={s}>{s}</MenuItem>)}
         </TextField>
@@ -185,24 +191,25 @@ export default function TaskTable({ tasks, onEdit, onDelete }: Props) {
       {/* ─── Table ───────────────────── */}
       <TableContainer
         sx={{
-          borderRadius: 3,
+          borderRadius: 1.5,
+          backgroundColor: "rgba(255, 255, 255, 0.2)",
           boxShadow: '0 2px 16px rgba(0,0,0,0.07)',
-          border: '1px solid rgba(201,168,76,0.15)',
+          border: '1px solid rgba(201,168,76,0.25)',
           '& .MuiTableCell-root': { fontSize: '0.85rem' },
         }}
       >
         <Table stickyHeader size="small">
           <TableHead>
             <TableRow>
-              <SortCell colKey="task_name"    label="שם המשימה" />
+              <SortCell colKey="task_name" label="שם המשימה" />
               <SortCell colKey="supplier_name" label="ספק" />
-              <SortCell colKey="category"     label="קטגוריה" />
-              <SortCell colKey="status"       label="סטטוס" />
+              <SortCell colKey="category" label="קטגוריה" />
+              <SortCell colKey="status" label="סטטוס" />
               <TableCell sx={{ fontWeight: 700, whiteSpace: 'nowrap', bgcolor: 'rgba(201,168,76,0.08)' }}>מקדמה</TableCell>
               <TableCell sx={{ fontWeight: 700, whiteSpace: 'nowrap', bgcolor: 'rgba(201,168,76,0.08)' }}>שולם</TableCell>
               <SortCell colKey="total_amount" label="סה״כ" />
               <TableCell sx={{ fontWeight: 700, whiteSpace: 'nowrap', bgcolor: 'rgba(201,168,76,0.08)' }}>נותר</TableCell>
-              <SortCell colKey="due_date"     label="תאריך יעד" />
+              <SortCell colKey="due_date" label="תאריך יעד" />
               <TableCell sx={{ fontWeight: 700, bgcolor: 'rgba(201,168,76,0.08)' }}>הערות</TableCell>
               <TableCell sx={{ fontWeight: 700, bgcolor: 'rgba(201,168,76,0.08)', whiteSpace: 'nowrap' }}>טלפון ספק</TableCell>
               <TableCell sx={{ fontWeight: 700, bgcolor: 'rgba(201,168,76,0.08)' }}>פעולות</TableCell>
@@ -270,9 +277,28 @@ export default function TaskTable({ tasks, onEdit, onDelete }: Props) {
                         {fmtDate(task.due_date)}
                       </TableCell>
                       <TableCell sx={{ maxWidth: 140 }}>
-                        <Typography variant="body2" noWrap color="text.secondary" title={task.notes ?? ''}>
-                          {task.notes ?? '—'}
-                        </Typography>
+                        {task.notes ? (
+                          <Typography
+                            variant="body2"
+                            noWrap
+                            color="text.secondary"
+                            onClick={() => setOpenNotes(task.notes)}
+                            sx={{
+                              cursor: 'pointer',
+                              maxWidth: 140,
+                              transition: "all 0.2s ease-in-out",
+                              '&:hover': {
+                                color: 'primary.main',
+                              },
+                            }}
+                          >
+                            {task.notes}
+                          </Typography>
+                        ) : (
+                          <Typography variant="body2" color="text.secondary">
+                            —
+                          </Typography>
+                        )}
                       </TableCell>
                       <TableCell sx={{ whiteSpace: 'nowrap' }}>
                         {task.phone ? (
@@ -333,6 +359,39 @@ export default function TaskTable({ tasks, onEdit, onDelete }: Props) {
           />
         </Box>
       )}
+      <Dialog
+        open={openNotes !== null}
+        onClose={() => setOpenNotes(null)}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: 3,
+          },
+        }}
+      >
+        <DialogTitle>
+          הערות
+        </DialogTitle>
+
+        <DialogContent dividers>
+          <Typography
+            sx={{
+              whiteSpace: 'pre-wrap',
+              wordBreak: 'break-word',
+              lineHeight: 1.8,
+            }}
+          >
+            {openNotes}
+          </Typography>
+        </DialogContent>
+
+        <DialogActions>
+          <Button onClick={() => setOpenNotes(null)}>
+            סגור
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

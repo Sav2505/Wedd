@@ -19,8 +19,8 @@ import AttendanceStatusTab from './AttendanceStatusTab';
 
 const TABS = [
   { label: 'פרטי האירוע',  icon: <InfoOutlinedIcon sx={{ fontSize: 22 }} />,       component: <InfoTab /> },
-  { label: 'גלריה',         icon: <PhotoLibraryOutlinedIcon sx={{ fontSize: 22 }} />, component: <PhotosTab /> },
   { label: 'הושבה',         icon: <TableBarIcon sx={{ fontSize: 22 }} />,             component: <SeatingTab /> },
+  { label: 'גלריה',         icon: <PhotoLibraryOutlinedIcon sx={{ fontSize: 22 }} />, component: <PhotosTab /> },
   { label: 'מאיתנו אליכם',   icon: <FavoriteIcon sx={{ fontSize: 22 }} />,             component: <MessageTab /> },
   { label: 'סטטוס הגעה',    icon: <HowToRegIcon sx={{ fontSize: 22 }} />,              component: <AttendanceStatusTab /> },
 ] as const;
@@ -134,8 +134,8 @@ export default function MainLayout() {
               )}
             </Box>
 
-            {isCouple && (
-              <Tooltip title="יציאה">
+            {/* {isCouple && ( */}
+              <Tooltip title="התנתקות">
                 <IconButton
                   onClick={() => dispatch(logout())}
                   size="small"
@@ -149,7 +149,7 @@ export default function MainLayout() {
                   <LogoutIcon sx={{ fontSize: 18 }} />
                 </IconButton>
               </Tooltip>
-            )}
+            {/* )} */}
           </Box>
 
           {/* Tabs */}

@@ -18,10 +18,13 @@ import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
 import SaveOutlinedIcon from '@mui/icons-material/SaveOutlined';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import { motion, AnimatePresence } from 'framer-motion';
-
+import Switch from '@mui/material/Switch';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import PublicIcon from '@mui/icons-material/Public';
+import LockIcon from '@mui/icons-material/Lock';
 import FloorPlanCanvas from '../../components/FloorPlanCanvas';
 import { WeddingTableWithGuests } from '../../types/domain';
-import { getWeddingInfo, updateWeddingInfo } from '../../services/info.service';
+import { getWeddingInfo, updateWeddingInfo, updatePublishTables } from '../../services/info.service';
 import {
     getAllTables,
     createTable,
@@ -107,11 +110,14 @@ export default function SeatingEditor() {
         const stored = window.localStorage.getItem(ENTRANCE_POSITION_STORAGE_KEY);
         return stored === 'right' || stored === 'left' || stored === 'bottom' ? stored : 'bottom';
     });
+    const [isPublishedTables, setIsPublishedTables] = useState(false);
+    const [isSavingPublish, setIsSavingPublish] = useState(false);
 
     // ── Editable copy of selected table fields ──
     const [editLabel, setEditLabel] = useState('');
     const [editCap, setEditCap] = useState(10);
     const [guestToAdd, setGuestToAdd] = useState<UnassignedGuest | null>(null);
+    const [confirmedGuestToAdd, setConfirmedGuestToAdd] = useState<UnassignedGuest | null>(null);
 
     // ── Load data ─────────────────────────────────────────────
 
@@ -132,13 +138,13 @@ export default function SeatingEditor() {
                 const info = await getWeddingInfo();
                 if (info.stage_label?.trim()) {
                     setStageLabel(info.stage_label);
+                    setIsPublishedTables(info.is_tables_published);
                     window.localStorage.setItem(STAGE_LABEL_STORAGE_KEY, info.stage_label);
                 }
             } catch { /* non-critical, localStorage fallback already set */ }
         };
         init().finally(() => setLoading(false));
     }, [reload]);
-
     // ── Sync edit fields when selection changes ───────────────
 
     useEffect(() => {
@@ -152,6 +158,9 @@ export default function SeatingEditor() {
     // ── Helpers ───────────────────────────────────────────────
 
     const selectedTable = tables.find(t => t.id === selectedId) ?? null;
+    const confirmedUnassignedGuests = unassigned.filter(
+        g => g.rsvp_status === 'COMING'
+    );
 
     function nextTableNumber(): number {
         const used = new Set(tables.map(t => t.table_number));
@@ -185,6 +194,22 @@ export default function SeatingEditor() {
             setError('שגיאה בשמירת הכיתוב');
         } finally {
             setIsSavingLabel(false);
+        }
+    }
+
+    async function handleTogglePublishedTables() {
+        const nextValue = !isPublishedTables;
+
+        setIsPublishedTables(nextValue);
+        setIsSavingPublish(true);
+
+        try {
+            await updatePublishTables(nextValue);
+        } catch {
+            setIsPublishedTables(!nextValue);
+            setError('שגיאה בעדכון מצב פרסום ההושבה');
+        } finally {
+            setIsSavingPublish(false);
         }
     }
 
@@ -287,11 +312,18 @@ export default function SeatingEditor() {
     // ── Assign guest ──────────────────────────────────────────
 
     async function handleAssignGuest() {
-        if (!selectedId || !guestToAdd) return;
+        const guest = guestToAdd ?? confirmedGuestToAdd;
+
+        if (!selectedId || !guest) return;
+
         setIsSaving(true);
+
         try {
-            await assignGuest(selectedId, guestToAdd.id);
+            await assignGuest(selectedId, guest.id);
+
             setGuestToAdd(null);
+            setConfirmedGuestToAdd(null);
+
             await reload();
         } catch {
             setError('שגיאה בשיבוץ אורח');
@@ -425,6 +457,92 @@ export default function SeatingEditor() {
             </Box>
 
             {/* ── Floor Plan ─────────────────────────────────── */}
+            <Box
+                sx={{
+                    mb: 2,
+                    p: 2,
+                    borderRadius: 3,
+                    border: '1px solid rgba(201,168,76,0.22)',
+                    background:
+                        isPublishedTables
+                            ? 'linear-gradient(135deg,#F5FFF7,#ECF9F0)'
+                            : 'linear-gradient(135deg,#FFFDF8,#FAF4E8)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: 2,
+                    transition: 'all .25s',
+                }}
+            >
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                    <Box
+                        sx={{
+                            width: 44,
+                            height: 44,
+                            borderRadius: '50%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            background:
+                                isPublishedTables
+                                    ? 'rgba(76,175,80,.12)'
+                                    : 'rgba(201,168,76,.14)',
+                        }}
+                    >
+                        {isPublishedTables ? (
+                            <PublicIcon sx={{ color: '#2E7D32' }} />
+                        ) : (
+                            <LockIcon sx={{ color: '#9A7833' }} />
+                        )}
+                    </Box>
+
+                    <Box>
+                        <Typography
+                            sx={{
+                                fontWeight: 700,
+                                color: '#2C1810',
+                                fontSize: '1rem',
+                            }}
+                        >
+                            מצב הצגת סידור ההושבה לאורחים
+                        </Typography>
+
+                        <Typography
+                            variant="body2"
+                            sx={{
+                                color: '#8A7A69',
+                                mt: .2,
+                            }}
+                        >
+                            {isPublishedTables
+                                ? 'האורחים יכולים לצפות בסידור השולחנות.'
+                                : 'סידור השולחנות מוסתר כרגע מהאורחים.'}
+                        </Typography>
+                    </Box>
+                </Box>
+                <Tooltip title={isPublishedTables ? 'הסתר סידור ההושבה מהאורחים' : 'אפשר צפייה בסידור ההושבה לאורחים'}>
+                    <FormControlLabel
+                        sx={{ m: 0 }}
+                        control={
+                            <Switch
+                                checked={isPublishedTables}
+                                disabled={isSavingPublish}
+                                onChange={handleTogglePublishedTables}
+                                color="success"
+                                sx={{
+                                    '& .MuiSwitch-switchBase.Mui-checked': {
+                                        color: '#4CAF50',
+                                    },
+                                    '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                                        backgroundColor: '#66BB6A',
+                                    },
+                                }}
+                            />
+                        }
+                        label=""
+                    />
+                </Tooltip>
+            </Box>
             <Box sx={{ mb: 2, mt: 3, display: 'flex', justifyContent: 'flex-start', gap: 1.25, flexWrap: 'wrap', alignItems: 'center' }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
                     <TextField
@@ -709,48 +827,123 @@ export default function SeatingEditor() {
                                     )}
                                 </Box>
 
-                                {/* Add guest autocomplete */}
-                                {selectedTable.guests.reduce((s, g) => s + getEffectivePartySize(g), 0) < selectedTable.capacity && unassigned.length > 0 && (
-                                    <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-start' }}>
-                                        <Autocomplete<UnassignedGuest>
-                                            options={unassigned}
-                                            getOptionLabel={o => {
-                                                const plus = getEffectivePlusCount(o);
-                                                if (getEffectivePartySize(o) === 0) return `${o.full_name} (לא מגיע)`;
-                                                return plus > 0 ? `${o.full_name} (+${plus})` : o.full_name;
-                                            }}
-                                            value={guestToAdd}
-                                            onChange={(_, v) => setGuestToAdd(v)}
-                                            size="small"
-                                            sx={{ flex: 1 }}
-                                            renderInput={params => (
-                                                <TextField {...params} label="הוסף מוזמן" placeholder="חיפוש לפי שם…" />
-                                            )}
-                                            noOptionsText="לא נמצאו אורחים ללא שולחן"
-                                        />
-                                        <Button
-                                            variant="contained"
-                                            size="small"
-                                            onClick={handleAssignGuest}
-                                            disabled={!guestToAdd || isSaving}
-                                            sx={{
-                                                background: 'linear-gradient(135deg, #E0C97A, #C9A84C)',
-                                                color: '#2C1810',
-                                                fontWeight: 700,
-                                                mt: '2px',
-                                                '&:hover': { background: 'linear-gradient(135deg, #E8D490, #D4A855)' },
-                                                '&:disabled': { background: 'rgba(201,168,76,0.25)', color: '#B0A090' },
-                                            }}
-                                        >
-                                            שבץ
-                                        </Button>
-                                    </Box>
-                                )}
+                                {/* Add guest autocompletes */}
+                                {selectedTable.guests.reduce((s, g) => s + getEffectivePartySize(g), 0) < selectedTable.capacity && (
+                                    <>
+                                        {confirmedUnassignedGuests.length > 0 && (
+                                            <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-start' }}>
+                                                <Autocomplete<UnassignedGuest>
+                                                    options={confirmedUnassignedGuests}
+                                                    getOptionLabel={o => {
+                                                        const plus = getEffectivePlusCount(o);
 
-                                {unassigned.length === 0 && selectedTable.guests.reduce((s, g) => s + getEffectivePartySize(g), 0) < selectedTable.capacity && (
-                                    <Typography variant="caption" sx={{ color: '#B8A898', fontStyle: 'italic' }}>
-                                        כל המוזמנים שובצו לשולחן 🎉
-                                    </Typography>
+                                                        if (getEffectivePartySize(o) === 0)
+                                                            return `${o.full_name} (לא מגיע)`;
+
+                                                        return plus > 0
+                                                            ? `${o.full_name} (+${plus})`
+                                                            : o.full_name;
+                                                    }}
+                                                    value={confirmedGuestToAdd}
+                                                    onChange={(_, v) => setConfirmedGuestToAdd(v)}
+                                                    size="small"
+                                                    sx={{ flex: '1 1 0' }}
+                                                    renderInput={params => (
+                                                        <TextField
+                                                            {...params}
+                                                            label="הוסף מוזמן מאושר"
+                                                            placeholder="חיפוש לפי שם…"
+                                                        />
+                                                    )}
+                                                    noOptionsText="אין מוזמנים מאושרים ללא שולחן"
+                                                />
+
+                                                <Button
+                                                    variant="contained"
+                                                    size="small"
+                                                    onClick={handleAssignGuest}
+                                                    disabled={!confirmedGuestToAdd || isSaving}
+                                                    sx={{
+                                                        minWidth: 70,
+                                                        height: 40,
+                                                        flexShrink: 0,
+                                                        background: 'linear-gradient(135deg, #6CBF7D, #4CAF50)',
+                                                        color: '#fff',
+                                                        fontWeight: 700,
+                                                        '&:hover': {
+                                                            background: 'linear-gradient(135deg, #74C986, #43A047)',
+                                                        },
+                                                        '&:disabled': {
+                                                            background: 'rgba(76,175,80,0.2)',
+                                                            color: '#A5A5A5',
+                                                        },
+                                                    }}
+                                                >
+                                                    שבץ
+                                                </Button>
+                                            </Box>
+                                        )}
+                                        {unassigned.length > 0 && (
+                                            <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-start' }}>
+                                                <Autocomplete<UnassignedGuest>
+                                                    options={unassigned}
+                                                    getOptionLabel={o => {
+                                                        const plus = getEffectivePlusCount(o);
+                                                        if (getEffectivePartySize(o) === 0) return `${o.full_name} (לא מגיע)`;
+                                                        return plus > 0 ? `${o.full_name} (+${plus})` : o.full_name;
+                                                    }}
+                                                    value={guestToAdd}
+                                                    onChange={(_, v) => setGuestToAdd(v)}
+                                                    size="small"
+                                                    sx={{ flex: '1 1 0' }}
+                                                    renderInput={params => (
+                                                        <TextField
+                                                            {...params}
+                                                            label="הוסף מוזמן שטרם אישר"
+                                                            placeholder="חיפוש לפי שם…"
+                                                        />
+                                                    )}
+                                                    noOptionsText="לא נמצאו אורחים ללא שולחן"
+                                                />
+
+                                                <Button
+                                                    variant="contained"
+                                                    size="small"
+                                                    onClick={handleAssignGuest}
+                                                    disabled={!guestToAdd || isSaving}
+                                                    sx={{
+                                                        minWidth: 70,
+                                                        height: 40,
+                                                        flexShrink: 0,
+                                                        background: 'linear-gradient(135deg, #E0C97A, #C9A84C)',
+                                                        color: '#2C1810',
+                                                        fontWeight: 700,
+                                                        '&:hover': {
+                                                            background: 'linear-gradient(135deg, #E8D490, #D4A855)',
+                                                        },
+                                                        '&:disabled': {
+                                                            background: 'rgba(201,168,76,0.25)',
+                                                            color: '#B0A090',
+                                                        },
+                                                    }}
+                                                >
+                                                    שבץ
+                                                </Button>
+                                            </Box>
+                                        )}
+
+                                        {unassigned.length === 0 && confirmedUnassignedGuests.length === 0 && (
+                                            <Typography
+                                                variant="caption"
+                                                sx={{
+                                                    color: '#B8A898',
+                                                    fontStyle: 'italic',
+                                                }}
+                                            >
+                                                כל המוזמנים שובצו לשולחן 🎉
+                                            </Typography>
+                                        )}
+                                    </>
                                 )}
                             </Box>
                         </Box>

@@ -5,7 +5,7 @@ import { getEffectivePartySize } from '../utils/effectiveAttendance';
 
 // ─── Types ───────────────────────────────────────────────────
 
-const TABLE_MIN_WIDTH = 35;
+const TABLE_MIN_WIDTH = 38;
 const TABLE_RECT_MIN_WIDTH = 78;
 const TABLE_RECT_MIN_HEIGHT = 30;
 
@@ -236,7 +236,7 @@ export default function FloorPlanCanvas({
               transform: 'translate(-50%, -50%)',
               width: isRect ? (isPortrait ? `min(${TABLE_RECT_MIN_HEIGHT}px, 10%)` : `min(${TABLE_RECT_MIN_WIDTH}px, 20%)`) : `min(${TABLE_MIN_WIDTH}px, 10%)`,
               height: isRect ? (isPortrait ? `min(${TABLE_RECT_MIN_WIDTH}px, 20%)` : `min(${TABLE_RECT_MIN_HEIGHT}px, 10%)`) : undefined,
-              minWidth: isRect ? (isPortrait ? 22 : `max(${TABLE_RECT_MIN_WIDTH}px, 20%)`) : TABLE_MIN_WIDTH,
+              minWidth: isRect ? (isPortrait ? 22 : `max(${TABLE_RECT_MIN_WIDTH}px, 20%)`) : `min(${TABLE_MIN_WIDTH}px, 10%)`,
               aspectRatio: isRect ? 'unset' : '1 / 1',
               borderRadius: isRect ? '7px' : table.shape === 'square' ? '16%' : '50%',
               background: isOwn

@@ -31,3 +31,18 @@ export async function uploadHeroImage(file: File): Promise<WeddingInfo> {
   if (!data.success || !data.data) throw new Error(data.message ?? 'שגיאה בהעלאת התמונה');
   return data.data;
 }
+
+export async function updatePublishTables(isPublishedTables: boolean): Promise<WeddingInfo> {
+  const { data } = await api.put<ApiResponse<WeddingInfo>>(
+    '/info/update-publish-tables',
+    {
+      is_published_tables: isPublishedTables,
+    }
+  );
+
+  if (!data.success || !data.data) {
+    throw new Error(data.message ?? 'שגיאה בעדכון מצב פרסום ההושבה');
+  }
+
+  return data.data;
+}

@@ -990,18 +990,18 @@ const GroupAccordionItem = memo(function GroupAccordionItem({
             />
           </Box>
           {/* Actions */}
-          <Box sx={{ display: 'flex', alignItems: 'center', flexShrink: 0, width: 118, justifyContent: 'flex-end' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', flexShrink: 0, width: 120, justifyContent: 'flex-end' }}>
             {!isUngrouped && group && (
               <>
                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
                   <Tooltip title="עריכת שם קבוצה">
                     <IconButton size="small" onClick={(e) => { e.stopPropagation(); onEditGroup?.(group); }}>
-                      <EditIcon sx={{ fontSize: 14, color: '#A08070' }} />
+                      <EditIcon sx={{ fontSize: 16, color: '#A08070' }} />
                     </IconButton>
                   </Tooltip>
                   <Tooltip title="מחיקת קבוצה">
                     <IconButton size="small" onClick={(e) => { e.stopPropagation(); onDeleteGroup?.(groupId); }}>
-                      <DeleteOutlineIcon sx={{ fontSize: 14, color: '#C04040' }} />
+                      <DeleteOutlineIcon sx={{ fontSize: 16, color: '#C04040' }} />
                     </IconButton>
                   </Tooltip>
                 </Box>
@@ -1011,7 +1011,7 @@ const GroupAccordionItem = memo(function GroupAccordionItem({
             <Button
               size="small"
               onClick={handleCreateGuest}
-              sx={{ color: '#9A7833', fontWeight: 700, fontSize: '0.7rem', minWidth: 0, px: 0.5, lineHeight: 1 }}
+              sx={{ color: '#9A7833', fontWeight: 700, fontSize: '0.75rem', minWidth: 0, px: 0.7, lineHeight: 1 }}
             >
               + אורח
             </Button>
@@ -1117,7 +1117,7 @@ const GuestRow = memo(function GuestRow({
           </Stack>
         </Box>
 
-        <Stack direction="row" spacing={0.3}>
+        <Stack direction="row" spacing={0.32}>
           <Tooltip title="שליחת הזמנה">
             <Button
               size="small"
@@ -1143,17 +1143,17 @@ const GuestRow = memo(function GuestRow({
           </Tooltip>
           <Tooltip title="העתק קישור כניסה">
             <IconButton size="small" onClick={handleCopyLink}>
-              <LinkIcon sx={{ fontSize: 17, color: copied ? '#4caf50' : '#A08070' }} />
+              <LinkIcon sx={{ fontSize: 18, color: copied ? '#4caf50' : '#A08070' }} />
             </IconButton>
           </Tooltip>
           <Tooltip title="עריכה">
             <IconButton size="small" onClick={() => onEdit(guest)}>
-              <EditIcon sx={{ fontSize: 17, color: '#A08070' }} />
+              <EditIcon sx={{ fontSize: 18, color: '#A08070' }} />
             </IconButton>
           </Tooltip>
           <Tooltip title="מחיקה">
             <IconButton size="small" onClick={() => onDelete(guest.id)}>
-              <DeleteOutlineIcon sx={{ fontSize: 17, color: '#C04040' }} />
+              <DeleteOutlineIcon sx={{ fontSize: 18, color: '#C04040' }} />
             </IconButton>
           </Tooltip>
         </Stack>

@@ -5,6 +5,10 @@ import { getEffectivePartySize } from '../utils/effectiveAttendance';
 
 // ─── Types ───────────────────────────────────────────────────
 
+const TABLE_MIN_WIDTH = 35;
+const TABLE_RECT_MIN_WIDTH = 78;
+const TABLE_RECT_MIN_HEIGHT = 27;
+
 export interface FloorPlanCanvasProps {
   tables: WeddingTableWithGuests[];
   /** Table number of the logged-in guest (null = editor / no highlight) */
@@ -146,8 +150,8 @@ export default function FloorPlanCanvas({
       sx={{
         position: 'relative',
         width: '100%',
-        aspectRatio: '8/5',
-        borderRadius: 3,
+        aspectRatio: '8/7',
+        borderRadius: 2,
         overflow: 'hidden',
         background: 'linear-gradient(145deg, #FDFAF3 0%, #F9EDD8 55%, #F3E4C6 100%)',
         border: '2px solid rgba(201,168,76,0.35)',
@@ -228,11 +232,10 @@ export default function FloorPlanCanvas({
             sx={{
               position: 'absolute',
               transform: 'translate(-50%, -50%)',
-              width: isRect ? (isPortrait ? 'min(36px, 6.5%)' : 'min(100px, 18%)') : 'min(58px, 10.5%)',
-              height: isRect ? (isPortrait ? 'min(100px, 18%)' : 'min(36px, 6.5%)') : undefined,
-              minWidth: isRect ? (isPortrait ? 22 : 54) : 38,
+              width: isRect ? (isPortrait ? `min(${TABLE_RECT_MIN_HEIGHT}px)` : `min(${TABLE_RECT_MIN_WIDTH}px)`) : `min(${TABLE_MIN_WIDTH}px)`,
+              height: isRect ? (isPortrait ? `min(${TABLE_RECT_MIN_WIDTH}px)` : `min(${TABLE_RECT_MIN_HEIGHT}px)`) : undefined,
               aspectRatio: isRect ? 'unset' : '1 / 1',
-              borderRadius: isRect ? '8px' : table.shape === 'square' ? '18%' : '50%',
+              borderRadius: isRect ? '7px' : table.shape === 'square' ? '16%' : '50%',
               background: isOwn
                 ? 'linear-gradient(135deg, #E0C97A 0%, #C9A84C 100%)'
                 : isWarning
@@ -284,7 +287,7 @@ export default function FloorPlanCanvas({
 
             {/* Table number */}
             <Typography sx={{
-              fontSize: 'clamp(0.62rem, 1.8vw, 0.84rem)',
+              fontSize: 'clamp(0.64rem, 1.82vw, 0.85rem)',
               fontWeight: 800,
               color: isOwn ? '#FAF7F2' : isWarning ? '#a3392f' : '#2C1810',
               lineHeight: 1,
@@ -296,7 +299,7 @@ export default function FloorPlanCanvas({
             {/* Seat fill ratio — shown on regular tables that have guests */}
             {!isOwn && table.capacity > 0 && (
               <Typography sx={{
-                fontSize: 'clamp(0.4rem, 1vw, 0.46rem)',
+                fontSize: 'clamp(0.425rem, 1vw, 0.46rem)',
                 color: isWarning ? 'rgba(163,57,47,0.75)' : 'rgba(154,120,51,0.65)',
                 lineHeight: 1,
               }}>

@@ -86,12 +86,12 @@ export default function SeatingTab() {
               מפת הושבה
             </Typography>
             <Typography variant="body2" sx={{ color: '#A08070', mt: 0.25 }}>
-              לחץ על שולחן כדי לראות את יושביו
+              {isTablesPublished ? `לחץ על שולחן כדי לראות את יושביו` : 'סידורי ההושבה טרם הושלמו'}
             </Typography>
           </Box>
 
           {/* Own table badge */}
-          {guest?.table_number ? (
+          {isTablesPublished && guest?.table_number ? (
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <Typography variant="body2" sx={{ color: '#A08070', whiteSpace: 'nowrap' }}>
                 השולחן שלך:

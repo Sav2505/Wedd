@@ -60,7 +60,7 @@ export default function SeatingTab() {
 
   function handleSelectTable(id: string) {
     const t = tables.find(t => t.id === id);
-    if (t) setDialogTable(t);
+    if (t && t?.table_number === guest?.table_number) setDialogTable(t);
   }
 
   // ── Render ────────────────────────────────────────────────
@@ -86,7 +86,7 @@ export default function SeatingTab() {
               מפת הושבה
             </Typography>
             <Typography variant="body2" sx={{ color: '#A08070', mt: 0.25 }}>
-              {isTablesPublished ? `לחץ על שולחן כדי לראות את יושביו` : 'סידורי ההושבה טרם הושלמו'}
+              {isTablesPublished ? `לחץ על שולחנך כדי לראות את יושביו` : 'סידורי ההושבה טרם הושלמו'}
             </Typography>
           </Box>
 
@@ -374,7 +374,7 @@ export default function SeatingTab() {
                         </ListItemIcon>
                         <ListItemText
                           primary={g.full_name}
-                          secondary={isMe ? 'את / אתה' : undefined}
+                          secondary={isMe ? 'אני' : undefined}
                           primaryTypographyProps={{
                             fontSize: '0.88rem',
                             fontWeight: isMe ? 700 : 400,

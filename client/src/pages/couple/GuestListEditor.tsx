@@ -35,10 +35,11 @@ import RemoveCircleOutlineIcon from '@mui/icons-material/RemoveCircleOutline';
 import PeopleAltIcon from '@mui/icons-material/PeopleAlt';
 import LinkIcon from '@mui/icons-material/Link';
 import WhatsAppIcon from '@mui/icons-material/WhatsApp';
+import DownloadIcon from '@mui/icons-material/Download';
 import CloseIcon from '@mui/icons-material/Close';
+import { exportGuestsToExcel } from '../../utils/exportGuestsToExcel';
 import { buildGuestUrl } from '../../utils/guestUrl';
 import { getEffectivePartySize, getEffectivePlusCount, getInvitedPartySize } from '../../utils/effectiveAttendance';
-
 import { GuestGroup, ManagedGuest, RsvpStatus } from '../../types/domain';
 import {
   createGuest,
@@ -482,6 +483,16 @@ export default function GuestListEditor() {
     }
   }
 
+  const handleExportExcel = () => {
+    exportGuestsToExcel(allGuests, info ? `${info?.bride_name} & ${info?.groom_name}` : "", {
+      totalGuests: allGuests.length,
+      totalPeople: rsvpSummary.effectiveTotalPeople,
+      coming: rsvpSummary.coming,
+      notComing: rsvpSummary.notComing,
+      pending: rsvpSummary.pending,
+    });
+  };
+
   if (loading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
@@ -578,6 +589,23 @@ export default function GuestListEditor() {
             <MenuItem value="COMING">מגיעים</MenuItem>
             <MenuItem value="NOT_COMING">לא מגיעים</MenuItem>
           </TextField>
+          <Button
+            variant="contained"
+            startIcon={<DownloadIcon />}
+            onClick={handleExportExcel}
+            sx={{
+              background: 'linear-gradient(135deg,#217346,#2ea043)',
+              color: '#fff',
+              fontWeight: 700,
+              fontSize: '13px',
+              padding: "6px 16px",
+              '&:hover': {
+                background: 'linear-gradient(135deg,#1b5f39,#24843a)',
+              },
+            }}
+          >
+            ייצוא לאקסל
+          </Button>
         </Stack>
 
         <Stack direction="row" spacing={0} mt={1.2} gap={1} ml={1} mb={0.2} flexWrap="wrap">

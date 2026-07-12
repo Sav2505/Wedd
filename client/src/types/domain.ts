@@ -49,7 +49,7 @@ export interface ApiResponse<T = undefined> {
 export interface LoginRequest {
   fullName: string;
   lastFourDigits: string;
-  weddingId: number;
+  weddingId: string;
 }
 
 export interface LoginResponse {

@@ -152,7 +152,7 @@ export default function LoginPage() {
 
     setLoading(true);
     try {
-      const { guest } = await login({ fullName: fullName.trim(), lastFourDigits, weddingId: autoCreds?.weddingId ?? -1 });
+      const { guest } = await login({ fullName: fullName.trim(), lastFourDigits, weddingId: String(autoCreds?.weddingId) ?? "" });
       dispatch(setGuest(guest));
       navigate('/', { replace: true });
     } catch (err) {

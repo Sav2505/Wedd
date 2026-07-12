@@ -1,14 +1,15 @@
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import LoginPage    from './pages/LoginPage';
-import MainLayout   from './pages/MainLayout';
+import LoginPage from './pages/LoginPage';
+import MainLayout from './pages/MainLayout';
 import CoupleLayout from './pages/CoupleLayout';
 import { useAppSelector } from './store';
 import { parseGuestParams } from './utils/guestUrl';
+import WeddingRegisterPage from './pages/WeddingRegisterPage';
 
 export default function App() {
   const isAuthenticated = useAppSelector((s) => s.auth.isAuthenticated);
-  const role            = useAppSelector((s) => s.auth.guest?.role);
-  const location        = useLocation();
+  const role = useAppSelector((s) => s.auth.guest?.role);
+  const location = useLocation();
 
   const HomeLayout = role === 'couple' ? <CoupleLayout /> : <MainLayout />;
 
@@ -26,6 +27,7 @@ export default function App() {
         path="/*"
         element={isAuthenticated && !hasGuestParams ? HomeLayout : <Navigate to={loginRedirect} replace />}
       />
+      <Route path="/register" element={<WeddingRegisterPage />} />
     </Routes>
   );
 }

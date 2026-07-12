@@ -9,6 +9,7 @@ import photosRoutes from './routes/photos.routes';
 import tablesRoutes from './routes/tables.routes';
 import guestsRoutes from './routes/guests.routes';
 import tasksRoutes from './routes/tasks.routes';
+import requestRoutes from './routes/weddingRequest.routes';
 import { pool } from './db/pool';
 
 import { errorHandler, notFound } from './middleware/errorHandler';
@@ -81,6 +82,7 @@ app.use('/photos', photosRoutes);
 app.use('/tables', tablesRoutes);
 app.use('/guests', guestsRoutes);
 app.use('/tasks', tasksRoutes);
+app.use('/wedding-requests', requestRoutes);
 
 // ─────────────────────────────────────────────────────────────
 // Health Check

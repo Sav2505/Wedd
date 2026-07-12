@@ -111,6 +111,15 @@ export interface WeddingTableWithGuests extends WeddingTable {
   }>;
 }
 
+export interface WeddingRequest {
+  id: number;
+  bride_name: string;
+  groom_name: string;
+  wedding_date: string;
+  status: 'new' | 'confirmed' | 'cancelled';
+  updated_at: string;
+}
+
 // ─── Tasks ───────────────────────────────────────────────────
 
 export type TaskStatus = 'not_started' | 'in_progress' | 'waiting' | 'completed' | 'cancelled';

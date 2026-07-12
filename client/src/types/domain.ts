@@ -56,6 +56,15 @@ export interface LoginResponse {
   guest: Guest;
 }
 
+export interface WeddingRequest {
+  id: number;
+  bride_name: string;
+  groom_name: string;
+  wedding_date: string;
+  status: 'new' | 'confirmed' | 'cancelled';
+  updated_at: string;
+}
+
 // ─── Seating ──────────────────────────────────────────────────
 
 export interface WeddingTable {

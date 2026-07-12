@@ -60,3 +60,16 @@ CREATE TABLE IF NOT EXISTS wedding_info (
   updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   CONSTRAINT single_row CHECK (id = 1)
 );
+
+-- ============================================================
+-- TABLE: wedding_requests
+-- (single-row configuration for the wedding requests and statuses)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS wedding_requests (
+  id              SERIAL      PRIMARY KEY,
+  bride_name      TEXT        NOT NULL DEFAULT 'הכלה',
+  groom_name      TEXT        NOT NULL DEFAULT 'החתן',
+  wedding_date    DATE        NOT NULL,
+  status          TEXT        NOT NULL DEFAULT 'new' CONSTRAINT chk_wedding_requests_status CHECK (status IN ('new', 'confirmed', 'cancelled')),
+  updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+);

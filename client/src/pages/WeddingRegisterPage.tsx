@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import {
   Box,
   TextField,
@@ -8,19 +8,15 @@ import {
   CircularProgress,
   InputAdornment,
 } from '@mui/material';
-import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
-import PhoneAndroidIcon from '@mui/icons-material/PhoneAndroid';
+import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
+import EventIcon from '@mui/icons-material/Event';
+import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useAppDispatch } from '../store';
-import { logout, setGuest } from '../store/authSlice';
-import { login } from '../services/auth.service';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import FallingPetals from '../components/FallingPetals';
-import DramaticWelcomeScreen from '../components/DramaticWelcomeScreen';
-import { parseGuestParams } from '../utils/guestUrl';
-import WeddingRegisterCTA from '../components/WeddingRegisterCTA';
+import { createWeddingRequest } from '../services/weddingRequest.service';
 
-// ─── Decorative SVG ring ────────────────────────────────────
+// ─── Decorative SVG ring (identical to LoginPage) ──────────
 
 function RingsIcon() {
   return (
@@ -50,7 +46,7 @@ function RingsIcon() {
   );
 }
 
-// ─── Floating floral decoration ────────────────────────────
+// ─── Floating floral decoration (identical to LoginPage) ───
 
 function FloralDecor({ top, right, left, bottom, size = 180, opacity = 0.12, rotate = 0 }: {
   top?: string | number; right?: string | number;
@@ -76,7 +72,7 @@ function FloralDecor({ top, right, left, bottom, size = 180, opacity = 0.12, rot
   );
 }
 
-// ─── Animation variants ─────────────────────────────────────
+// ─── Animation variants (identical to LoginPage) ───────────
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -101,76 +97,43 @@ const cardVariants = {
 
 // ─── Component ──────────────────────────────────────────────
 
-export default function LoginPage() {
-  const dispatch = useAppDispatch();
+export default function WeddingRegisterPage() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const autoCreds = useMemo(() => parseGuestParams(searchParams), [searchParams]);
-  const hasAutoParams = Boolean(autoCreds);
-  const greetingName = useMemo(() => autoCreds?.fullName.trim().split(/\s+/)[0] ?? '', [autoCreds]);
 
-  const [fullName, setFullName] = useState('');
-  const [lastFourDigits, setLastFourDigits] = useState('');
+  const [brideName, setBrideName] = useState('');
+  const [groomName, setGroomName] = useState('');
+  const [weddingDate, setWeddingDate] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(hasAutoParams);
-  const [showWelcomeScreen, setShowWelcomeScreen] = useState(false);
-
-  // ─── Auto-login from URL params (?n=<name>&p=<last4>) ──────
-  useEffect(() => {
-    if (!autoCreds) return;
-
-    dispatch(logout());
-    setLoading(true);
-    setError(null);
-
-    login({ fullName: autoCreds.fullName, lastFourDigits: autoCreds.lastFourDigits, weddingId: autoCreds.weddingId })
-      .then(({ guest }) => {
-        dispatch(setGuest(guest));
-        if (guest.role === 'guest' && guest.rsvp_status === 'PENDING') {
-          sessionStorage.setItem('wedding.forceRsvpGuestId', guest.id);
-        }
-        setShowWelcomeScreen(true);
-      })
-      .catch((err) => {
-        navigate('/login', { replace: true });
-        setError(err instanceof Error ? err.message : 'שגיאה בהתחברות אוטומטית');
-      })
-      .finally(() => setLoading(false));
-  }, [autoCreds, dispatch, navigate]);
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
-    if (!fullName.trim()) {
-      setError('נא להזין שם מלא');
+    if (!brideName.trim() || !groomName.trim()) {
+      setError('נא להזין את שמות בני הזוג');
       return;
     }
-    if (!/^\d{4}$/.test(lastFourDigits)) {
-      setError('נא להזין 4 ספרות בלבד');
+    if (!weddingDate) {
+      setError('נא לבחור תאריך לחתונה');
       return;
     }
 
     setLoading(true);
     try {
-      const { guest } = await login({ fullName: fullName.trim(), lastFourDigits, weddingId: String(autoCreds?.weddingId) ?? "" });
-      dispatch(setGuest(guest));
-      navigate('/', { replace: true });
+      await createWeddingRequest({
+        bride_name: brideName.trim(),
+        groom_name: groomName.trim(),
+        wedding_date: weddingDate,
+      });
+      setSuccess(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'שגיאה בהתחברות');
+      setError(err instanceof Error ? err.message : 'שגיאה בשליחת הבקשה');
     } finally {
       setLoading(false);
     }
   };
-
-  if (hasAutoParams && showWelcomeScreen) {
-    return (
-      <DramaticWelcomeScreen
-        firstName={greetingName || 'אורח יקר'}
-        onComplete={() => navigate('/', { replace: true })}
-      />
-    );
-  }
 
   return (
     <Box
@@ -216,15 +179,11 @@ export default function LoginPage() {
             boxShadow:
               '0 4px 24px rgba(44,24,16,0.08), 0 20px 60px rgba(44,24,16,0.10)',
             p: { xs: 4, sm: 5 },
-            maxHeight: "94vh"
+            maxHeight: '94vh',
           }}
         >
-          <motion.div
-            variants={containerVariants}
-            initial="hidden"
-            animate="show"
-          >
-            {/* Rings icon */}
+          <motion.div variants={containerVariants} initial="hidden" animate="show">
+            {/* Icon */}
             <motion.div variants={itemVariants}>
               <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
                 <motion.div
@@ -249,7 +208,7 @@ export default function LoginPage() {
                   letterSpacing: '0.01em',
                 }}
               >
-                ברוכים הבאים
+                רוצים מערכת כזאת?
               </Typography>
               <Typography
                 variant="subtitle1"
@@ -261,28 +220,20 @@ export default function LoginPage() {
                   mb: 3,
                 }}
               >
-                לחתונה שלנו 💍
+                גם לחתונה שלכם 💍
               </Typography>
             </motion.div>
 
             {/* Divider */}
             <motion.div variants={itemVariants}>
-              <Box
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 1.5,
-                  mb: 3.5,
-                }}
-              >
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 3.5 }}>
                 <Box sx={{ flex: 1, height: '1px', background: 'rgba(201,168,76,0.25)' }} />
                 <Typography sx={{ color: '#C9A84C', fontSize: '1.1rem' }}>✦</Typography>
                 <Box sx={{ flex: 1, height: '1px', background: 'rgba(201,168,76,0.25)' }} />
               </Box>
             </motion.div>
 
-            {/* Auto-login loading experience */}
-            {hasAutoParams && loading ? (
+            {success ? (
               <motion.div
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -292,60 +243,46 @@ export default function LoginPage() {
                   sx={{
                     mt: 1,
                     mb: 1,
-                    p: 2.2,
+                    p: 2.6,
                     direction: 'rtl',
                     borderRadius: 3,
+                    textAlign: 'center',
                     background:
                       'linear-gradient(135deg, rgba(224,201,122,0.20) 0%, rgba(255,255,255,0.82) 45%, rgba(201,168,76,0.16) 100%)',
                     border: '1px solid rgba(201,168,76,0.26)',
                     boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.75), 0 8px 24px rgba(154,120,51,0.10)',
                   }}
                 >
+                  <motion.div
+                    animate={{ scale: [1, 1.12, 1] }}
+                    transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}
+                  >
+                    <Typography sx={{ fontSize: '2.4rem' }}>🎉</Typography>
+                  </motion.div>
                   <Typography
-                    align="center"
                     sx={{
                       fontFamily: "'Frank Ruhl Libre', serif",
                       fontSize: { xs: '1.1rem', sm: '1.25rem' },
                       fontWeight: 700,
                       color: '#2C1810',
+                      mt: 1,
                     }}
                   >
-                    מיד תחוברו לחוויה
+                    הבקשה נשלחה בהצלחה!
                   </Typography>
-                  <Typography align="center" sx={{ mt: 0.6, color: '#8A6A2B', fontSize: '0.92rem' }}>
-                    ✨ טוענים את החגיגה
+                  <Typography sx={{ mt: 0.8, color: '#8A6A2B', fontSize: '0.92rem', lineHeight: 1.7 }}>
+                    ניצור איתכם קשר בהקדם כדי להקים
+                    <br />
+                    את מערכת החתונה שלכם ✨
                   </Typography>
 
-                  <Box sx={{ mt: 2.1, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 1.5, dir: "rtl" }}>
-                    <motion.div
-                      animate={{ scale: [1, 1.08, 1], opacity: [0.7, 1, 0.7] }}
-                      transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
-                    >
-                      <CircularProgress size={34} thickness={4.2} sx={{ color: '#C9A84C' }} />
-                    </motion.div>
-                    <motion.div
-                      animate={{ x: [0, 6, 0] }}
-                      transition={{ duration: 1.4, repeat: Infinity, ease: 'easeInOut' }}
-                    >
-                      <Typography sx={{ color: '#A08070', fontWeight: 600, letterSpacing: '0.03em' }}>
-                        ..מתחברים
-                      </Typography>
-                    </motion.div>
-                  </Box>
-
-                  <Box sx={{ mt: 2, height: 6, borderRadius: 999, overflow: 'hidden', bgcolor: 'rgba(201,168,76,0.16)' }}>
-                    <motion.div
-                      initial={{ x: '100%' }}
-                      animate={{ x: '-100%' }}
-                      transition={{ duration: 1.8, repeat: Infinity, ease: 'linear' }}
-                      style={{
-                        width: '45%',
-                        height: '100%',
-                        borderRadius: 999,
-                        background: 'linear-gradient(90deg, rgba(201,168,76,0.25), #C9A84C, rgba(201,168,76,0.2))',
-                      }}
-                    />
-                  </Box>
+                  <Button
+                    variant="text"
+                    onClick={() => navigate('/login')}
+                    sx={{ mt: 2.4, color: '#C9A84C', fontWeight: 600 }}
+                  >
+                    חזרה למסך הכניסה
+                  </Button>
                 </Box>
               </motion.div>
             ) : (
@@ -355,16 +292,16 @@ export default function LoginPage() {
                   <motion.div variants={itemVariants}>
                     <TextField
                       fullWidth
-                      label="שם מלא"
-                      placeholder="לדוגמה: ישראל ישראלי"
-                      value={fullName}
-                      onChange={(e) => setFullName(e.target.value)}
+                      label="שם הכלה"
+                      placeholder="לדוגמה: מיכל"
+                      value={brideName}
+                      onChange={(e) => setBrideName(e.target.value)}
                       disabled={loading}
-                      autoComplete="name"
+                      autoComplete="off"
                       InputProps={{
                         endAdornment: (
                           <InputAdornment position="end">
-                            <PersonOutlineIcon sx={{ color: 'rgba(201,168,76,0.7)', fontSize: 20 }} />
+                            <FavoriteBorderIcon sx={{ color: 'rgba(201,168,76,0.7)', fontSize: 20 }} />
                           </InputAdornment>
                         ),
                       }}
@@ -375,19 +312,36 @@ export default function LoginPage() {
                   <motion.div variants={itemVariants}>
                     <TextField
                       fullWidth
-                      label="4 ספרות אחרונות של הטלפון"
-                      placeholder="לדוגמה: 4567"
-                      value={lastFourDigits}
-                      onChange={(e) =>
-                        setLastFourDigits(e.target.value.replace(/\D/g, '').slice(0, 4))
-                      }
+                      label="שם החתן"
+                      placeholder="לדוגמה: יוסי"
+                      value={groomName}
+                      onChange={(e) => setGroomName(e.target.value)}
                       disabled={loading}
-                      inputMode="numeric"
-                      autoComplete="tel"
+                      autoComplete="off"
                       InputProps={{
                         endAdornment: (
                           <InputAdornment position="end">
-                            <PhoneAndroidIcon sx={{ color: 'rgba(201,168,76,0.7)', fontSize: 20 }} />
+                            <FavoriteBorderIcon sx={{ color: 'rgba(201,168,76,0.7)', fontSize: 20 }} />
+                          </InputAdornment>
+                        ),
+                      }}
+                      sx={{ mb: 2.5 }}
+                    />
+                  </motion.div>
+
+                  <motion.div variants={itemVariants}>
+                    <TextField
+                      fullWidth
+                      type="date"
+                      label="תאריך החתונה"
+                      value={weddingDate}
+                      onChange={(e) => setWeddingDate(e.target.value)}
+                      disabled={loading}
+                      InputLabelProps={{ shrink: true }}
+                      InputProps={{
+                        endAdornment: (
+                          <InputAdornment position="end">
+                            <EventIcon sx={{ color: 'rgba(201,168,76,0.7)', fontSize: 20 }} />
                           </InputAdornment>
                         ),
                       }}
@@ -439,13 +393,13 @@ export default function LoginPage() {
                       {loading ? (
                         <CircularProgress size={24} sx={{ color: 'rgba(255,255,255,0.85)' }} />
                       ) : (
-                        'כניסה לחגיגה ✨'
+                        'שליחת בקשה 💍'
                       )}
                     </Button>
                   </motion.div>
                 </Box>
 
-                {/* Footer note */}
+                {/* Footer note + back link */}
                 <motion.div variants={itemVariants}>
                   <Typography
                     variant="caption"
@@ -453,13 +407,32 @@ export default function LoginPage() {
                     display="block"
                     sx={{ mt: 3, color: '#A08070', lineHeight: 1.6 }}
                   >
-                    הזינו את שמכם המלא ו-4 הספרות האחרונות של מספר הטלפון
-                    <br />
-                    כפי שנרשמתם על ידי הזוג המאושר
+                    נשלח אליכם פרטים ליצירת קשר בהמשך התהליך
                   </Typography>
-                </motion.div>
 
-                <WeddingRegisterCTA variants={itemVariants} />
+                  <RouterLink
+                    to="/login"
+                    style={{ textDecoration: 'none' }}
+                  >
+                    <Box
+                      sx={{
+                        mt: 2,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: 0.6,
+                        color: '#C9A84C',
+                        fontWeight: 700,
+                        fontSize: '0.95rem',
+                        transition: '.2s',
+                        '&:hover': { color: '#9A7833' },
+                      }}
+                    >
+                      <ArrowForwardIcon sx={{ fontSize: 18 }} />
+                      חזרה למסך הכניסה
+                    </Box>
+                  </RouterLink>
+                </motion.div>
               </>
             )}
           </motion.div>

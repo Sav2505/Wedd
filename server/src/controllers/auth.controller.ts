@@ -9,19 +9,27 @@ const loginSchema = z.object({
     .string()
     .length(4, '4 ספרות בלבד')
     .regex(/^\d{4}$/, 'יש להזין 4 ספרות בלבד'),
-  weddingId: z.string(),
+  weddingId: z.string().optional(),
 });
 
 export async function login(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const parsed = loginSchema.safeParse(req.body);
+
     if (!parsed.success) {
       const message = parsed.error.errors.map((e) => e.message).join(', ');
       return next(createError(message, 400));
     }
 
     const { fullName, lastFourDigits, weddingId } = parsed.data;
-    const guest = await authService.loginGuest(fullName, lastFourDigits, Number(weddingId));
+    let guest;
+
+    if (!weddingId) {
+      guest = await authService.loginGroomOrBride(fullName, lastFourDigits);
+    } else {
+      guest = await authService.loginGuest(fullName, lastFourDigits, Number(weddingId));
+    }
+
 
     res.status(200).json({ success: true, data: { guest } });
   } catch (err) {

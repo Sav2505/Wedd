@@ -23,10 +23,10 @@ export default function WeddingRegisterCTA({ variants }: Props) {
             <Link
                 component={RouterLink}
                 to="/register"
-                underline="hover"
                 sx={{
                     display: 'block',
                     textAlign: 'center',
+                    textDecoration: 'none',
                     mt: 0.5,
                     fontWeight: 700,
                     fontSize: '1rem',
@@ -38,7 +38,7 @@ export default function WeddingRegisterCTA({ variants }: Props) {
                     },
                 }}
             >
-                דברו איתנו 💍
+                לחצו כאן 💍
             </Link>
         </Box>
     );

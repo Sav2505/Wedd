@@ -14,7 +14,19 @@ export async function loginGuest(
 ): Promise<Pick<Guest, 'id' | 'full_name' | 'table_number' | 'side' | 'role' | 'rsvp_status' | 'number_of_guests' | 'rsvp_updated_at'>> {
   const code = lastFourDigits.trim();
 
-  // Try couple first (password = last 4 chars of UUID, letters a-f mapped to 1-6)
+  // Try guest first (password = last 4 digits of phone)
+  const guestResult = await pool.query<Guest>(
+    `SELECT id, full_name, table_number, side, role, rsvp_status, number_of_guests, rsvp_updated_at
+       FROM guests
+      WHERE wedding_id = $3 AND full_name = $1
+        AND role = 'guest'
+        AND RIGHT(phone, 4) = $2
+      LIMIT 1`,
+    [fullName.trim(), code, weddingId],
+  );
+  if (guestResult.rows.length > 0) return guestResult.rows[0];
+
+  // Then couple first (password = last 4 chars of UUID, letters a-f mapped to 1-6)
   const coupleResult = await pool.query<Guest>(
     `SELECT id, full_name, table_number, side, role, rsvp_status, number_of_guests, rsvp_updated_at
        FROM guests
@@ -26,15 +38,37 @@ export async function loginGuest(
   );
   if (coupleResult.rows.length > 0) return coupleResult.rows[0];
 
+
+  throw createError('שם מלא או קוד שגויים', 401);
+}
+
+export async function loginGroomOrBride(
+  fullName: string,
+  lastFourDigits: string
+): Promise<Pick<Guest, 'id' | 'full_name' | 'table_number' | 'side' | 'role' | 'rsvp_status' | 'number_of_guests' | 'rsvp_updated_at'>> {
+  const code = lastFourDigits.trim();
+
+  // Try couple first (password = last 4 chars of UUID, letters a-f mapped to 1-6)
+  const coupleResult = await pool.query<Guest>(
+    `SELECT id, full_name, table_number, side, role, rsvp_status, number_of_guests, rsvp_updated_at
+       FROM guests
+      WHERE full_name = $1
+        AND role = 'couple'
+        AND TRANSLATE(RIGHT(id::text, 4), 'abcdef', '123456') = $2
+      LIMIT 1`,
+    [fullName.trim(), code],
+  );
+  if (coupleResult.rows.length > 0) return coupleResult.rows[0];
+
   // Then try guest (password = last 4 digits of phone)
   const guestResult = await pool.query<Guest>(
     `SELECT id, full_name, table_number, side, role, rsvp_status, number_of_guests, rsvp_updated_at
        FROM guests
-      WHERE wedding_id = $3 AND full_name = $1
+      WHERE full_name = $1
         AND role = 'guest'
         AND RIGHT(phone, 4) = $2
       LIMIT 1`,
-    [fullName.trim(), code, weddingId],
+    [fullName.trim(), code],
   );
   if (guestResult.rows.length > 0) return guestResult.rows[0];
 

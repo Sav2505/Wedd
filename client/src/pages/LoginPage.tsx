@@ -153,7 +153,7 @@ export default function LoginPage() {
 
     setLoading(true);
     try {
-      const { guest } = await login({ fullName: fullName.trim(), lastFourDigits, weddingId: String(autoCreds?.weddingId) ?? "" });
+      const { guest } = await login({ fullName: fullName.trim(), lastFourDigits });
       dispatch(setGuest(guest));
       navigate('/', { replace: true });
     } catch (err) {
@@ -187,7 +187,6 @@ export default function LoginPage() {
           'radial-gradient(ellipse at 60% 85%, rgba(245,237,217,0.4) 0%, transparent 60%),' +
           'linear-gradient(160deg, #FAF7F2 0%, #F5EDD9 50%, #FAF7F2 100%)',
         px: 2,
-        py: { xs: 2, sm: 4 },
       }}
     >
       {/* Falling petals */}
@@ -215,8 +214,9 @@ export default function LoginPage() {
             border: '1px solid rgba(201,168,76,0.2)',
             boxShadow:
               '0 4px 24px rgba(44,24,16,0.08), 0 20px 60px rgba(44,24,16,0.10)',
-            p: { xs: 4, sm: 5 },
-            maxHeight: "94vh"
+            p: { xs: 4, sm: 4 },
+            maxHeight: "94vh",
+            overflowY: "auto",
           }}
         >
           <motion.div

@@ -21,6 +21,7 @@ import dayjs, { Dayjs } from 'dayjs';
 import 'dayjs/locale/he';
 import FallingPetals from '../components/FallingPetals';
 import { createWeddingRequest } from '../services/weddingRequest.service';
+import { datePickerSx } from './couple/WeddingInfoEditor';
 
 dayjs.locale('he');
 
@@ -199,7 +200,7 @@ export default function WeddingRegisterPage() {
                             border: '1px solid rgba(201,168,76,0.2)',
                             boxShadow:
                                 '0 4px 24px rgba(44,24,16,0.08), 0 20px 60px rgba(44,24,16,0.10)',
-                            p: { xs: 4, sm: 5 },
+                            p: { xs: 4, sm: 4 },
                             maxHeight: '92vh',
                             overflowY: 'auto',
                         }}
@@ -362,7 +363,9 @@ export default function WeddingRegisterPage() {
                                                     textField: {
                                                         fullWidth: true,
                                                         label: 'תאריך החתונה',
-                                                        sx: { mb: 2.5 },
+                                                        sx: {
+                                                            ...datePickerSx, mb: 2.5
+                                                        },
                                                     },
                                                     openPickerIcon: {
                                                         sx: { color: 'rgba(201,168,76,0.7)', fontSize: 20 },

@@ -137,11 +137,16 @@ function formatWeddingDate(weddingDate: string) {
 
 // להחליף את כל הפונקציה buildWhatsAppInviteUrl בזו:
 
-function buildWhatsAppInviteUrl(guest: ManagedGuest, brideAndGroom: string, weddingDate: string | undefined): string {
+function buildWhatsAppInviteUrl(weddingId: number, guest: ManagedGuest, brideAndGroom: string, weddingDate: string | undefined): string {
+  if (weddingId < 0) {
+    throw new Error('Invalid weddingId for WhatsApp invite URL');
+  }
+
   const digits = guest.phone.replace(/\D/g, '');
   const normalizedPhone = digits.startsWith('0') ? `972${digits.slice(1)}` : digits;
-  const personalLink = buildGuestUrl(`${guest.first_name} ${guest.last_name}`, digits.slice(-4));
+  const personalLink = buildGuestUrl(`${guest.first_name} ${guest.last_name}`, digits.slice(-4), weddingId);
   const formattedDate = weddingDate ? formatWeddingDate(weddingDate) : undefined;
+
 
   const message = [
     `שלום ${guest.first_name} 💛`,
@@ -203,7 +208,7 @@ export default function GuestListEditor() {
   const [rsvpListLoadingStatus, setRsvpListLoadingStatus] = useState<RsvpStatus | null>(null);
   const [searchLoading, setSearchLoading] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [info, setInfo] = useState<{ bride_name?: string; groom_name?: string, wedding_date?: string } | null>(null);
+  const [info, setInfo] = useState<{ id: number; bride_name?: string; groom_name?: string, wedding_date?: string } | null>(null);
 
   useEffect(() => {
     getWeddingInfo().then(setInfo).catch(() => {/* non-critical */ });
@@ -375,7 +380,7 @@ export default function GuestListEditor() {
   }, []);
 
   const handleSendInvitation = useCallback((guest: ManagedGuest) => {
-    window.open(buildWhatsAppInviteUrl(guest, `${info?.bride_name ?? "שחר"} & ${info?.groom_name ?? "שחר"}`, info?.wedding_date ?? "יום שני, 7 בדצמבר 2026"), '_blank', 'noopener,noreferrer');
+    window.open(buildWhatsAppInviteUrl(info?.id ?? -1, guest, `${info?.bride_name ?? "שחר"} & ${info?.groom_name ?? "שחר"}`, info?.wedding_date ?? "יום שני, 7 בדצמבר 2026"), '_blank', 'noopener,noreferrer');
   }, [info]);
 
   function openCreateGroup() {
@@ -679,6 +684,7 @@ export default function GuestListEditor() {
           {groups.map((group) => (
             <GroupAccordionItem
               key={group.id}
+              weddingId={info?.id ?? -1}
               groupId={group.id}
               name={group.name}
               items={grouped.map.get(group.id) ?? []}
@@ -696,6 +702,7 @@ export default function GuestListEditor() {
 
           <GroupAccordionItem
             groupId={UNGROUPED_KEY}
+            weddingId={info?.id ?? -1}
             name="ללא קבוצה"
             items={grouped.ungrouped}
             expanded={expandedGroups.has(UNGROUPED_KEY)}
@@ -944,6 +951,7 @@ export default function GuestListEditor() {
  */
 const GroupAccordionItem = memo(function GroupAccordionItem({
   groupId,
+  weddingId,
   name,
   items,
   expanded,
@@ -958,6 +966,7 @@ const GroupAccordionItem = memo(function GroupAccordionItem({
   onSendInvitation,
 }: {
   groupId: string;
+  weddingId: number;
   name: string;
   items: ManagedGuest[];
   expanded: boolean;
@@ -1056,6 +1065,7 @@ const GroupAccordionItem = memo(function GroupAccordionItem({
             {items.map((guest) => (
               <GuestRow
                 key={guest.id}
+                weddingId={weddingId}
                 guest={guest}
                 onEdit={onEditGuest}
                 onDelete={onDeleteGuest}
@@ -1071,11 +1081,13 @@ const GroupAccordionItem = memo(function GroupAccordionItem({
 
 const GuestRow = memo(function GuestRow({
   guest,
+  weddingId,
   onEdit,
   onDelete,
   onSendInvitation,
 }: {
   guest: ManagedGuest;
+  weddingId: number;
   onEdit: (guest: ManagedGuest) => void;
   onDelete: (id: string) => void;
   onSendInvitation: (guest: ManagedGuest) => void;
@@ -1085,7 +1097,7 @@ const GuestRow = memo(function GuestRow({
   function handleCopyLink() {
     const phone = guest.phone.replace(/\D/g, '');
     const last4 = phone.slice(-4);
-    const url = buildGuestUrl(`${guest.first_name} ${guest.last_name}`, last4);
+    const url = buildGuestUrl(`${guest.first_name} ${guest.last_name}`, last4, weddingId);
     navigator.clipboard.writeText(url).then(() => setCopied(true));
   }
 

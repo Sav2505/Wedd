@@ -122,7 +122,7 @@ export default function LoginPage() {
     setLoading(true);
     setError(null);
 
-    login({ fullName: autoCreds.fullName, lastFourDigits: autoCreds.lastFourDigits })
+    login({ fullName: autoCreds.fullName, lastFourDigits: autoCreds.lastFourDigits, weddingId: autoCreds.weddingId })
       .then(({ guest }) => {
         dispatch(setGuest(guest));
         if (guest.role === 'guest' && guest.rsvp_status === 'PENDING') {
@@ -152,7 +152,7 @@ export default function LoginPage() {
 
     setLoading(true);
     try {
-      const { guest } = await login({ fullName: fullName.trim(), lastFourDigits });
+      const { guest } = await login({ fullName: fullName.trim(), lastFourDigits, weddingId: autoCreds?.weddingId ?? -1 });
       dispatch(setGuest(guest));
       navigate('/', { replace: true });
     } catch (err) {
@@ -326,7 +326,7 @@ export default function LoginPage() {
                       transition={{ duration: 1.4, repeat: Infinity, ease: 'easeInOut' }}
                     >
                       <Typography sx={{ color: '#A08070', fontWeight: 600, letterSpacing: '0.03em' }}>
-                       ..מתחברים
+                        ..מתחברים
                       </Typography>
                     </motion.div>
                   </Box>

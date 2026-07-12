@@ -453,9 +453,9 @@ export default function LoginPage() {
                     display="block"
                     sx={{ mt: 3, color: '#A08070', lineHeight: 1.6 }}
                   >
-                    הזינו את שמכם המלא ו-4 הספרות האחרונות של מספר הטלפון
+                    כדי להיכנס, הזינו את שמכם המלא
                     <br />
-                    כפי שנרשמתם על ידי הזוג המאושר
+                    ו-4 הספרות האחרונות של מספר הטלפון שלכם
                   </Typography>
                 </motion.div>
 

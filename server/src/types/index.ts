@@ -118,6 +118,8 @@ export interface WeddingRequest {
   wedding_date: string;
   status: 'new' | 'confirmed' | 'cancelled';
   updated_at: string;
+  phone_number: string;
+  email: string | undefined;
 }
 
 // ─── Tasks ───────────────────────────────────────────────────

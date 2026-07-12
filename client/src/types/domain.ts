@@ -63,6 +63,8 @@ export interface WeddingRequest {
   wedding_date: string;
   status: 'new' | 'confirmed' | 'cancelled';
   updated_at: string;
+  email: string | undefined;
+  phone_number: string;
 }
 
 // ─── Seating ──────────────────────────────────────────────────

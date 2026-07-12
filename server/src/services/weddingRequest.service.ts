@@ -5,6 +5,8 @@ export interface CreateWeddingRequest {
     bride_name: string;
     groom_name: string;
     wedding_date: string;
+    email: string;
+    phone_number?: string;
 }
 
 export async function createWeddingRequest(
@@ -17,15 +19,19 @@ export async function createWeddingRequest(
     (
       bride_name,
       groom_name,
-      wedding_date
+      wedding_date,
+      phone_number,
+      email
     )
-    VALUES ($1, $2, $3)
+    VALUES ($1, $2, $3, $4, $5)
     RETURNING *
     `,
         [
             data.bride_name,
             data.groom_name,
             data.wedding_date,
+            data.phone_number ?? null,
+            data.email ?? null,
         ],
     );
 

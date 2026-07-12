@@ -5,6 +5,8 @@ export interface CreateWeddingRequest {
     bride_name: string;
     groom_name: string;
     wedding_date: string;
+    phone_number?: string;
+    email: string;
 }
 
 export async function createWeddingRequest(

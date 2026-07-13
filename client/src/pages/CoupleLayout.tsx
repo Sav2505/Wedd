@@ -168,7 +168,7 @@ function OrnamentalHeader({
           overflow: 'hidden',
           boxShadow: '0 6px 32px rgba(154,120,51,0.16), 0 2px 8px rgba(201,168,76,0.10)',
           borderBottom: '1.5px solid rgba(201,168,76,0.32)',
-          pt: 2.5,
+          pt: 1,
           pb: 0,
         }}
       >

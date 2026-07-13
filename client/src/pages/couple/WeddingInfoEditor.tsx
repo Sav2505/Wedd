@@ -78,13 +78,13 @@ const fieldBgColor = 'rgba(255,255,255,0.7)';
 const fieldHoverBorderColor = '#C9A84C';
 const fieldFocusBorderColor = '#9A7833';
 const fieldFocusLabelColor = '#9A7833';
-const fieldBorderRadius = 1;
+const fieldBorderRadius = 0.75;
 
 const fieldSx = {
   mb: 2,
   '& .MuiOutlinedInput-root': {
     borderRadius: fieldBorderRadius,
-    background: fieldBgColor,
+    background: `${fieldBgColor} !important`,
     '&:hover fieldset': {
       borderColor: fieldHoverBorderColor,
     },
@@ -100,7 +100,7 @@ const fieldSx = {
 export const datePickerSx = {
   ...fieldSx,
   '& .MuiPickersInputBase-root': {
-    backgroundColor: fieldBgColor,
+    backgroundColor: `${fieldBgColor} !important`,
     borderRadius: `12px !important`,
     '&:hover fieldset': {
       borderColor: fieldHoverBorderColor,
@@ -245,15 +245,13 @@ export default function WeddingInfoEditor() {
                 textField: {
                   label: 'תאריך',
                   fullWidth: true,
-                  sx: {
-                    datePickerSx
-                  },
+                  sx: datePickerSx
                 },
                 openPickerButton: {
                   sx: {
                     color: '#C9A84C',
                     '& svg': {
-                      fontSize: 20,
+                      fontSize: `20px !important`,
                     },
                   },
                 },

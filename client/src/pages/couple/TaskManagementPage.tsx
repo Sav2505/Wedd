@@ -12,7 +12,7 @@ import {
 import AddIcon from '@mui/icons-material/Add';
 import AssignmentOutlinedIcon from '@mui/icons-material/AssignmentOutlined';
 import { AnimatePresence, motion } from 'framer-motion';
-import { TaskFormData, WeddingTask } from '../../types/domain';
+import { TaskFormData, WeddingInfo, WeddingTask } from '../../types/domain';
 import { createTask, deleteTask, getTasks, updateTask } from '../../services/tasks.service';
 import { getGuests } from '../../services/guests.service';
 import TaskSummaryCards from './tasks/TaskSummaryCards';
@@ -20,6 +20,7 @@ import TaskTable from './tasks/TaskTable';
 import TaskDialog from './tasks/TaskDialog';
 import BudgetAnalytics from './tasks/BudgetAnalytics';
 import { getEffectivePartySize } from '../../utils/effectiveAttendance';
+import { getWeddingInfo } from '../../services/info.service';
 
 // ─── Dialog mode ─────────────────────────────────────────────
 
@@ -30,18 +31,18 @@ type DialogMode = 'closed' | 'add' | 'edit' | 'delete';
 const AVG_GIFT_KEY = 'wedding_avg_gift';
 
 export default function TaskManagementPage() {
-  const [tasks, setTasks]         = useState<WeddingTask[]>([]);
+  const [tasks, setTasks] = useState<WeddingTask[]>([]);
   const [guestCount, setGuestCount] = useState(300);
   const [avgGift, setAvgGiftState] = useState<number>(() => {
     const stored = localStorage.getItem(AVG_GIFT_KEY);
     return stored ? Number(stored) : 450;
   });
-  const [loading, setLoading]     = useState(true);
-  const [error, setError]         = useState<string | null>(null);
-  const [toast, setToast]         = useState<string | null>(null);
-  const [weddingId, setWeddingId] = useState<number | null>(null);
-  
-  const [dialogMode, setDialogMode]     = useState<DialogMode>('closed');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [toast, setToast] = useState<string | null>(null);
+  const [info, setInfo] = useState<WeddingInfo | null>(null);
+
+  const [dialogMode, setDialogMode] = useState<DialogMode>('closed');
   const [selectedTask, setSelectedTask] = useState<WeddingTask | null>(null);
 
   function handleAvgGiftChange(v: number) {
@@ -52,13 +53,21 @@ export default function TaskManagementPage() {
 
   // ─── Load data ───────────────────────────────────────────
 
+  useEffect(() => {
+    getWeddingInfo().then(setInfo).catch(() => { });
+  }, []);
+
   const reload = useCallback(async () => {
+    if (!info?.id) return;
+
     try {
       const [fetchedTasks, guests] = await Promise.all([
-        getTasks(),
+        getTasks(info.id),
         getGuests().catch(() => [] as Awaited<ReturnType<typeof getGuests>>),
       ]);
+
       setTasks(fetchedTasks);
+
       if (guests.length > 0) {
         const count = guests.reduce((sum, g) => sum + getEffectivePartySize(g), 0);
         setGuestCount(count);
@@ -66,18 +75,21 @@ export default function TaskManagementPage() {
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'שגיאה בטעינת נתונים');
     }
-  }, []);
+  }, [info?.id]);
 
   useEffect(() => {
+    if (!info?.id) return;
+
     setLoading(true);
     reload().finally(() => setLoading(false));
-  }, [reload]);
+  }, [reload, info?.id]);
 
   // ─── CRUD handlers ───────────────────────────────────────
 
   async function handleSave(data: TaskFormData): Promise<void> {
     if (dialogMode === 'add') {
-      const newTask = await createTask(data);
+      if (!info?.id) return;
+      const newTask = await createTask(info.id, data);
       setTasks(prev => [newTask, ...prev]);
       setToast('המשימה נוספה בהצלחה ✓');
     } else if (dialogMode === 'edit' && selectedTask) {
@@ -94,10 +106,10 @@ export default function TaskManagementPage() {
     setToast('המשימה נמחקה');
   }
 
-  function openAdd()               { setSelectedTask(null); setDialogMode('add'); }
-  function openEdit(t: WeddingTask) { setSelectedTask(t);   setDialogMode('edit'); }
+  function openAdd() { setSelectedTask(null); setDialogMode('add'); }
+  function openEdit(t: WeddingTask) { setSelectedTask(t); setDialogMode('edit'); }
   function openDelete(t: WeddingTask) { setSelectedTask(t); setDialogMode('delete'); }
-  function closeDialog()            { setDialogMode('closed'); }
+  function closeDialog() { setDialogMode('closed'); }
 
   // ─── Derived state ───────────────────────────────────────
 

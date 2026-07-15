@@ -2,6 +2,7 @@ import { pool } from '../db/pool';
 import { WeddingTask, TaskCategory, TaskStatus } from '../types';
 
 export interface TaskCreateInput {
+  wedding_id: number;
   task_name: string;
   supplier_name?: string | null;
   category: TaskCategory;
@@ -19,9 +20,9 @@ export interface TaskCreateInput {
 
 export type TaskUpdateInput = Partial<TaskCreateInput>;
 
-export async function listTasks(): Promise<WeddingTask[]> {
+export async function listTasks(weddingId: number): Promise<WeddingTask[]> {
   const { rows } = await pool.query<WeddingTask>(
-    `SELECT * FROM wedding_tasks ORDER BY created_at DESC`,
+    `SELECT * FROM wedding_tasks WHERE wedding_id = ${weddingId} ORDER BY created_at DESC`,
   );
   return rows;
 }
@@ -37,11 +38,12 @@ export async function getTaskById(id: string): Promise<WeddingTask | null> {
 export async function createTask(data: TaskCreateInput, coupleId: string): Promise<WeddingTask> {
   const { rows } = await pool.query<WeddingTask>(
     `INSERT INTO wedding_tasks
-       (task_name, supplier_name, category, status, deposit, paid_amount, total_amount,
+       (wedding_id, task_name, supplier_name, category, status, deposit, paid_amount, total_amount,
         price_per_plate, min_commitment, due_date, phone, website, notes, created_by)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
      RETURNING *`,
     [
+      data.wedding_id,
       data.task_name,
       data.supplier_name ?? null,
       data.category,

@@ -5,19 +5,20 @@ import { TaskCategory, TaskStatus } from '../types';
 type CoupleRequest = Request & { coupleId: string };
 
 const VALID_CATEGORIES: TaskCategory[] = [
-  'venue','photographer','dj','dress','suit','rings',
-  'decorations','invitations','transportation','makeup',
-  'hair','rabbi','flowers','food','alcohol','gifts',
-  'design','side_event','hotel','attire','lighting', 'other',
+  'venue', 'photographer', 'dj', 'dress', 'suit', 'rings',
+  'decorations', 'invitations', 'transportation', 'makeup',
+  'hair', 'rabbi', 'flowers', 'food', 'alcohol', 'gifts',
+  'design', 'side_event', 'hotel', 'attire', 'lighting', 'other',
 ];
 
 const VALID_STATUSES: TaskStatus[] = [
-  'not_started','in_progress','waiting','completed','cancelled',
+  'not_started', 'in_progress', 'waiting', 'completed', 'cancelled',
 ];
 
 export async function getTasks(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    const tasks = await tasksService.listTasks();
+    const weddingId = Number(req.query.wedding_id);
+    const tasks = await tasksService.listTasks(weddingId ?? -1);
     res.json({ success: true, data: tasks });
   } catch (err) { next(err); }
 }
@@ -43,6 +44,11 @@ export async function createTask(req: Request, res: Response, next: NextFunction
       res.status(400).json({ success: false, message: 'קטגוריה לא חוקית' }); return;
     }
 
+    const wedding_id = body.wedding_id as number;
+    if (wedding_id !== undefined && wedding_id <= 0) {
+      res.status(400).json({ success: false, message: 'wedding_id לא חוקי' }); return;
+    }
+
     const status = (body.status as TaskStatus | undefined) ?? 'not_started';
     if (!VALID_STATUSES.includes(status)) {
       res.status(400).json({ success: false, message: 'סטטוס לא חוקי' }); return;
@@ -63,6 +69,7 @@ export async function createTask(req: Request, res: Response, next: NextFunction
     }
 
     const task = await tasksService.createTask({
+      wedding_id,
       task_name,
       supplier_name: (body.supplier_name as string | undefined)?.trim() || null,
       category,
@@ -71,7 +78,7 @@ export async function createTask(req: Request, res: Response, next: NextFunction
       paid_amount,
       total_amount,
       price_per_plate: body.price_per_plate != null ? Number(body.price_per_plate) : null,
-      min_commitment:  body.min_commitment  != null ? Number(body.min_commitment)  : null,
+      min_commitment: body.min_commitment != null ? Number(body.min_commitment) : null,
       due_date: (body.due_date as string | undefined) || null,
       phone: (body.phone as string | undefined)?.trim() || null,
       website: (body.website as string | undefined)?.trim() || null,
@@ -105,8 +112,8 @@ export async function updateTask(req: Request, res: Response, next: NextFunction
     const total_amount = body.total_amount !== undefined ? Number(body.total_amount) : undefined;
 
     if ((deposit !== undefined && deposit < 0) ||
-        (paid_amount !== undefined && paid_amount < 0) ||
-        (total_amount !== undefined && total_amount < 0)) {
+      (paid_amount !== undefined && paid_amount < 0) ||
+      (total_amount !== undefined && total_amount < 0)) {
       res.status(400).json({ success: false, message: 'סכומים לא יכולים להיות שליליים' }); return;
     }
 
@@ -119,7 +126,7 @@ export async function updateTask(req: Request, res: Response, next: NextFunction
       ...(paid_amount !== undefined && { paid_amount }),
       ...(total_amount !== undefined && { total_amount }),
       ...(body.price_per_plate !== undefined && { price_per_plate: body.price_per_plate != null ? Number(body.price_per_plate) : null }),
-      ...(body.min_commitment  !== undefined && { min_commitment:  body.min_commitment  != null ? Number(body.min_commitment)  : null }),
+      ...(body.min_commitment !== undefined && { min_commitment: body.min_commitment != null ? Number(body.min_commitment) : null }),
       ...(body.due_date !== undefined && { due_date: (body.due_date as string) || null }),
       ...(body.phone !== undefined && { phone: (body.phone as string)?.trim() || null }),
       ...(body.website !== undefined && { website: (body.website as string)?.trim() || null }),

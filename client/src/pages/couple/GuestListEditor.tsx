@@ -556,8 +556,6 @@ export default function GuestListEditor() {
         setSuccessMessage(wasEditing ? 'האורח עודכן בהצלחה' : 'האורח נוסף בהצלחה');
       }
     } catch (e) {
-      console.log("sa");
-      console.log(e);
       setGuestDialogError(
         'אורח זה כבר קיים ברשימת האורחים.'
       );

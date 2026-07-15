@@ -223,6 +223,13 @@ export default function WeddingInfoEditor() {
               value={form.groom_name ?? ''}
               onChange={set('groom_name')}
               sx={fieldSx}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <PeopleOutlineIcon sx={{ color: '#C9A84C', fontSize: 20 }} />
+                  </InputAdornment>
+                ),
+              }}
             />
           </Box>
 

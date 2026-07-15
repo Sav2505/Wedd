@@ -27,7 +27,7 @@ export async function getAllTables(): Promise<WeddingTableWithGuests[]> {
 }
 
 export async function createTable(payload: {
-  table_number: number; label?: string; capacity?: number; pos_x?: number; pos_y?: number;
+  wedding_id: number; table_number: number; label?: string; capacity?: number; pos_x?: number; pos_y?: number;
   shape?: 'round' | 'square' | 'rect'; orientation?: 'h' | 'v';
 }): Promise<WeddingTableWithGuests> {
   const { data } = await api.post<ApiResponse<WeddingTableWithGuests>>('/tables', payload);
@@ -37,7 +37,7 @@ export async function createTable(payload: {
 
 export async function updateTable(
   id: string,
-  payload: { label?: string | null; capacity?: number; table_number?: number; pos_x?: number; pos_y?: number; shape?: 'round' | 'square' | 'rect'; orientation?: 'h' | 'v' | null }, 
+  payload: { label?: string | null; capacity?: number; table_number?: number; pos_x?: number; pos_y?: number; shape?: 'round' | 'square' | 'rect'; orientation?: 'h' | 'v' | null },
 ): Promise<void> {
   await api.put(`/tables/${id}`, payload);
 }

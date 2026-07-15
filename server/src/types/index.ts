@@ -70,6 +70,7 @@ export interface WeddingInfo {
   hero_image_url: string | null;
   stage_label: string | null;
   updated_at: string;
+  is_tables_published: boolean;
 }
 
 // ─── API Response Types ───────────────────────────────────────

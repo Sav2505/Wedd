@@ -118,6 +118,7 @@ export default function SeatingEditor() {
     const [editCap, setEditCap] = useState(10);
     const [guestToAdd, setGuestToAdd] = useState<UnassignedGuest | null>(null);
     const [confirmedGuestToAdd, setConfirmedGuestToAdd] = useState<UnassignedGuest | null>(null);
+    const [weddingId, setWeddingId] = useState<number | null>(null);
 
     // ── Load data ─────────────────────────────────────────────
 
@@ -139,6 +140,7 @@ export default function SeatingEditor() {
                 if (info.stage_label?.trim()) {
                     setStageLabel(info.stage_label);
                     setIsPublishedTables(info.is_tables_published);
+                    setWeddingId(info.id);
                     window.localStorage.setItem(STAGE_LABEL_STORAGE_KEY, info.stage_label);
                 }
             } catch { /* non-critical, localStorage fallback already set */ }
@@ -246,6 +248,7 @@ export default function SeatingEditor() {
             const posY = Math.round(clamp(50 + radius * 0.6 * Math.sin((angle * Math.PI) / 180), 20, 80));
 
             const newTable = await createTable({
+                wedding_id: weddingId ?? -1,
                 table_number: num,
                 label: newLabel.trim() || undefined,
                 capacity: newCap,

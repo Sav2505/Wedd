@@ -26,6 +26,7 @@ export type WeddingInfoUpdate = Partial<
     | 'notes'
     | 'message'
     | 'stage_label'
+    | 'is_tables_published'
   >
 >;
 
@@ -33,7 +34,7 @@ export async function updateWeddingInfo(data: WeddingInfoUpdate): Promise<Weddin
   const allowed = [
     'bride_name', 'groom_name', 'wedding_date', 'wedding_time',
     'venue_name', 'venue_address', 'venue_lat', 'venue_lng',
-    'dress_code', 'notes', 'message', 'stage_label',
+    'dress_code', 'notes', 'message', 'stage_label', 'is_tables_published',
   ] as const;
 
   const sets: string[] = [];

@@ -11,9 +11,9 @@ export async function getTables(_req: Request, res: Response, next: NextFunction
 
 export async function createTable(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    const { table_number, label, capacity, pos_x, pos_y, shape, orientation } = req.body as {       
+    const { wedding_id, table_number, label, capacity, pos_x, pos_y, shape, orientation } = req.body as {
       table_number: number; label?: string; capacity?: number; pos_x?: number; pos_y?: number;
-      shape?: 'round' | 'square' | 'rect'; orientation?: 'h' | 'v';
+      shape?: 'round' | 'square' | 'rect'; orientation?: 'h' | 'v'; wedding_id: number;
     };
     if (!table_number || isNaN(Number(table_number))) {
       return next(createError('מספר שולחן הוא שדה חובה', 400));
@@ -30,6 +30,7 @@ export async function createTable(req: Request, res: Response, next: NextFunctio
       Number(pos_y ?? 50),
       safeShape,
       safeOrientation,
+      wedding_id,
     );
     res.status(201).json({ success: true, data: table });
   } catch (err) { next(err); }

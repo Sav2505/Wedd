@@ -53,12 +53,13 @@ export async function createTable(
   posY: number,
   shape: 'round' | 'square' | 'rect' = 'round',
   orientation: 'h' | 'v' | null = null,
+  weddingId: number,
 ): Promise<WeddingTableWithGuests> {
   const { rows } = await pool.query<WeddingTable>(`
-    INSERT INTO tables (table_number, label, capacity, pos_x, pos_y, shape, orientation)
-    VALUES ($1, $2, $3, $4, $5, $6, $7)
+    INSERT INTO tables (table_number, label, capacity, pos_x, pos_y, shape, orientation, wedding_id)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
     RETURNING *
-  `, [tableNumber, label, capacity, posX, posY, shape, orientation]);
+  `, [tableNumber, label, capacity, posX, posY, shape, orientation, weddingId]);
   return { ...rows[0], guests: [] };
 }
 

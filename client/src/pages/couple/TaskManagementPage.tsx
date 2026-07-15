@@ -39,7 +39,8 @@ export default function TaskManagementPage() {
   const [loading, setLoading]     = useState(true);
   const [error, setError]         = useState<string | null>(null);
   const [toast, setToast]         = useState<string | null>(null);
-
+  const [weddingId, setWeddingId] = useState<number | null>(null);
+  
   const [dialogMode, setDialogMode]     = useState<DialogMode>('closed');
   const [selectedTask, setSelectedTask] = useState<WeddingTask | null>(null);
 

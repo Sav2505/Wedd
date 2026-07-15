@@ -37,6 +37,7 @@ import LinkIcon from '@mui/icons-material/Link';
 import WhatsAppIcon from '@mui/icons-material/WhatsApp';
 import DownloadIcon from '@mui/icons-material/Download';
 import CloseIcon from '@mui/icons-material/Close';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import { exportGuestsToExcel } from '../../utils/exportGuestsToExcel';
 import { buildGuestUrl } from '../../utils/guestUrl';
 import { getEffectivePartySize, getEffectivePlusCount, getInvitedPartySize } from '../../utils/effectiveAttendance';
@@ -202,6 +203,7 @@ export default function GuestListEditor() {
   const [guestForm, setGuestForm] = useState<GuestForm>(EMPTY_FORM);
 
   const [deleteGuestId, setDeleteGuestId] = useState<string | null>(null);
+  const [deletingGuest, setDeletingGuest] = useState(false);
   const [deleteGroupId, setDeleteGroupId] = useState<string | null>(null);
   const [rsvpListStatus, setRsvpListStatus] = useState<RsvpStatus | null>(null);
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
@@ -209,6 +211,21 @@ export default function GuestListEditor() {
   const [searchLoading, setSearchLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [info, setInfo] = useState<{ id: number; bride_name?: string; groom_name?: string, wedding_date?: string } | null>(null);
+
+  // --- Post-save feedback: success toast + highlight/scroll to the affected guest ---
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [guestDialogError, setGuestDialogError] = useState<string | null>(null);
+  const [highlightedGuestId, setHighlightedGuestId] = useState<string | null>(null);
+  const guestRowRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+  const highlightTimeoutRef = useRef<number | null>(null);
+
+  const registerGuestRef = useCallback((id: string, el: HTMLDivElement | null) => {
+    if (el) {
+      guestRowRefs.current.set(id, el);
+    } else {
+      guestRowRefs.current.delete(id);
+    }
+  }, []);
 
   useEffect(() => {
     getWeddingInfo().then(setInfo).catch(() => {/* non-critical */ });
@@ -224,6 +241,7 @@ export default function GuestListEditor() {
     const [nextGroups, nextGuests] = await Promise.all([getGuestGroups(), getGuests()]);
     setGroups(nextGroups);
     setAllGuests(nextGuests);
+    return { nextGroups, nextGuests };
   }, []);
 
   useEffect(() => {
@@ -248,6 +266,14 @@ export default function GuestListEditor() {
     }, 120000);
     return () => clearInterval(interval);
   }, [reload]);
+
+  useEffect(() => {
+    return () => {
+      if (highlightTimeoutRef.current) {
+        window.clearTimeout(highlightTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const processedGuests = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -402,7 +428,7 @@ export default function GuestListEditor() {
       if (editingGroup) {
         await updateGuestGroup(editingGroup.id, groupName.trim());
       } else {
-        await createGuestGroup(groupName.trim());
+        await createGuestGroup(groupName.trim(), info?.id ?? -1);
       }
       await reload();
       setGroupDialogOpen(false);
@@ -422,35 +448,125 @@ export default function GuestListEditor() {
   }, []);
 
   // 1) שמירת מודל אורח פתוח בזמן השמירה + spinner בתוך כפתור השמירה
+  // 2) אחרי שמירה מוצלחת: הודעת הצלחה + פתיחת הקבוצה הרלוונטית + גלילה והדגשה של האורח
+
+  /**
+   * Scrolls to a guest row and briefly highlights it. Runs after the DOM had a
+   * chance to re-render with the (possibly newly expanded) group open.
+   */
+  const focusGuestRow = useCallback((guestId: string) => {
+    if (highlightTimeoutRef.current) {
+      window.clearTimeout(highlightTimeoutRef.current);
+    }
+
+    setHighlightedGuestId(guestId);
+
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        const el = guestRowRefs.current.get(guestId);
+
+        if (el) {
+          const rect = el.getBoundingClientRect();
+
+          window.scrollBy({
+            top: rect.top - 120,
+            behavior: 'smooth',
+          });
+        }
+      });
+    });
+
+    highlightTimeoutRef.current = window.setTimeout(() => {
+      setHighlightedGuestId(null);
+      highlightTimeoutRef.current = null;
+    }, 2600);
+  }, []);
+
+  useEffect(() => {
+    setGuestDialogError(null);
+  }, [guestDialogOpen]);
 
   async function handleSaveGuest() {
     if (!guestForm.first_name.trim() || !guestForm.last_name.trim() || !guestForm.phone.trim()) return;
+
+    const wasEditing = !!editingGuest;
+    const editedGuestId = editingGuest?.id ?? null;
+    const firstName = guestForm.first_name.trim();
+    const lastName = guestForm.last_name.trim();
+    const phone = guestForm.phone.trim();
+    const phoneDigits = phone.replace(/\D/g, '');
 
     setSaving(true);
     try {
       if (editingGuest) {
         await updateGuest(editingGuest.id, {
-          first_name: guestForm.first_name.trim(),
-          last_name: guestForm.last_name.trim(),
-          phone: guestForm.phone.trim(),
+          first_name: firstName,
+          last_name: lastName,
+          phone,
           side: guestForm.side,
           guest_group_id: guestForm.guest_group_id,
           plus_count: guestForm.plus_count,
         });
       } else {
         await createGuest({
-          first_name: guestForm.first_name.trim(),
-          last_name: guestForm.last_name.trim(),
-          phone: guestForm.phone.trim(),
+          wedding_id: info?.id ?? -1,
+          first_name: firstName,
+          last_name: lastName,
+          phone,
           side: guestForm.side,
           guest_group_id: guestForm.guest_group_id,
           plus_count: guestForm.plus_count,
         });
       }
-      await reload();
+
+      const { nextGroups, nextGuests } = await reload();
       setGuestDialogOpen(false);
+
+      // Locate the saved guest in the freshly-loaded list so we know exactly
+      // which group to open and which row to scroll/highlight.
+      const savedGuest = wasEditing
+        ? nextGuests.find((g) => g.id === editedGuestId)
+        : nextGuests.find((g) =>
+          g.phone.replace(/\D/g, '') === phoneDigits &&
+          g.first_name === firstName &&
+          g.last_name === lastName
+        );
+
+      if (savedGuest) {
+        const groupExists = nextGroups.some((g) => g.id === savedGuest.guest_group_id);
+        const targetGroupKey = savedGuest.guest_group_id && groupExists
+          ? savedGuest.guest_group_id
+          : UNGROUPED_KEY;
+
+        setExpandedGroups((prev) => {
+          if (prev.has(targetGroupKey)) return prev;
+          const next = new Set(prev);
+          next.add(targetGroupKey);
+          return next;
+        });
+
+        setSuccessMessage(
+          wasEditing
+            ? `הפרטים של ${firstName} ${lastName} עודכנו בהצלחה`
+            : `${firstName} ${lastName} נוסף/ה לרשימת האורחים 🎉`
+        );
+
+        focusGuestRow(savedGuest.id);
+      } else {
+        setSuccessMessage(wasEditing ? 'האורח עודכן בהצלחה' : 'האורח נוסף בהצלחה');
+      }
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'שגיאה בשמירת אורח');
+      console.log("sa");
+      console.log(e);
+      setGuestDialogError(
+        'אורח זה כבר קיים ברשימת האורחים.'
+      );
+
+      setError(
+        e instanceof Error
+          ? e.message
+          : 'שגיאה בשמירת אורח'
+      );
     } finally {
       setSaving(false);
     }
@@ -458,15 +574,17 @@ export default function GuestListEditor() {
 
   async function handleDeleteGuest() {
     if (!deleteGuestId) return;
-    setSaving(true);
+
+    setDeletingGuest(true);
+
     try {
       await deleteGuest(deleteGuestId);
-      setDeleteGuestId(null);
       await reload();
+      setDeleteGuestId(null);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'שגיאה במחיקת אורח');
     } finally {
-      setSaving(false);
+      setDeletingGuest(false);
     }
   }
 
@@ -697,6 +815,8 @@ export default function GuestListEditor() {
               onEditGuest={handleEditGuestOpen}
               onDeleteGuest={handleDeleteGuestOpen}
               onSendInvitation={handleSendInvitation}
+              registerGuestRef={registerGuestRef}
+              highlightedGuestId={highlightedGuestId}
             />
           ))}
 
@@ -712,6 +832,8 @@ export default function GuestListEditor() {
             onEditGuest={handleEditGuestOpen}
             onDeleteGuest={handleDeleteGuestOpen}
             onSendInvitation={handleSendInvitation}
+            registerGuestRef={registerGuestRef}
+            highlightedGuestId={highlightedGuestId}
           />
         </>
       )}
@@ -832,6 +954,17 @@ export default function GuestListEditor() {
                 </Typography>
               )}
             </Box>
+            {guestDialogError && (
+              <Alert
+                severity="error"
+                sx={{
+                  mb: 2,
+                  borderRadius: 2,
+                }}
+              >
+                {guestDialogError}
+              </Alert>
+            )}
           </Stack>
         </DialogContent>
         <DialogActions>
@@ -846,14 +979,43 @@ export default function GuestListEditor() {
         </DialogActions>
       </Dialog>
 
-      <Dialog open={deleteGuestId !== null} onClose={() => setDeleteGuestId(null)} maxWidth="xs" fullWidth>
+      <Dialog
+        open={deleteGuestId !== null}
+        onClose={deletingGuest ? undefined : () => setDeleteGuestId(null)}
+        maxWidth="xs"
+        fullWidth
+      >
         <DialogTitle sx={{ fontFamily: "'Frank Ruhl Libre', serif", fontWeight: 700 }}>מחיקת אורח</DialogTitle>
         <DialogContent>
           <Typography variant="body2">למחוק את האורח מהרשימה?</Typography>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDeleteGuestId(null)} sx={{ color: '#A08070' }}>ביטול</Button>
-          <Button onClick={handleDeleteGuest} sx={{ color: '#C04040', fontWeight: 700 }} disabled={saving}>מחק</Button>
+          <Button
+            onClick={() => setDeleteGuestId(null)}
+            disabled={deletingGuest}
+            sx={{ color: '#A08070' }}
+          >
+            ביטול
+          </Button>
+          <Button
+            onClick={handleDeleteGuest}
+            disabled={deletingGuest}
+            sx={{
+              color: '#C04040',
+              fontWeight: 700,
+              minWidth: 84,
+            }}
+          >
+            {deletingGuest ? (
+              <CircularProgress
+                size={18}
+                thickness={5}
+                sx={{ color: '#C04040' }}
+              />
+            ) : (
+              'מחק'
+            )}
+          </Button>
         </DialogActions>
       </Dialog>
 
@@ -939,6 +1101,29 @@ export default function GuestListEditor() {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Success feedback after a guest is added/updated */}
+      <Snackbar
+        open={successMessage !== null}
+        autoHideDuration={3000}
+        onClose={() => setSuccessMessage(null)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert
+          onClose={() => setSuccessMessage(null)}
+          severity="success"
+          variant="filled"
+          icon={<CheckCircleIcon fontSize="small" />}
+          sx={{
+            borderRadius: 2,
+            fontWeight: 700,
+            boxShadow: '0 6px 20px rgba(46,139,87,0.35)',
+            background: 'linear-gradient(135deg,#2E8B57,#3CA96B)',
+          }}
+        >
+          {successMessage}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }
@@ -964,6 +1149,8 @@ const GroupAccordionItem = memo(function GroupAccordionItem({
   onEditGuest,
   onDeleteGuest,
   onSendInvitation,
+  registerGuestRef,
+  highlightedGuestId,
 }: {
   groupId: string;
   weddingId: number;
@@ -979,6 +1166,8 @@ const GroupAccordionItem = memo(function GroupAccordionItem({
   onEditGuest: (guest: ManagedGuest) => void;
   onDeleteGuest: (id: string) => void;
   onSendInvitation: (guest: ManagedGuest) => void;
+  registerGuestRef: (id: string, el: HTMLDivElement | null) => void;
+  highlightedGuestId: string | null;
 }) {
   const handleChange = useCallback(() => onToggle(groupId), [onToggle, groupId]);
   const handleCreateGuest = useCallback(
@@ -1070,6 +1259,8 @@ const GroupAccordionItem = memo(function GroupAccordionItem({
                 onEdit={onEditGuest}
                 onDelete={onDeleteGuest}
                 onSendInvitation={onSendInvitation}
+                registerRef={registerGuestRef}
+                highlighted={highlightedGuestId === guest.id}
               />
             ))}
           </Stack>
@@ -1085,12 +1276,16 @@ const GuestRow = memo(function GuestRow({
   onEdit,
   onDelete,
   onSendInvitation,
+  registerRef,
+  highlighted,
 }: {
   guest: ManagedGuest;
   weddingId: number;
   onEdit: (guest: ManagedGuest) => void;
   onDelete: (id: string) => void;
   onSendInvitation: (guest: ManagedGuest) => void;
+  registerRef: (id: string, el: HTMLDivElement | null) => void;
+  highlighted: boolean;
 }) {
   const [copied, setCopied] = useState(false);
 
@@ -1106,12 +1301,15 @@ const GuestRow = memo(function GuestRow({
 
   return (
     <Box
+      ref={(el: HTMLDivElement | null) => registerRef(guest.id, el)}
       sx={{
-        border: '1px solid rgba(201,168,76,0.18)',
+        border: highlighted ? '1px solid rgba(46,139,87,0.55)' : '1px solid rgba(201,168,76,0.18)',
         borderRadius: 2,
         px: 1.2,
         py: 0.9,
-        background: 'rgba(255,255,255,0.7)',
+        background: highlighted ? 'rgba(46,139,87,0.10)' : 'rgba(255,255,255,0.7)',
+        boxShadow: highlighted ? '0 0 0 3px rgba(46,139,87,0.18)' : 'none',
+        transition: 'background-color 0.6s ease, box-shadow 0.6s ease, border-color 0.6s ease',
       }}
     >
       <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} alignItems={{ sm: 'center' }}>

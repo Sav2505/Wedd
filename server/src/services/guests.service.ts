@@ -34,13 +34,13 @@ export async function listGuestGroups(): Promise<Array<GuestGroup & { guest_coun
   return rows;
 }
 
-export async function createGuestGroup(name: string): Promise<GuestGroup> {
+export async function createGuestGroup(name: string, wedding_id: number): Promise<GuestGroup> {
   const cleanName = name.trim();
   if (!cleanName) throw createError('שם קבוצה הוא שדה חובה', 400);
 
   const { rows } = await pool.query<GuestGroup>(
-    'INSERT INTO guest_groups (name) VALUES ($1) RETURNING *',
-    [cleanName],
+    'INSERT INTO guest_groups (name, wedding_id) VALUES ($1, $2) RETURNING *',
+    [cleanName, wedding_id],
   );
 
   return rows[0];
@@ -108,6 +108,7 @@ export async function listGuests(query?: string): Promise<ManagedGuest[]> {
 }
 
 export async function createGuest(payload: {
+  wedding_id: number;
   first_name: string;
   last_name: string;
   phone: string;
@@ -122,14 +123,29 @@ export async function createGuest(payload: {
   if (!firstName || !lastName) throw createError('שם פרטי ושם משפחה הם שדות חובה', 400);
   if (!phone) throw createError('מספר טלפון הוא שדה חובה', 400);
 
+  // בדיקת כפילות: אותו wedding_id + טלפון + שם פרטי + שם משפחה
+  const { rows: existing } = await pool.query(
+    `SELECT id FROM guests
+     WHERE wedding_id = $1
+       AND phone = $2
+       AND lower(first_name) = lower($3)
+       AND lower(last_name) = lower($4)
+     LIMIT 1`,
+    [payload.wedding_id, phone, firstName, lastName]
+  );
+
+  if (existing.length > 0) {
+    throw createError('אורח עם אותו שם וטלפון כבר קיים ברשימת האורחים', 409);
+  }
+
   const fullName = compactName(firstName, lastName);
   const plusCount = Math.max(0, Math.floor(payload.plus_count ?? 0));
 
   const { rows } = await pool.query<ManagedGuest>(`
     INSERT INTO guests (
-      full_name, first_name, last_name, phone, side, role, guest_group_id, plus_count
+      wedding_id, full_name, first_name, last_name, phone, side, role, guest_group_id, plus_count
     )
-    VALUES ($1, $2, $3, $4, $5, 'guest', $6, $7)
+    VALUES ($1, $2, $3, $4, $5, $6, 'guest', $7, $8)
     RETURNING
       id,
       first_name,
@@ -145,7 +161,7 @@ export async function createGuest(payload: {
         number_of_guests,
         rsvp_updated_at,
       created_at
-  `, [fullName, firstName, lastName, phone, payload.side ?? null, payload.guest_group_id ?? null, plusCount]);
+  `, [payload.wedding_id, fullName, firstName, lastName, phone, payload.side ?? null, payload.guest_group_id ?? null, plusCount]);
 
   return rows[0];
 }

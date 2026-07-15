@@ -22,6 +22,7 @@ export interface GuestGroup {
   id: string;
   name: string;
   created_at: string;
+  wedding_id: number;
 }
 
 export interface ManagedGuest {

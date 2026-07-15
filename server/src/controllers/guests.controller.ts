@@ -16,10 +16,10 @@ export async function getGuestGroups(_req: Request, res: Response, next: NextFun
 
 export async function createGuestGroup(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    const { name } = req.body as { name?: string };
+    const { name, wedding_id } = req.body as { name?: string, wedding_id: number };
     if (!name) return next(createError('שם קבוצה הוא שדה חובה', 400));
 
-    const group = await guestsService.createGuestGroup(name);
+    const group = await guestsService.createGuestGroup(name, wedding_id);
     res.status(201).json({ success: true, data: group });
   } catch (err) {
     next(err);
@@ -60,6 +60,7 @@ export async function getGuests(req: Request, res: Response, next: NextFunction)
 export async function createGuest(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const payload = req.body as {
+      wedding_id: number;
       first_name?: string;
       last_name?: string;
       phone?: string;
@@ -73,6 +74,7 @@ export async function createGuest(req: Request, res: Response, next: NextFunctio
     }
 
     const guest = await guestsService.createGuest({
+      wedding_id: payload.wedding_id,
       first_name: payload.first_name,
       last_name: payload.last_name,
       phone: payload.phone,

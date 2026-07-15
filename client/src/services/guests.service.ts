@@ -14,8 +14,8 @@ export async function getGuestGroups(): Promise<GuestGroup[]> {
   return data.data;
 }
 
-export async function createGuestGroup(name: string): Promise<GuestGroup> {
-  const { data } = await api.post<ApiResponse<GuestGroup>>('/guests/groups', { name });
+export async function createGuestGroup(name: string, wedding_id: number): Promise<GuestGroup> {
+  const { data } = await api.post<ApiResponse<GuestGroup>>('/guests/groups', { name, wedding_id });
   if (!data.success || !data.data) throw new Error(data.message ?? 'שגיאה ביצירת קבוצה');
   return data.data;
 }
@@ -39,6 +39,7 @@ export async function getGuests(q?: string): Promise<ManagedGuest[]> {
 }
 
 export async function createGuest(payload: {
+  wedding_id: number;
   first_name: string;
   last_name: string;
   phone: string;

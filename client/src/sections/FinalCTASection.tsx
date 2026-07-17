@@ -7,7 +7,7 @@ export default function FinalCTASection() {
     const navigate = useNavigate();
 
     return (
-        <Box sx={{ px: 2, py: { xs: 8, sm: 11 }, textAlign: 'center' }}>
+        <Box sx={{ px: 2, py: { xs: 2, sm: 11 }, mb: 12, textAlign: 'center' }}>
             <motion.div {...scrollReveal} variants={staggerContainer} style={{ maxWidth: 480, margin: '0 auto' }}>
                 <motion.div variants={fadeUp}>
                     <Typography sx={{ fontSize: '2.2rem', mb: 1.5 }}>💍</Typography>
@@ -43,12 +43,6 @@ export default function FinalCTASection() {
                     >
                         אני רוצה גם מערכת כזאת 💍
                     </Button>
-                </motion.div>
-
-                <motion.div variants={fadeUp}>
-                    <Typography sx={{ mt: 2.5, color: palette.textFaint, fontSize: '0.82rem' }}>
-                        נשלח אליכם פרטים ליצירת קשר בהמשך התהליך
-                    </Typography>
                 </motion.div>
             </motion.div>
         </Box>

@@ -1,9 +1,8 @@
 import { Box, Typography } from '@mui/material';
 import { motion } from 'framer-motion';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import NearMeIcon from '@mui/icons-material/NearMe';
 import { fadeUp, fadeUpCard, staggerContainer, scrollReveal, palette } from '../shared/animations';
-import MockupFrame from '../components/MockupFrame';
+import GuestAppMockup from '../components/GuestAppMockup';
 
 const features = [
     'אישור הגעה בלחיצה אחת, ישירות מוואטסאפ',
@@ -12,60 +11,6 @@ const features = [
     'גלריה משותפת לכל האורחים',
     'צפייה במיקום שלהם בשולחן (לבחירתכם)',
 ];
-
-function GuestMockup() {
-    return (
-        <MockupFrame label="מסך אורח" maxWidth={330}>
-            <Box sx={{ textAlign: 'center', py: 1 }}>
-                <Typography sx={{ fontFamily: "'Frank Ruhl Libre', serif", fontWeight: 700, fontSize: '1.1rem', color: palette.textDark }}>
-                    מיכל & יוסי
-                </Typography>
-                <Typography sx={{ color: palette.textMuted, fontSize: '0.8rem', mt: 0.4 }}>
-                    שמחים שתהיו איתנו! 💛
-                </Typography>
-
-                <Box
-                    sx={{
-                        mt: 2,
-                        p: 1.6,
-                        borderRadius: '14px',
-                        background: 'rgba(201,168,76,0.08)',
-                        border: '1px solid rgba(201,168,76,0.16)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: 1,
-                    }}
-                >
-                    <NearMeIcon sx={{ color: palette.gold, fontSize: 18 }} />
-                    <Typography sx={{ fontSize: '0.85rem', fontWeight: 600, color: palette.textDark }}>
-                        ניווט לאולם עם Waze
-                    </Typography>
-                </Box>
-
-                <Box sx={{ display: 'flex', gap: 1, mt: 1.4 }}>
-                    {['שולחן 12', 'גלריה', 'RSVP ✓'].map((chip) => (
-                        <Box
-                            key={chip}
-                            sx={{
-                                flex: 1,
-                                py: 1,
-                                borderRadius: '10px',
-                                background: 'rgba(255,255,255,0.7)',
-                                border: '1px solid rgba(201,168,76,0.18)',
-                                fontSize: '0.72rem',
-                                fontWeight: 600,
-                                color: palette.textMuted,
-                            }}
-                        >
-                            {chip}
-                        </Box>
-                    ))}
-                </Box>
-            </Box>
-        </MockupFrame>
-    );
-}
 
 export default function GuestExperienceSection() {
     return (
@@ -120,7 +65,7 @@ export default function GuestExperienceSection() {
                 </motion.div>
 
                 <motion.div {...scrollReveal} variants={fadeUpCard}>
-                    <GuestMockup />
+                    <GuestAppMockup />
                 </motion.div>
             </Box>
         </Box>

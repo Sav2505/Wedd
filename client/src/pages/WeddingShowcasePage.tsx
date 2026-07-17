@@ -2,13 +2,14 @@ import { Box } from '@mui/material';
 import FallingPetals from '../components/FallingPetals';
 import ShowcaseHero from '../sections/ShowcaseHero';
 import WhyLoveIt from '../sections/WhyLoveIt';
-import CoupleDashboardSection from '../sections/CoupleDashboardSection';
+// import CoupleDashboardSection from '../sections/CoupleDashboardSection';
 import RsvpTimelineSection from '../sections/RsvpTimelineSection';
 import GuestExperienceSection from '../sections/GuestExperienceSection';
 import GallerySection from '../sections/GallerySection';
 import PricingSection from '../sections/PricingSection';
 import FinalCTASection from '../sections/FinalCTASection';
 import StickyMobileCTA from '../components/StickyMobileCTA';
+import { useEffect } from 'react';
 
 // ─── Wedding Showcase / Landing page ───────────────────────
 // Sits between "לחצו כאן לפרטים" on the login screen and the
@@ -20,6 +21,13 @@ import StickyMobileCTA from '../components/StickyMobileCTA';
 // Route suggestion: <Route path="/showcase" element={<WeddingShowcasePage />} />
 
 export default function WeddingShowcasePage() {
+    // React Router doesn't reset scroll position between route changes,
+    // so arriving here from a page that was scrolled down would otherwise
+    // land mid-page instead of at the hero. Force it to the top on mount.
+    useEffect(() => {
+        window.scrollTo(0, 0);
+    }, []);
+
     return (
         <Box
             sx={{
@@ -36,7 +44,7 @@ export default function WeddingShowcasePage() {
 
             <ShowcaseHero />
             <WhyLoveIt />
-            <CoupleDashboardSection />
+            {/* <CoupleDashboardSection /> */}
             <RsvpTimelineSection />
             <GuestExperienceSection />
             <GallerySection />

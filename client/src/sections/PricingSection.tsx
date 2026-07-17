@@ -6,7 +6,7 @@ import { fadeUp, fadeUpCard, staggerContainer, scrollReveal, palette } from '../
 const included = [
     'מערכת מלאה לחתן ולכלה',
     'אפליקציה מלאה לאורחים',
-    'אישורי הגעה אוטומטיים בוואטסאפ',
+    'אישורי הגעה אוטומטיים',
     'סידורי הושבה',
     'גלריה משותפת',
     'ניהול הוצאות והכנסות',
@@ -78,7 +78,7 @@ export default function PricingSection() {
                                     style={{ display: 'flex', alignItems: 'center', gap: 8 }}
                                 >
                                     <CheckCircleIcon sx={{ color: palette.gold, fontSize: 17, flexShrink: 0 }} />
-                                    <Typography sx={{ fontSize: '0.85rem', color: palette.textDark }}>{item}</Typography>
+                                    <Typography sx={{ fontSize: '0.85rem', color: palette.textDark, textAlign: "start" }}>{item}</Typography>
                                 </motion.div>
                             ))}
                         </Box>

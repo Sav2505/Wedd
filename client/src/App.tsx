@@ -5,6 +5,7 @@ import CoupleLayout from './pages/CoupleLayout';
 import { useAppSelector } from './store';
 import { parseGuestParams } from './utils/guestUrl';
 import WeddingRegisterPage from './pages/WeddingRegisterPage';
+import WeddingShowcasePage from './pages/WeddingShowcasePage';
 
 export default function App() {
   const isAuthenticated = useAppSelector((s) => s.auth.isAuthenticated);
@@ -27,6 +28,7 @@ export default function App() {
         path="/*"
         element={isAuthenticated && !hasGuestParams ? HomeLayout : <Navigate to={loginRedirect} replace />}
       />
+      <Route path="/showcase" element={<WeddingShowcasePage />} />
       <Route path="/register" element={<WeddingRegisterPage />} />
     </Routes>
   );

@@ -25,7 +25,7 @@ export default function WeddingRegisterCTA({ variants, mt }: Props) {
 
             <Link
                 component={RouterLink}
-                to="/register"
+                to="/showcase"
                 sx={{
                     display: 'block',
                     textAlign: 'center',

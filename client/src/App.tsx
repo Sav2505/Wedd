@@ -24,12 +24,12 @@ export default function App() {
         path="/login"
         element={isAuthenticated && !hasGuestParams ? <Navigate to="/" replace /> : <LoginPage />}
       />
+      <Route path="/showcase" element={<WeddingShowcasePage />} />
+      <Route path="/register" element={<WeddingRegisterPage />} />
       <Route
         path="/*"
         element={isAuthenticated && !hasGuestParams ? HomeLayout : <Navigate to={loginRedirect} replace />}
       />
-      <Route path="/showcase" element={<WeddingShowcasePage />} />
-      <Route path="/register" element={<WeddingRegisterPage />} />
     </Routes>
   );
 }

@@ -305,7 +305,7 @@ export default function WeddingRegisterPage() {
                                             onClick={() => navigate('/login')}
                                             sx={{ mt: 2.4, color: '#C9A84C', fontWeight: 600 }}
                                         >
-                                            חזרה למסך הכניסה
+                                            לחיצה לחזרה
                                         </Button>
                                     </Box>
                                 </motion.div>
@@ -498,7 +498,7 @@ export default function WeddingRegisterPage() {
                                                 }}
                                             >
                                                 <ArrowForwardIcon sx={{ fontSize: 18 }} />
-                                                חזרה למסך הכניסה
+                                                לחיצה לחזרה
                                             </Box>
                                         </RouterLink>
                                     </motion.div>

@@ -4,11 +4,14 @@ import { motion } from 'framer-motion';
 
 interface Props {
     variants?: any;
+    mt?: number;
 }
 
-export default function WeddingRegisterCTA({ variants }: Props) {
+const DEFAULT_MT = 3;
+
+export default function WeddingRegisterCTA({ variants, mt }: Props) {
     const content = (
-        <Box sx={{ mt: 3 }}>
+        <Box sx={{ mt: mt ?? DEFAULT_MT }}>
             <Typography
                 align="center"
                 sx={{
@@ -17,7 +20,7 @@ export default function WeddingRegisterCTA({ variants }: Props) {
                     fontWeight: 500,
                 }}
             >
-                רוצים גם לחתונה שלכם ?
+                מתחתנים בקרוב & אהבתם את האפליקציה שלנו ?
             </Typography>
 
             <Link
@@ -38,7 +41,7 @@ export default function WeddingRegisterCTA({ variants }: Props) {
                     },
                 }}
             >
-                לחצו כאן 💍
+                לחצו כאן לפרטים 💍
             </Link>
         </Box>
     );

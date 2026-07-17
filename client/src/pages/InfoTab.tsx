@@ -14,6 +14,7 @@ import { getWeddingInfo } from '../services/info.service';
 import { WeddingInfo } from '../types/domain';
 import GoldCard from '../components/GoldCard';
 import CountdownTimer from '../components/CountdownTimer';
+import WeddingRegisterCTA from '../components/WeddingRegisterCTA';
 
 // ─── helpers ────────────────────────────────────────────────
 
@@ -21,7 +22,7 @@ function formatHebrewDate(iso: string): string {
   // Use noon to avoid UTC→local timezone shift flipping the day
   const d = new Date(iso + 'T12:00:00');
   const weekday = d.toLocaleDateString('he-IL', { weekday: 'long' });
-  const date    = d.toLocaleDateString('he-IL', { day: 'numeric', month: 'long', year: 'numeric' });
+  const date = d.toLocaleDateString('he-IL', { day: 'numeric', month: 'long', year: 'numeric' });
   return `${weekday}, ${date}`;
 }
 
@@ -183,8 +184,8 @@ function InfoSkeleton() {
 // ─── Main ───────────────────────────────────────────────────
 
 export default function InfoTab() {
-  const [info, setInfo]       = useState<WeddingInfo | null>(null);
-  const [error, setError]     = useState<string | null>(null);
+  const [info, setInfo] = useState<WeddingInfo | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -292,6 +293,11 @@ export default function InfoTab() {
           </Box>
         </motion.div>
       )}
+
+      {/* Sign up */}
+      <GoldCard delay={0.4} sx={{ mt: 2, textAlign: 'center' }}>
+        <WeddingRegisterCTA mt={1} />
+      </GoldCard>
     </Box>
   );
 }

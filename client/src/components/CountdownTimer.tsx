@@ -13,10 +13,10 @@ function calcTimeLeft(targetDate: string): TimeLeft {
   const diff = new Date(targetDate + 'T00:00:00').getTime() - Date.now();
   if (diff <= 0) return { days: 0, hours: 0, minutes: 0, seconds: 0 };
   return {
-    days:    Math.floor(diff / 86_400_000),
-    hours:   Math.floor((diff % 86_400_000) / 3_600_000),
+    days: Math.floor(diff / 86_400_000),
+    hours: Math.floor((diff % 86_400_000) / 3_600_000),
     minutes: Math.floor((diff % 3_600_000) / 60_000),
-    seconds: Math.floor((diff % 60_000)    / 1_000),
+    seconds: Math.floor((diff % 60_000) / 1_000),
   };
 }
 
@@ -101,12 +101,12 @@ export default function CountdownTimer({ weddingDate }: Props) {
   const isPast = Object.values(timeLeft).every((v) => v === 0);
 
   return (
-    <Box sx={{ mt: 3 }}>
+    <Box sx={{ mt: 1, mb: 1 }}>
       <Typography
         variant="body2"
         sx={{ color: '#A08070', mb: 1.5, textAlign: 'center', fontWeight: 500 }}
       >
-        {isPast ? '🎉 החתונה כבר הגיעה!' : '⏳ נותרו עד החתונה'}
+        {isPast ? '🎉 החתונה כבר הגיעה !' : '⏳ נותרו עד החתונה'}
       </Typography>
       {!isPast && (
         <Box
@@ -122,9 +122,9 @@ export default function CountdownTimer({ weddingDate }: Props) {
           <Separator />
           <UnitBox value={timeLeft.minutes} label="דקות" />
           <Separator />
-          <UnitBox value={timeLeft.hours}   label="שעות" />
+          <UnitBox value={timeLeft.hours} label="שעות" />
           <Separator />
-          <UnitBox value={timeLeft.days}    label="ימים" />
+          <UnitBox value={timeLeft.days} label="ימים" />
         </Box>
       )}
     </Box>

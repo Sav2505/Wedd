@@ -1,11 +1,17 @@
 import { Box, Typography } from '@mui/material';
 import { motion } from 'framer-motion';
-import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
+// import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
 import { fadeUp, fadeUpCard, staggerContainer, scrollReveal, palette } from '../shared/animations';
 
 // Decorative "polaroid" placeholders — deliberately abstract (icon + gradient),
 // not real photos, since this is a marketing mockup of the feature.
 const rotations = [-6, 4, -3, 7, -8, 3];
+
+const imgStyle: React.CSSProperties = {
+    width: '100%',
+    height: '100%',
+    objectFit: 'contain',
+}
 
 export default function GallerySection() {
     return (
@@ -68,7 +74,8 @@ export default function GallerySection() {
                                         background: `linear-gradient(135deg, rgba(224,201,122,${0.35 + (i % 3) * 0.1}) 0%, rgba(201,168,76,${0.5 + (i % 2) * 0.15}) 100%)`,
                                     }}
                                 >
-                                    <PhotoCameraIcon sx={{ color: 'rgba(255,255,255,0.85)', fontSize: 26 }} />
+                                    <img src={`/example_image_${i + 1}.jpeg`} style={imgStyle}></img>
+                                    {/* <PhotoCameraIcon sx={{ color: 'rgba(255,255,255,0.85)', fontSize: 26 }} /> */}
                                 </Box>
                             </Box>
                         </motion.div>

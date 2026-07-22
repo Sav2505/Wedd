@@ -73,6 +73,7 @@ export async function exportGuestsToExcel(
         { key: 'table', width: 14 },
         { key: 'guests', width: 16 },
         { key: 'status', width: 18 },
+        { key: 'gift_amount', width: 16 },
     ];
 
     const header = sheet.addRow([
@@ -84,6 +85,7 @@ export async function exportGuestsToExcel(
         'מספר שולחן',
         'מספר אורחים',
         'סטטוס',
+        'מתנה בש"ח'
     ]);
 
     header.height = 26;
@@ -132,6 +134,7 @@ export async function exportGuestsToExcel(
             table: guest.table_number ?? '',
             guests: guest.number_of_guests,
             status: translateStatus(guest.rsvp_status),
+            gift_amount: guest.gift_amount ?? '',
         });
     });
 

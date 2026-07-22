@@ -97,7 +97,8 @@ export async function listGuests(query?: string): Promise<ManagedGuest[]> {
       g.rsvp_status,
       g.number_of_guests,
       g.rsvp_updated_at,
-      g.created_at
+      g.created_at,
+      g.gift_amount
     FROM guests g
     LEFT JOIN guest_groups gg ON gg.id = g.guest_group_id
     ${where}
@@ -115,10 +116,12 @@ export async function createGuest(payload: {
   side?: 'חתן' | 'כלה' | 'שניהם' | null;
   guest_group_id?: string | null;
   plus_count?: number;
+  gift_amount?: number | null;
 }): Promise<ManagedGuest> {
   const firstName = payload.first_name.trim();
   const lastName = payload.last_name.trim();
   const phone = sanitizePhone(payload.phone);
+  const giftAmount = payload.gift_amount ?? null;
 
   if (!firstName || !lastName) throw createError('שם פרטי ושם משפחה הם שדות חובה', 400);
   if (!phone) throw createError('מספר טלפון הוא שדה חובה', 400);
@@ -143,9 +146,9 @@ export async function createGuest(payload: {
 
   const { rows } = await pool.query<ManagedGuest>(`
     INSERT INTO guests (
-      wedding_id, full_name, first_name, last_name, phone, side, role, guest_group_id, plus_count
+      wedding_id, full_name, first_name, last_name, phone, side, role, guest_group_id, plus_count, gift_amount
     )
-    VALUES ($1, $2, $3, $4, $5, $6, 'guest', $7, $8)
+    VALUES ($1, $2, $3, $4, $5, $6, 'guest', $7, $8, $9)
     RETURNING
       id,
       first_name,
@@ -157,11 +160,12 @@ export async function createGuest(payload: {
       guest_group_id,
       NULL::text AS group_name,
       plus_count,
-        rsvp_status,
-        number_of_guests,
-        rsvp_updated_at,
-      created_at
-  `, [payload.wedding_id, fullName, firstName, lastName, phone, payload.side ?? null, payload.guest_group_id ?? null, plusCount]);
+      rsvp_status,
+      number_of_guests,
+      rsvp_updated_at,
+      created_at,
+      gift_amount
+  `, [payload.wedding_id, fullName, firstName, lastName, phone, payload.side ?? null, payload.guest_group_id ?? null, plusCount, giftAmount ?? null]);
 
   return rows[0];
 }
@@ -173,6 +177,7 @@ export async function updateGuest(id: string, payload: {
   side?: 'חתן' | 'כלה' | 'שניהם' | null;
   guest_group_id?: string | null;
   plus_count?: number;
+  gift_amount?: number | null;
 }): Promise<ManagedGuest> {
   const current = await pool.query<{
     first_name: string | null;
@@ -181,8 +186,9 @@ export async function updateGuest(id: string, payload: {
     phone: string;
     side: 'חתן' | 'כלה' | 'שניהם' | null;
     guest_group_id: string | null;
+    gift_amount: number | null;
   }>(
-    "SELECT first_name, last_name, full_name, phone, side, guest_group_id FROM guests WHERE id = $1 AND role = 'guest'",
+    "SELECT first_name, last_name, full_name, phone, side, guest_group_id, gift_amount FROM guests WHERE id = $1 AND role = 'guest'",
     [id],
   );
 
@@ -195,6 +201,7 @@ export async function updateGuest(id: string, payload: {
   const side = payload.side === undefined ? now.side : payload.side;
   const groupId = payload.guest_group_id === undefined ? now.guest_group_id : payload.guest_group_id;
   const plusCount = payload.plus_count !== undefined ? Math.max(0, Math.floor(payload.plus_count)) : undefined;
+  const giftAmount = payload.gift_amount !== undefined ? payload.gift_amount : now.gift_amount;
 
   if (!firstName || !lastName) throw createError('שם פרטי ושם משפחה הם שדות חובה', 400);
   if (!phone) throw createError('מספר טלפון הוא שדה חובה', 400);
@@ -210,7 +217,8 @@ export async function updateGuest(id: string, payload: {
       phone = $4,
       side = $5,
       guest_group_id = $6,
-      plus_count = COALESCE($7, plus_count)
+      plus_count = COALESCE($7, plus_count),
+      gift_amount = $9
     WHERE id = $8 AND role = 'guest'
     RETURNING
       id,
@@ -223,11 +231,12 @@ export async function updateGuest(id: string, payload: {
       guest_group_id,
       NULL::text AS group_name,
       plus_count,
-        rsvp_status,
-        number_of_guests,
-        rsvp_updated_at,
-      created_at
-  `, [firstName, lastName, fullName, phone, side ?? null, groupId ?? null, plusCount ?? null, id]);
+      rsvp_status,
+      number_of_guests,
+      rsvp_updated_at,
+      created_at,
+      gift_amount
+  `, [firstName, lastName, fullName, phone, side ?? null, groupId ?? null, plusCount ?? null, id, giftAmount]);
 
   if (rows.length === 0) throw createError('אורח לא נמצא', 404);
   return rows[0];

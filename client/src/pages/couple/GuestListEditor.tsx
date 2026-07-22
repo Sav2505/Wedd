@@ -63,6 +63,7 @@ type GuestForm = {
   side: SideOption;
   guest_group_id: string | null;
   plus_count: number;
+  gift_amount: number | null;
 };
 
 const EMPTY_FORM: GuestForm = {
@@ -72,6 +73,7 @@ const EMPTY_FORM: GuestForm = {
   side: null,
   guest_group_id: null,
   plus_count: 0,
+  gift_amount: null,
 };
 
 type RsvpFilter = 'ALL' | RsvpStatus;
@@ -397,6 +399,7 @@ export default function GuestListEditor() {
       side: guest.side,
       guest_group_id: guest.guest_group_id,
       plus_count: guest.plus_count ?? 0,
+      gift_amount: guest.gift_amount ?? null,
     });
     setGuestDialogOpen(true);
   }, []);
@@ -495,6 +498,8 @@ export default function GuestListEditor() {
     const lastName = guestForm.last_name.trim();
     const phone = guestForm.phone.trim();
     const phoneDigits = phone.replace(/\D/g, '');
+    const plusCount = guestForm.plus_count ?? 0;
+    const giftAmount = guestForm.gift_amount ?? null;
 
     setSaving(true);
     try {
@@ -505,7 +510,8 @@ export default function GuestListEditor() {
           phone,
           side: guestForm.side,
           guest_group_id: guestForm.guest_group_id,
-          plus_count: guestForm.plus_count,
+          plus_count: plusCount,
+          gift_amount: giftAmount,
         });
       } else {
         await createGuest({
@@ -952,6 +958,20 @@ export default function GuestListEditor() {
                 </Typography>
               )}
             </Box>
+            <Stack direction={{ xs: 'column', sm: 'column' }} spacing={1.25}>
+              <Typography variant="caption" sx={{ color: '#9A7833', fontWeight: 600, marginLeft: "2px !important", marginBottom: "3px !important" }}>
+                מתנה מהאורח
+              </Typography>
+              <TextField
+                sx={{ marginTop: '6px !important' }}
+                fullWidth
+                label='סכום מתנה בש"ח'
+                value={guestForm.gift_amount}
+                onChange={(e) => setGuestForm((p) => ({ ...p, gift_amount: Number(e.target.value) }))}
+                size="small"
+                type="number"
+              />
+            </Stack>
             {guestDialogError && (
               <Alert
                 severity="error"
@@ -1122,7 +1142,7 @@ export default function GuestListEditor() {
           {successMessage}
         </Alert>
       </Snackbar>
-    </Box>
+    </Box >
   );
 }
 

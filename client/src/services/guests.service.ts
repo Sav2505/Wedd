@@ -61,6 +61,7 @@ export async function updateGuest(
     side?: 'חתן' | 'כלה' | 'שניהם' | null;
     guest_group_id?: string | null;
     plus_count?: number;
+    gift_amount?: number | null;
   },
 ): Promise<ManagedGuest> {
   const { data } = await api.put<ApiResponse<ManagedGuest>>(`/guests/${id}`, payload);

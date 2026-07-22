@@ -67,6 +67,7 @@ export async function createGuest(req: Request, res: Response, next: NextFunctio
       side?: 'חתן' | 'כלה' | 'שניהם' | null;
       guest_group_id?: string | null;
       plus_count?: number;
+      gift_amount?: number | null;
     };
 
     if (!payload.first_name || !payload.last_name || !payload.phone) {
@@ -81,6 +82,7 @@ export async function createGuest(req: Request, res: Response, next: NextFunctio
       side: payload.side ?? null,
       guest_group_id: payload.guest_group_id ?? null,
       plus_count: payload.plus_count ?? 0,
+      gift_amount: payload.gift_amount ?? null,
     });
 
     res.status(201).json({ success: true, data: guest });
@@ -98,6 +100,7 @@ export async function updateGuest(req: Request, res: Response, next: NextFunctio
       side?: 'חתן' | 'כלה' | 'שניהם' | null;
       guest_group_id?: string | null;
       plus_count?: number;
+      gift_amount?: number | null;
     };
 
     const guest = await guestsService.updateGuest(req.params.id, payload);

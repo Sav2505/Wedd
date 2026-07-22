@@ -16,6 +16,7 @@ export interface Guest {
   number_of_guests: number;
   rsvp_updated_at: string | null;
   created_at: string;
+  gift_amount: number | null;
 }
 
 export interface GuestGroup {
@@ -40,6 +41,7 @@ export interface ManagedGuest {
   number_of_guests: number;
   rsvp_updated_at: string | null;
   created_at: string;
+  gift_amount: number | null;
 }
 
 export interface Photo {

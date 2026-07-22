@@ -13,7 +13,7 @@ interface AnimatedCounterProps {
 
 // Counts up from 0 to `value` once it scrolls into view. Used for the
 // small stat tiles inside the dashboard mockup and the pricing block
-// ("149 ₪", "3 תזכורות אוטומטיות", etc.).
+// ("3 תזכורות אוטומטיות", etc.).
 export default function AnimatedCounter({
     value,
     prefix = '',

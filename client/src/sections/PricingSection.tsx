@@ -48,7 +48,7 @@ export default function PricingSection() {
                                 lineHeight: 1,
                             }}
                         >
-                            149 ₪
+                            {import.meta.env.VITE_PRICING} ₪
                         </Typography>
                     </motion.div>
 

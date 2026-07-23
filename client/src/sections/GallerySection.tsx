@@ -10,7 +10,7 @@ const rotations = [-6, 4, -3, 7, -8, 3];
 const imgStyle: React.CSSProperties = {
     width: '100%',
     height: '100%',
-    objectFit: 'contain',
+    objectFit: 'cover'
 }
 
 export default function GallerySection() {

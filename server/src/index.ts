@@ -10,6 +10,7 @@ import tablesRoutes from './routes/tables.routes';
 import guestsRoutes from './routes/guests.routes';
 import tasksRoutes from './routes/tasks.routes';
 import requestRoutes from './routes/weddingRequest.routes';
+import whatsappRoutes from './routes/whatsapp.routes';
 import { pool } from './db/pool';
 
 import { errorHandler, notFound } from './middleware/errorHandler';
@@ -83,6 +84,9 @@ app.use('/tables', tablesRoutes);
 app.use('/guests', guestsRoutes);
 app.use('/tasks', tasksRoutes);
 app.use('/wedding-requests', requestRoutes);
+
+// API
+app.use('/whatsapp', whatsappRoutes);
 
 // ─────────────────────────────────────────────────────────────
 // Health Check

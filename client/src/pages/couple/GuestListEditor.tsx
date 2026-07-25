@@ -173,17 +173,18 @@ function buildWhatsAppInviteUrl(weddingId: number, guest: ManagedGuest, brideAnd
 
 function computeGroupChipLabel(items: ManagedGuest[]) {
   const total = items.reduce((s, g) => s + getEffectivePartySize(g), 0);
-  if (total > items.length) {
+  if (items.length > 0) {
     return (
       <Box component="span" sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', fontSize: '0.65rem', lineHeight: 1.5, padding: '2px 4px' }}>
         <span>{items.length} רשומים</span>
-        <span>{total} בסה"כ</span>
+        <span style={{ fontSize: '0.75rem', fontWeight: "bold" }}>{total} סה"כ</span>
       </Box>
     );
   }
-  return `${items.length} אורחים`;
+  return <span style={{ fontSize: '0.72rem' }}>
+    ללא רשומים
+  </span>
 }
-
 const UNGROUPED_KEY = '__ungrouped__';
 
 export default function GuestListEditor() {

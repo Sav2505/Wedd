@@ -72,4 +72,6 @@ CREATE TABLE IF NOT EXISTS wedding_requests (
   wedding_date    DATE        NOT NULL,
   status          TEXT        NOT NULL DEFAULT 'new' CONSTRAINT chk_wedding_requests_status CHECK (status IN ('new', 'confirmed', 'cancelled')),
   updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  email           TEXT        NOT NULL,
+  phone_number     TEXT        NOT NULL,
 );

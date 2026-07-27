@@ -4,7 +4,7 @@
   "description": "אפליקציית האורחים לחתונה שלנו",
   "icons": [
     {
-      "src": "/favicon.svg",
+      "src": "/WeddFlowIcon.svg",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any maskable"

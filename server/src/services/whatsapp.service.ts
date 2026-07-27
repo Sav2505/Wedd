@@ -8,9 +8,10 @@ export async function sendTestMessage(to: string) {
     const body = {
         messaging_product: 'whatsapp',
         to,
-        type: 'text',
-        text: {
-            body: 'שלום 👋 זאת הודעת בדיקה ממערכת החתונות שלי!'
+        type: 'template',
+        template: {
+            name: 'hello_world',
+            language: { code: 'en_US' }
         }
     };
 

@@ -49,9 +49,9 @@ import {
   deleteGuestGroup,
   getGuestGroups,
   getGuests,
-  sendWhatsappInvitation,
   updateGuest,
   updateGuestGroup,
+  // sendWhatsappInvitation,
 } from '../../services/guests.service';
 import { getWeddingInfo } from '../../services/info.service';
 
@@ -123,6 +123,7 @@ function formatRsvpUpdatedAt(ts: string | null): string | null {
   });
 }
 
+// פונקציה זו תרד
 function formatWeddingDate(weddingDate: string) {
   const d = new Date(weddingDate + 'T12:00:00');
 
@@ -139,8 +140,7 @@ function formatWeddingDate(weddingDate: string) {
   return `${weekday}, ${date}`;
 }
 
-// להחליף את כל הפונקציה buildWhatsAppInviteUrl בזו:
-
+// פונקציה זו תרד
 function buildWhatsAppInviteUrl(weddingId: number, guest: ManagedGuest, brideAndGroom: string, weddingDate: string | undefined): string {
   if (weddingId < 0) {
     throw new Error('Invalid weddingId for WhatsApp invite URL');
@@ -410,25 +410,26 @@ export default function GuestListEditor() {
     setDeleteGuestId(id);
   }, []);
 
-  // const handleSendInvitation = useCallback((guest: ManagedGuest) => {
-  //   window.open(buildWhatsAppInviteUrl(info?.id ?? -1, guest, `${info?.bride_name ?? "שחר"} & ${info?.groom_name ?? "שחר"}`, info?.wedding_date ?? "יום שני, 7 בדצמבר 2026"), '_blank', 'noopener,noreferrer');
-  // }, [info]);
+  const handleSendInvitation = useCallback((guest: ManagedGuest) => {
+    window.open(buildWhatsAppInviteUrl(info?.id ?? -1, guest, `${info?.bride_name ?? "שחר"} & ${info?.groom_name ?? "שחר"}`, info?.wedding_date ?? "יום שני, 7 בדצמבר 2026"), '_blank', 'noopener,noreferrer');
+  }, [info]);
 
-  const handleSendInvitation = useCallback(async (guest: ManagedGuest) => {
-  try {
-    const digits = guest.phone.replace(/\D/g, '');
-    const phone = digits.startsWith('0')
-      ? `972${digits.slice(1)}`
-      : digits;
+  // TO RETURN
+//   const handleSendInvitation = useCallback(async (guest: ManagedGuest) => {
+//   try {
+//     const digits = guest.phone.replace(/\D/g, '');
+//     const phone = digits.startsWith('0')
+//       ? `972${digits.slice(1)}`
+//       : digits;
 
-    await sendWhatsappInvitation(phone);
+//     await sendWhatsappInvitation(phone);
 
-    setSuccessMessage('הודעת WhatsApp נשלחה בהצלחה 🎉');
-  } catch (err) {
-    console.error(err);
-    setError('שליחת הודעת WhatsApp נכשלה');
-  }
-}, []);
+//     setSuccessMessage('הודעת WhatsApp נשלחה בהצלחה 🎉');
+//   } catch (err) {
+//     console.error(err);
+//     setError('שליחת הודעת WhatsApp נכשלה');
+//   }
+// }, []);
 
   function openCreateGroup() {
     setEditingGroup(null);

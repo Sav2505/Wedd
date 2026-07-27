@@ -24,6 +24,31 @@ interface CoupleGuestRow {
 }
 
 const DAN_HAVIV_FULL_NAME = 'דן חביב';
+let ensureWeddingRequestsAdminColumnsPromise: Promise<void> | null = null;
+
+async function ensureWeddingRequestsAdminColumns(): Promise<void> {
+    if (!ensureWeddingRequestsAdminColumnsPromise) {
+        ensureWeddingRequestsAdminColumnsPromise = (async () => {
+            await pool.query(`
+                ALTER TABLE wedding_requests
+                ADD COLUMN IF NOT EXISTS first_contact_sent_at TIMESTAMPTZ DEFAULT NULL,
+                ADD COLUMN IF NOT EXISTS opened_at TIMESTAMPTZ DEFAULT NULL,
+                ADD COLUMN IF NOT EXISTS opened_by UUID REFERENCES guests(id),
+                ADD COLUMN IF NOT EXISTS open_notes TEXT DEFAULT NULL
+            `);
+
+            await pool.query(`
+                CREATE INDEX IF NOT EXISTS idx_wedding_requests_status_updated_at
+                ON wedding_requests(status, updated_at DESC)
+            `);
+        })().catch((err) => {
+            ensureWeddingRequestsAdminColumnsPromise = null;
+            throw err;
+        });
+    }
+
+    await ensureWeddingRequestsAdminColumnsPromise;
+}
 
 function normalizeWhitespace(value: string): string {
     return value.replace(/\s+/g, ' ').trim();
@@ -73,6 +98,8 @@ export async function createWeddingRequest(
 }
 
 export async function listWeddingRequests(): Promise<WeddingRequest[]> {
+    await ensureWeddingRequestsAdminColumns();
+
     const { rows } = await pool.query<WeddingRequest>(
         `
         SELECT *
@@ -118,6 +145,8 @@ export async function sendFirstContact(requestId: number): Promise<{
     mailLog: { messageId: string; to: string; subject: string };
     preview: FirstContactMailPayload;
 }> {
+    await ensureWeddingRequestsAdminColumns();
+
     const { rows } = await pool.query<WeddingRequest>(
         `SELECT * FROM wedding_requests WHERE id = $1 LIMIT 1`,
         [requestId],
@@ -169,6 +198,8 @@ export async function openWedding(
     openedBy: string,
     note?: string,
 ): Promise<OpenWeddingResult> {
+    await ensureWeddingRequestsAdminColumns();
+
     const client = await pool.connect();
 
     try {

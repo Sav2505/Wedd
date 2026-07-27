@@ -38,6 +38,9 @@
 \echo '==> Running migration_011_wedding_requests_admin_flow.sql...'
 \i migration_011_wedding_requests_admin_flow.sql
 
+\echo '==> Running migration_012_whatsapp_scheduling.sql...'
+\i migration_012_whatsapp_scheduling.sql
+
 \echo '==> Running seed.sql...'
 \i seed.sql
 

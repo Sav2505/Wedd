@@ -19,8 +19,11 @@ export async function sendWhatsappTest(req: Request, res: Response) {
             data: result,
         });
     } catch (err: any) {
-        console.error(err.response?.data || err);
+        console.error(err?.raw || err);
 
-        res.status(500).json(err.response?.data || err.message);
+        res.status(err?.statusCode ?? 500).json({
+            success: false,
+            message: err?.message ?? 'שגיאה בשליחת הודעת WhatsApp',
+        });
     }
 }

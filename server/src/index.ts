@@ -11,7 +11,10 @@ import guestsRoutes from './routes/guests.routes';
 import tasksRoutes from './routes/tasks.routes';
 import requestRoutes from './routes/weddingRequest.routes';
 import whatsappRoutes from './routes/whatsapp.routes';
+import weddingMessageScheduleRoutes from './routes/weddingMessageSchedule.routes';
 import { pool } from './db/pool';
+import { initWhatsappScheduler } from './jobs/whatsapp-scheduler.job';
+import { initWhatsappReconciliationJob } from './jobs/whatsapp-reconciliation.job';
 
 import { errorHandler, notFound } from './middleware/errorHandler';
 
@@ -84,6 +87,7 @@ app.use('/tables', tablesRoutes);
 app.use('/guests', guestsRoutes);
 app.use('/tasks', tasksRoutes);
 app.use('/wedding-requests', requestRoutes);
+app.use('/weddings', weddingMessageScheduleRoutes);
 
 // API
 app.use('/whatsapp', whatsappRoutes);
@@ -113,6 +117,9 @@ app.use(errorHandler);
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`🌍 ENV: ${process.env.NODE_ENV ?? 'development'}`);
+
+  initWhatsappScheduler();
+  initWhatsappReconciliationJob();
 });
 
 // ─────────────────────────────────────────────────────────────

@@ -40,6 +40,8 @@ import CloseIcon from '@mui/icons-material/Close';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import { exportGuestsToExcel } from '../../utils/exportGuestsToExcel';
 import { buildGuestUrl } from '../../utils/guestUrl';
+import WhatsAppScheduleModal from '../../components/WhatsAppScheduleModal';
+import ScheduleSendIcon from '@mui/icons-material/ScheduleSend';
 import { getEffectivePartySize, getEffectivePlusCount, getInvitedPartySize } from '../../utils/effectiveAttendance';
 import { GuestGroup, ManagedGuest, RsvpStatus } from '../../types/domain';
 import {
@@ -215,6 +217,7 @@ export default function GuestListEditor() {
   const [searchLoading, setSearchLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [info, setInfo] = useState<{ id: number; bride_name?: string; groom_name?: string, wedding_date?: string } | null>(null);
+  const [whatsappScheduleOpen, setWhatsappScheduleOpen] = useState(false);
 
   // --- Post-save feedback: success toast + highlight/scroll to the affected guest ---
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -415,21 +418,21 @@ export default function GuestListEditor() {
   }, [info]);
 
   // TO RETURN
-//   const handleSendInvitation = useCallback(async (guest: ManagedGuest) => {
-//   try {
-//     const digits = guest.phone.replace(/\D/g, '');
-//     const phone = digits.startsWith('0')
-//       ? `972${digits.slice(1)}`
-//       : digits;
+  //   const handleSendInvitation = useCallback(async (guest: ManagedGuest) => {
+  //   try {
+  //     const digits = guest.phone.replace(/\D/g, '');
+  //     const phone = digits.startsWith('0')
+  //       ? `972${digits.slice(1)}`
+  //       : digits;
 
-//     await sendWhatsappInvitation(phone);
+  //     await sendWhatsappInvitation(phone);
 
-//     setSuccessMessage('הודעת WhatsApp נשלחה בהצלחה 🎉');
-//   } catch (err) {
-//     console.error(err);
-//     setError('שליחת הודעת WhatsApp נכשלה');
-//   }
-// }, []);
+  //     setSuccessMessage('הודעת WhatsApp נשלחה בהצלחה 🎉');
+  //   } catch (err) {
+  //     console.error(err);
+  //     setError('שליחת הודעת WhatsApp נכשלה');
+  //   }
+  // }, []);
 
   function openCreateGroup() {
     setEditingGroup(null);
@@ -689,7 +692,6 @@ export default function GuestListEditor() {
               ) : undefined,
             }}
           />
-
           <Stack direction="row" spacing={1}>
             <Button
               variant="outlined"
@@ -751,6 +753,19 @@ export default function GuestListEditor() {
             }}
           >
             ייצוא לאקסל
+          </Button>
+                    <Button
+            variant="outlined"
+            startIcon={<ScheduleSendIcon />}
+            onClick={() => setWhatsappScheduleOpen(true)}
+            sx={{
+              borderColor: 'rgba(37,211,102,0.5)',
+              color: '#1f9f51',
+              fontWeight: 700,
+              fontSize: '14px',
+            }}
+          >
+            תזמון הודעות לאורחים
           </Button>
         </Stack>
 
@@ -1161,6 +1176,12 @@ export default function GuestListEditor() {
           {successMessage}
         </Alert>
       </Snackbar>
+      <WhatsAppScheduleModal
+        open={whatsappScheduleOpen}
+        weddingId={info?.id ?? -1}
+        weddingDate={info?.wedding_date}
+        onClose={() => setWhatsappScheduleOpen(false)}
+      />
     </Box >
   );
 }

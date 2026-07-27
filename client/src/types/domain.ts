@@ -40,6 +40,25 @@ export interface WeddingInfo {
   is_tables_published: boolean;
 }
 
+export interface WeddingMessageSchedule {
+  id: number;
+  wedding_id: number;
+  invitation_days_before: number;
+  reminder_days_before: number;
+  day_before_offset_days: number;
+  invitation_locked_at: string | null;
+  reminder_locked_at: string | null;
+  day_before_locked_at: string | null;
+  invitation_image_mime_type: string | null;
+  invitation_image_filename: string | null;
+  has_invitation_image: boolean;
+  invitation_send_at: string;
+  reminder_send_at: string;
+  day_before_send_at: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface ApiResponse<T = undefined> {
   success: boolean;
   data?: T;

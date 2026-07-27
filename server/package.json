@@ -7,7 +7,8 @@
     "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
-    "migrate": "ts-node --transpile-only src/db/migrate.ts"
+    "migrate": "ts-node --transpile-only src/db/migrate.ts",
+    "test": "node --import tsx --test src/**/*.test.ts"
   },
   "dependencies": {
     "@types/cors": "^2.8.17",
@@ -19,13 +20,19 @@
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
+    "luxon": "^3.7.2",
     "multer": "^2.1.1",
+    "node-cron": "^4.6.0",
+    "nodemailer": "^9.0.3",
     "pg": "^8.11.5",
     "typescript": "^5.4.5",
     "zod": "^3.23.8"
   },
   "devDependencies": {
-    "ts-node-dev": "^2.0.0"
+    "@types/luxon": "^3.7.2",
+    "@types/nodemailer": "^8.0.1",
+    "ts-node-dev": "^2.0.0",
+    "tsx": "^4.23.1"
   },
   "resolutions": {
     "@types/express": "4.17.21",

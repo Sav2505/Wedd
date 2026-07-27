@@ -63,8 +63,35 @@ export interface WeddingRequest {
   wedding_date: string;
   status: 'new' | 'confirmed' | 'cancelled';
   updated_at: string;
-  email: string | undefined;
+  email: string;
   phone_number: string;
+  first_contact_sent_at?: string | null;
+  opened_at?: string | null;
+  opened_by?: string | null;
+  open_notes?: string | null;
+}
+
+export interface WeddingRequestMailLog {
+  messageId: string;
+  to: string;
+  subject: string;
+}
+
+export interface CoupleCredential {
+  full_name: string;
+  side: 'חתן' | 'כלה';
+  code: string;
+}
+
+export interface SendFirstContactResponse {
+  request: WeddingRequest;
+  mailLog: WeddingRequestMailLog;
+}
+
+export interface OpenWeddingResponse {
+  request: WeddingRequest;
+  credentials: CoupleCredential[];
+  mailLog: WeddingRequestMailLog;
 }
 
 // ─── Seating ──────────────────────────────────────────────────

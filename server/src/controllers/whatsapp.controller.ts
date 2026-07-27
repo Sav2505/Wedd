@@ -3,10 +3,24 @@ import { sendTestMessage } from '../services/whatsapp.service';
 
 export async function sendWhatsappTest(req: Request, res: Response) {
     try {
-        const result = await sendTestMessage("972585709899");
-        res.json(result);
+        const { to } = req.body;
+
+        if (!to) {
+            return res.status(400).json({
+                success: false,
+                message: "Phone number is required",
+            });
+        }
+
+        const result = await sendTestMessage(to);
+
+        res.json({
+            success: true,
+            data: result,
+        });
     } catch (err: any) {
         console.error(err.response?.data || err);
+
         res.status(500).json(err.response?.data || err.message);
     }
 }

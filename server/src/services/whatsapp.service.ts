@@ -16,7 +16,7 @@ export async function sendTestMessage(to: string) {
 
     const response = await axios.post(url, body, {
         headers: {
-            Authorization: `Bearer ${process.env.WHATSAPP_TOKEN}`,
+            Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
             'Content-Type': 'application/json',
         },
     });

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, type ReactElement } from 'react';
 import {
   Box, Tab, Tabs, Typography, IconButton, Tooltip, Fade,
 } from '@mui/material';
@@ -8,6 +8,7 @@ import PhotoLibraryOutlinedIcon from '@mui/icons-material/PhotoLibraryOutlined';
 import TableBarIcon from '@mui/icons-material/TableBar';
 import Groups2Icon from '@mui/icons-material/Groups2';
 import AssignmentOutlinedIcon from '@mui/icons-material/AssignmentOutlined';
+import ManageAccountsOutlinedIcon from '@mui/icons-material/ManageAccountsOutlined';
 import LogoutIcon from '@mui/icons-material/LogoutOutlined';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useAppDispatch, useAppSelector } from '../store';
@@ -20,10 +21,11 @@ import SeatingEditor from './couple/SeatingEditor';
 import GuestListEditor from './couple/GuestListEditor';
 import PhotosTab from './PhotosTab';
 import TaskManagementPage from './couple/TaskManagementPage';
+import WeddingRequestsAdminPage from './couple/WeddingRequestsAdminPage';
 
 // ─── Tab config ──────────────────────────────────────────────
 
-const TABS = [
+const BASE_TABS = [
   { label: 'פרטי האירוע', icon: <EditCalendarOutlinedIcon sx={{ fontSize: 22 }} /> },
   { label: 'הודעה לאורחים', icon: <FavoriteBorderIcon sx={{ fontSize: 22 }} /> },
   { label: 'מעקב משימות', icon: <AssignmentOutlinedIcon sx={{ fontSize: 22 }} /> },
@@ -32,7 +34,14 @@ const TABS = [
   { label: 'גלריה', icon: <PhotoLibraryOutlinedIcon sx={{ fontSize: 22 }} /> },
 ] as const;
 
-const PANELS = [<WeddingInfoEditor />, <MessageEditor />, <TaskManagementPage />, <GuestListEditor />, <SeatingEditor />, <PhotosTab />];
+const BASE_PANELS = [
+  <WeddingInfoEditor />,
+  <MessageEditor />,
+  <TaskManagementPage />,
+  <GuestListEditor />,
+  <SeatingEditor />,
+  <PhotosTab />,
+];
 
 // ─── Panel animation ─────────────────────────────────────────
 
@@ -150,13 +159,14 @@ function BotanicalSVG() {
 // ─── Ornamental header ────────────────────────────────────────
 
 function OrnamentalHeader({
-  info, guest, activeTab, onTabChange, onLogout,
+  info, guest, activeTab, onTabChange, onLogout, tabs,
 }: {
   info: WeddingInfo | null;
   guest: { full_name: string; side: string | null } | null;
   activeTab: number;
   onTabChange: (v: number) => void;
   onLogout: () => void;
+  tabs: Array<{ label: string; icon: ReactElement }>;
 }) {
   return (
     <Box sx={{ position: 'sticky', top: 0, zIndex: 100 }}>
@@ -258,7 +268,7 @@ function OrnamentalHeader({
               },
             }}
           >
-            {TABS.map((tab, i) => (
+            {tabs.map((tab, i) => (
               <Tab key={i} icon={tab.icon} iconPosition="top" label={tab.label} disableRipple={false} />
             ))}
           </Tabs>
@@ -273,12 +283,26 @@ function OrnamentalHeader({
 export default function CoupleLayout() {
   const dispatch = useAppDispatch();
   const guest = useAppSelector((s) => s.auth.guest);
+  const isDanHavivAdmin = guest?.role === 'couple' && guest?.full_name?.trim() === 'דן חביב';
+  const tabs = isDanHavivAdmin
+    ? [...BASE_TABS, { label: 'בקשות הרשמה', icon: <ManageAccountsOutlinedIcon sx={{ fontSize: 22 }} /> }]
+    : BASE_TABS;
+  const panels = isDanHavivAdmin
+    ? [...BASE_PANELS, <WeddingRequestsAdminPage />]
+    : BASE_PANELS;
+
   const [activeTab, setActiveTab] = useState(0);
   const [info, setInfo] = useState<WeddingInfo | null>(null);
 
   useEffect(() => {
-    getWeddingInfo().then(setInfo).catch(() => {/* non-critical */ });
+    getWeddingInfo().then(setInfo).catch(() => { /* non-critical */ });
   }, []);
+
+  useEffect(() => {
+    if (activeTab >= tabs.length) {
+      setActiveTab(0);
+    }
+  }, [activeTab, tabs.length]);
 
   return (
     <Box
@@ -303,13 +327,14 @@ export default function CoupleLayout() {
           activeTab={activeTab}
           onTabChange={setActiveTab}
           onLogout={() => dispatch(logout())}
+          tabs={tabs as Array<{ label: string; icon: ReactElement }>}
         />
       </motion.div>
 
       <Box
         sx={{
           flex: 1, maxWidth: 680, width: '100%',
-          mx: 'auto', px: { xs: 0, sm: 1 }, overflow: 'hidden'
+          mx: 'auto', px: { xs: 0, sm: 1 }, overflow: 'hidden',
         }}
       >
         <AnimatePresence mode="wait">
@@ -321,7 +346,7 @@ export default function CoupleLayout() {
             exit="exit"
           >
             <Fade in timeout={200}>
-              <Box>{PANELS[activeTab]}</Box>
+              <Box>{panels[activeTab]}</Box>
             </Fade>
           </motion.div>
         </AnimatePresence>

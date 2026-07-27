@@ -50,6 +50,10 @@ async function runSqlFile(filePath: string): Promise<void> {
 // ─── Main ───────────────────────────────────────────────────
 async function migrate(): Promise<void> {
   const dbDir = path.resolve(__dirname, '../../../database');
+  const migrationFiles = fs
+    .readdirSync(dbDir)
+    .filter((file) => /^migration_\d+.*\.sql$/i.test(file))
+    .sort((left, right) => left.localeCompare(right, undefined, { numeric: true }));
 
   // Verify DB connection first
   console.log('\n🔌  Testing database connection...');
@@ -59,6 +63,9 @@ async function migrate(): Promise<void> {
   client.release();
 
   await runSqlFile(path.join(dbDir, 'schema.sql'));
+  for (const migrationFile of migrationFiles) {
+    await runSqlFile(path.join(dbDir, migrationFile));
+  }
   await runSqlFile(path.join(dbDir, 'seed.sql'));
 
   console.log('\n🎉  Migration complete!\n');

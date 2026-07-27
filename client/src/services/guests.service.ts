@@ -87,3 +87,13 @@ export async function updateMyRsvp(payload: {
   if (!data.success || !data.data) throw new Error(data.message ?? 'שגיאה בשמירת אישור ההגעה');
   return data.data;
 }
+
+export async function sendWhatsappInvitation(to: string): Promise<void> {
+  const { data } = await api.post<ApiResponse<void>>('/whatsapp/send', {
+    to,
+  });
+
+  if (!data.success) {
+    throw new Error(data.message ?? 'שגיאה בשליחת הודעת WhatsApp');
+  }
+}

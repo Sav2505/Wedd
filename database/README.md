@@ -12,6 +12,8 @@
    psql -U postgres -d wedding_db -f database/migrate.sql
    ```
 
+   This runs `schema.sql`, then every numbered migration file, and finally `seed.sql`.
+
 ---
 
 ## Tables

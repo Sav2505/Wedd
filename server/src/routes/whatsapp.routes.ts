@@ -3,6 +3,6 @@ import { sendWhatsappTest } from '../controllers/whatsapp.controller';
 
 const router = Router();
 
-router.get('/test', sendWhatsappTest);
+router.post('/send', sendWhatsappTest);
 
 export default router;

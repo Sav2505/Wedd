@@ -2,6 +2,22 @@ import { pool } from '../db/pool';
 import { Guest } from '../types';
 import { createError } from '../middleware/errorHandler';
 
+function normalizeCoupleCodeSegment(segment: string): string {
+  return segment
+    .toLowerCase()
+    .replace(/a/g, '1')
+    .replace(/b/g, '2')
+    .replace(/c/g, '3')
+    .replace(/d/g, '4')
+    .replace(/e/g, '5')
+    .replace(/f/g, '6');
+}
+
+export function generateCoupleLoginCodeFromGuestId(guestId: string): string {
+  const lastFour = guestId.trim().slice(-4);
+  return normalizeCoupleCodeSegment(lastFour);
+}
+
 /**
  * Authenticate a user:
  * - role='couple' → last 4 chars of their UUID
@@ -32,7 +48,7 @@ export async function loginGuest(
        FROM guests
       WHERE wedding_id = $3 AND full_name = $1
         AND role = 'couple'
-        AND TRANSLATE(RIGHT(id::text, 4), 'abcdef', '123456') = $2
+        AND TRANSLATE(LOWER(RIGHT(id::text, 4)), 'abcdef', '123456') = $2
       LIMIT 1`,
     [fullName.trim(), code, weddingId],
   );
@@ -54,7 +70,7 @@ export async function loginGroomOrBride(
        FROM guests
       WHERE full_name = $1
         AND role = 'couple'
-        AND TRANSLATE(RIGHT(id::text, 4), 'abcdef', '123456') = $2
+        AND TRANSLATE(LOWER(RIGHT(id::text, 4)), 'abcdef', '123456') = $2
       LIMIT 1`,
     [fullName.trim(), code],
   );

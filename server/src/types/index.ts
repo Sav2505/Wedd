@@ -123,7 +123,34 @@ export interface WeddingRequest {
   status: 'new' | 'confirmed' | 'cancelled';
   updated_at: string;
   phone_number: string;
-  email: string | undefined;
+  email: string;
+  first_contact_sent_at: string | null;
+  opened_at: string | null;
+  opened_by: string | null;
+  open_notes: string | null;
+}
+
+export interface FirstContactMailPayload {
+  to: string;
+  subject: string;
+  html: string;
+  text: string;
+}
+
+export interface CoupleCredentials {
+  full_name: string;
+  side: 'חתן' | 'כלה';
+  code: string;
+}
+
+export interface OpenWeddingResult {
+  request: WeddingRequest;
+  credentials: CoupleCredentials[];
+  mailLog: {
+    messageId: string;
+    to: string;
+    subject: string;
+  };
 }
 
 // ─── Tasks ───────────────────────────────────────────────────

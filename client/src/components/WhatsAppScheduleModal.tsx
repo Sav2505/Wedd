@@ -253,9 +253,24 @@ export default function WhatsAppScheduleModal({ open, weddingId, weddingDate, on
                                 </Button>
                                 <Collapse in={previewOpen.invitation} timeout="auto" unmountOnExit>
                                     <WhatsAppBubblePreview
-                                        header="שלום דן :)"
-                                        body={'אנו שמחים ונרגשים להזמינך ליום חתונתנו 💍✨\n📅 מועד האירוע: יום שישי, 12 בספטמבר 2026\n\nנא אשר/י הגעתך בכפתור למטה, שנוכל להיערך בהתאם 🙏\n\nמחכים להתרגש, לשמוח ולחגוג איתך את אחד הימים המיוחדים בחיינו. 🥂❤️\n\nבאהבה,\nרוני & יובל 💕'}
-                                        buttonLabel="אישור הגעה"
+                                        image={imagePreviewUrl ?? undefined}
+                                        header="שלום יואב! 💌"
+                                        body={
+                                            `בשמחה ובהתרגשות גדולה,
+                                            אנו מזמינים אותך לקחת חלק ביום המאושר בחיינו! 💍✨
+
+                                            📅 מועד האירוע: יום שני, 07 בדצמבר 2026
+                                            🥂 קבלת פנים: 19:30
+                                            ⛪ חופה: 20:30
+
+                                            נשמח מאוד אם תאשר/י את הגעתך באמצעות הכפתור למטה, כדי שנוכל להיערך בצורה הטובה ביותר. 🙏
+
+                                            מחכים להתרגש, לשמוח ולחגוג איתך 🥂❤️
+
+                                            באהבה,
+                                            שחר & דן 💕`
+                                        }
+                                        buttonLabel="לאישור הגעה"
                                     />
                                 </Collapse>
                             </Stack>
@@ -296,9 +311,24 @@ export default function WhatsAppScheduleModal({ open, weddingId, weddingDate, on
                                 </Button>
                                 <Collapse in={previewOpen.reminder} timeout="auto" unmountOnExit>
                                     <WhatsAppBubblePreview
-                                        header="היי דן, עדיין מחכים לתשובתך 🙂"
-                                        body={'רק תזכורת קטנה וחמה 💛\nטרם קיבלנו את אישור הגעתך לחתונה שלנו.\n\n📅 מועד האירוע: יום שישי, 12 בספטמבר 2026\n\nנשמח מאוד לדעת אם תוכל/י להצטרף אלינו, כדי שנוכל להיערך בצורה הטובה ביותר 🙏\n\nבאהבה,\nרוני & יובל 💕'}
-                                        buttonLabel="אישור הגעה"
+                                        header="רק תזכורת קטנה... 💛"
+                                        body={
+                                            `שלום יואב 😊
+
+                                            טרם קיבלנו את אישור הגעתך לחתונה שלנו, וחשוב לנו לדעת אם נזכה לחגוג איתך את היום המיוחד שלנו. 💍✨
+
+                                            📅 מועד האירוע: יום שני, 07 בדצמבר 2026
+                                            🥂 קבלת פנים: 19:30
+                                            ⛪ חופה: 20:30
+
+                                            נשמח מאוד אם תוכל/י לאשר את הגעתך באמצעות הכפתור למטה, כדי שנוכל להיערך בצורה הטובה ביותר. 🙏
+
+                                            מחכים ומקווים לחגוג איתך! ❤️
+
+                                            באהבה,
+                                            שחר & דן 💕`
+                                        }
+                                        buttonLabel="לאישור הגעה"
                                     />
                                 </Collapse>
                             </Stack>
@@ -339,8 +369,31 @@ export default function WhatsAppScheduleModal({ open, weddingId, weddingDate, on
                                 </Button>
                                 <Collapse in={previewOpen.dayBefore} timeout="auto" unmountOnExit>
                                     <WhatsAppBubblePreview
-                                        header="מחר זה קורה, דן! 🎉"
-                                        body={'רק יום נותר עד החתונה שלנו 🥂✨\nאנחנו כל כך נרגשים לחגוג יחד איתך!\n\n📍 מיקום: אולמי הגן הקסום\n🕖 שעת התחלה: 19:00\n\nבאפליקציה שלנו תוכל/י למצוא את כל הפרטים על האירוע, לנווט בWaze, לראות את מיקום הישיבה שלך בשולחנות וגם להעלות תמונות מהערב לגלריה המשותפת שלנו 📸\n\nמומלץ להגיע כמה דקות מראש, שנתחיל את הערב ברוגע 😊\n\nנתראה מחר!\nבאהבה,\nיובל ונועה 💕'}
+                                        header="💍✨ מחר אנחנו מתחתנים ✨💍"
+                                        body={
+                                            `שלום יואב ❤️
+
+                                            ההתרגשות בשיאה... נשאר רק יום אחד עד שנחגוג יחד את היום המאושר בחיינו! 🥂
+
+                                            📍 מיקום: הגן הכחול, תל אביב
+                                            🥂 קבלת פנים: 19:30
+                                            ⛪ חופה: 20:30
+
+                                            דרך ההזמנה הדיגיטלית שלנו מחכים לך כל הפרטים שתצטרך/י:
+                                            📍 ניווט ישירות ל-Waze
+                                            🪑 מיקום הישיבה שלך
+                                            📸 גלריה משותפת להעלאת תמונות מהאירוע
+                                            ℹ️ מידע נוסף על הערב
+
+                                            💛 מומלץ להגיע מספר דקות לפני קבלת הפנים, ליהנות מהאווירה, מהמנות הפותחות ולהתחיל את החגיגות איתנו.
+
+                                            כבר לא יכולים לחכות לראות אותך ולחגוג יחד! 🥳
+
+                                            נתראה מחר! ❤️
+
+                                            באהבה,
+                                            שחר & דן 💕`
+                                        }
                                         buttonLabel="צפייה בפרטי האירוע"
                                     />
                                 </Collapse>
@@ -403,7 +456,7 @@ export default function WhatsAppScheduleModal({ open, weddingId, weddingDate, on
                 </Stack>
 
             </DialogContent>
-            <DialogActions>
+            <DialogActions sx={{ px: 3, py: 3, justifyContent: 'end' }}>
                 <Button onClick={onClose} sx={{ color: '#A08070' }}>סגירה</Button>
                 <Button
                     variant="contained"
@@ -423,7 +476,7 @@ export default function WhatsAppScheduleModal({ open, weddingId, weddingDate, on
     );
 }
 
-function WhatsAppBubblePreview({ header, body, buttonLabel }: { header: string; body: string; buttonLabel?: string }) {
+function WhatsAppBubblePreview({ header, body, buttonLabel, image }: { header: string; body: string; buttonLabel?: string, image?: string; }) {
     return (
         <Box
             sx={{
@@ -458,6 +511,45 @@ function WhatsAppBubblePreview({ header, body, buttonLabel }: { header: string; 
                 }}
             >
                 <Box sx={{ p: 1.5, pb: 1 }}>
+                    {image ? (
+                        <Box
+                            component="img"
+                            src={image}
+                            alt="Invitation"
+                            sx={{
+                                width: '100%',
+                                maxHeight: 380,
+                                objectFit: 'cover',
+                                display: 'block',
+                                borderRadius: 1.5,
+                                mb: 1.2,
+                                border: '1px solid rgba(0,0,0,0.08)',
+                            }}
+                        />
+                    ) : (
+                        <Box
+                            sx={{
+                                mb: 1.2,
+                                height: 180,
+                                borderRadius: 1.5,
+                                border: '1px dashed rgba(0,0,0,.18)',
+                                bgcolor: '#F7F7F7',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                justifyContent: 'center',
+                                alignItems: 'center',
+                                color: '#777',
+                            }}
+                        >
+                            <UploadFileIcon sx={{ fontSize: 42, mb: 1, opacity: .7 }} />
+                            <Typography fontSize="0.8rem" fontWeight={600}>
+                                תמונת ההזמנה
+                            </Typography>
+                            <Typography variant="caption">
+                                תוצג כאן לאחר העלאה
+                            </Typography>
+                        </Box>
+                    )}
                     <Typography sx={{ fontWeight: 700, fontSize: '0.88rem', color: '#111B21', mb: 0.75 }}>
                         {header}
                     </Typography>

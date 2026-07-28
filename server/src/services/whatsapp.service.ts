@@ -1,9 +1,10 @@
 import { DateTime } from 'luxon';
 
 export type SupportedWeddingTemplate =
-    | 'wedding_invitation'
+    | 'wedding_confirmation'
     | 'wedding_reminder'
-    | 'wedding_day_before';
+    | 'wedding_day_before'
+    | 'wedding_thank_you';
 
 export interface SendTemplatePayload {
     to: string;
@@ -226,7 +227,7 @@ export function buildTemplateComponents(input: BuildTemplateComponentsInput): un
     const formattedDate = formatWeddingDateForMessage(input.weddingDate);
 
     const headerComponent =
-        input.templateName === 'wedding_invitation' && input.invitationImageMediaId
+        input.templateName === 'wedding_confirmation' && input.invitationImageMediaId
             ? [{
                 type: 'header',
                 parameters: [{ type: 'image', image: { id: input.invitationImageMediaId } }],
@@ -295,8 +296,27 @@ export function buildTemplateComponents(input: BuildTemplateComponentsInput): un
 export async function sendTestMessage(to: string): Promise<unknown> {
     const result = await sendTemplateMessageWithRetry({
         to,
-        templateName: 'hello_world',
-        languageCode: 'en_US',
+        templateName: 'wedding_confirmation',
+        languageCode: 'he',
+        components: [
+            {
+                type: 'header',
+                parameters: [{ type: 'text', text: 'דן' }],
+            },
+            {
+                type: 'body',
+                parameters: [
+                    { type: 'text', text: 'יום שישי, 12 בספטמבר 2026' },
+                    { type: 'text', text: 'יובל ונועה' },
+                ],
+            },
+            {
+                type: 'button',
+                sub_type: 'url',
+                index: '0',
+                parameters: [{ type: 'text', text: '?n=Dan&p=1234&w=1' }],
+            },
+        ],
     });
     return result.raw;
 }

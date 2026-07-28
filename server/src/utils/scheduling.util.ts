@@ -3,9 +3,10 @@ import { DateTime } from 'luxon';
 export const ISRAEL_TIMEZONE = 'Asia/Jerusalem';
 
 export type WeddingMessageTemplateName =
-  | 'wedding_invitation'
+  | 'wedding_confirmation'
   | 'wedding_reminder'
-  | 'wedding_day_before';
+  | 'wedding_day_before'
+  | 'wedding_post_thanks';
 
 export interface WeddingScheduleOffsets {
   invitationDaysBefore: number;

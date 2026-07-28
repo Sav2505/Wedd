@@ -53,7 +53,7 @@ import {
   getGuests,
   updateGuest,
   updateGuestGroup,
-  // sendWhatsappInvitation,
+  sendWhatsappInvitation,
 } from '../../services/guests.service';
 import { getWeddingInfo } from '../../services/info.service';
 
@@ -143,36 +143,36 @@ function formatWeddingDate(weddingDate: string) {
 }
 
 // פונקציה זו תרד
-function buildWhatsAppInviteUrl(weddingId: number, guest: ManagedGuest, brideAndGroom: string, weddingDate: string | undefined): string {
-  if (weddingId < 0) {
-    throw new Error('Invalid weddingId for WhatsApp invite URL');
-  }
+// function buildWhatsAppInviteUrl(weddingId: number, guest: ManagedGuest, brideAndGroom: string, weddingDate: string | undefined): string {
+//   if (weddingId < 0) {
+//     throw new Error('Invalid weddingId for WhatsApp invite URL');
+//   }
 
-  const digits = guest.phone.replace(/\D/g, '');
-  const normalizedPhone = digits.startsWith('0') ? `972${digits.slice(1)}` : digits;
-  const personalLink = buildGuestUrl(`${guest.first_name} ${guest.last_name}`, digits.slice(-4), weddingId);
-  const formattedDate = weddingDate ? formatWeddingDate(weddingDate) : undefined;
+//   const digits = guest.phone.replace(/\D/g, '');
+//   const normalizedPhone = digits.startsWith('0') ? `972${digits.slice(1)}` : digits;
+//   const personalLink = buildGuestUrl(`${guest.first_name} ${guest.last_name}`, digits.slice(-4), weddingId);
+//   const formattedDate = weddingDate ? formatWeddingDate(weddingDate) : undefined;
 
 
-  const message = [
-    `שלום ${guest.first_name} 💛`,
-    '',
-    `אנו שמחים ונרגשים להזמינך ליום חתונתנו 💍✨`,
-    formattedDate ? `📅 מועד האירוע: ${formattedDate}` : '',
-    '',
-    'נא אשר/י הגעתך בקישור המצורף, שנוכל להיערך בהתאם 🙏',
-    '',
-    personalLink,
-    '',
-    'מחכים להתרגש, לשמוח ולחגוג איתך את אחד הימים המיוחדים בחיינו. 🥂❤️',
-    '',
-    brideAndGroom ? `באהבה,\n${brideAndGroom} 💕` : 'באהבה 💕',
-  ]
-    .filter(Boolean)
-    .join('\n');
+//   const message = [
+//     `שלום ${guest.first_name} 💛`,
+//     '',
+//     `אנו שמחים ונרגשים להזמינך ליום חתונתנו 💍✨`,
+//     formattedDate ? `📅 מועד האירוע: ${formattedDate}` : '',
+//     '',
+//     'נא אשר/י הגעתך בקישור המצורף, שנוכל להיערך בהתאם 🙏',
+//     '',
+//     personalLink,
+//     '',
+//     'מחכים להתרגש, לשמוח ולחגוג איתך את אחד הימים המיוחדים בחיינו. 🥂❤️',
+//     '',
+//     brideAndGroom ? `באהבה,\n${brideAndGroom} 💕` : 'באהבה 💕',
+//   ]
+//     .filter(Boolean)
+//     .join('\n');
 
-  return `https://wa.me/${normalizedPhone}?text=${encodeURIComponent(message)}`;
-}
+//   return `https://wa.me/${normalizedPhone}?text=${encodeURIComponent(message)}`;
+// }
 
 function computeGroupChipLabel(items: ManagedGuest[]) {
   const total = items.reduce((s, g) => s + getEffectivePartySize(g), 0);
@@ -413,26 +413,26 @@ export default function GuestListEditor() {
     setDeleteGuestId(id);
   }, []);
 
-  const handleSendInvitation = useCallback((guest: ManagedGuest) => {
-    window.open(buildWhatsAppInviteUrl(info?.id ?? -1, guest, `${info?.bride_name ?? "שחר"} & ${info?.groom_name ?? "שחר"}`, info?.wedding_date ?? "יום שני, 7 בדצמבר 2026"), '_blank', 'noopener,noreferrer');
-  }, [info]);
+  // const handleSendInvitation = useCallback((guest: ManagedGuest) => {
+  //   window.open(buildWhatsAppInviteUrl(info?.id ?? -1, guest, `${info?.bride_name ?? "שחר"} & ${info?.groom_name ?? "שחר"}`, info?.wedding_date ?? "יום שני, 7 בדצמבר 2026"), '_blank', 'noopener,noreferrer');
+  // }, [info]);
 
   // TO RETURN
-  //   const handleSendInvitation = useCallback(async (guest: ManagedGuest) => {
-  //   try {
-  //     const digits = guest.phone.replace(/\D/g, '');
-  //     const phone = digits.startsWith('0')
-  //       ? `972${digits.slice(1)}`
-  //       : digits;
+    const handleSendInvitation = useCallback(async (guest: ManagedGuest) => {
+    try {
+      const digits = guest.phone.replace(/\D/g, '');
+      const phone = digits.startsWith('0')
+        ? `972${digits.slice(1)}`
+        : digits;
 
-  //     await sendWhatsappInvitation(phone);
+      await sendWhatsappInvitation(phone);
 
-  //     setSuccessMessage('הודעת WhatsApp נשלחה בהצלחה 🎉');
-  //   } catch (err) {
-  //     console.error(err);
-  //     setError('שליחת הודעת WhatsApp נכשלה');
-  //   }
-  // }, []);
+      setSuccessMessage('הודעת WhatsApp נשלחה בהצלחה 🎉');
+    } catch (err) {
+      console.error(err);
+      setError('שליחת הודעת WhatsApp נכשלה');
+    }
+  }, []);
 
   function openCreateGroup() {
     setEditingGroup(null);

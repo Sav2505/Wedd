@@ -135,7 +135,7 @@ async function getEligibleGuests(weddingId: number, templateName: MessageTemplat
 
 async function maybeLockTemplate(weddingId: number, templateName: MessageTemplateName): Promise<void> {
   const column =
-    templateName === 'wedding_invitation'
+    templateName === 'wedding_confirmation'
       ? 'invitation_locked_at'
       : templateName === 'wedding_reminder'
         ? 'reminder_locked_at'
@@ -168,13 +168,13 @@ async function processTemplateForWedding(
   });
 
   const lockMap: Record<MessageTemplateName, string | null> = {
-    wedding_invitation: wedding.invitation_locked_at,
+    wedding_confirmation: wedding.invitation_locked_at,
     wedding_reminder: wedding.reminder_locked_at,
     wedding_day_before: wedding.day_before_locked_at,
   };
 
   const dateMap: Record<MessageTemplateName, string> = {
-    wedding_invitation: computed.invitationSendAt,
+    wedding_confirmation: computed.invitationSendAt,
     wedding_reminder: computed.reminderSendAt,
     wedding_day_before: computed.dayBeforeSendAt,
   };
@@ -191,7 +191,7 @@ async function processTemplateForWedding(
 
   let invitationMediaId: string | undefined;
   if (
-    templateName === 'wedding_invitation' &&
+    templateName === 'wedding_confirmation' &&
     wedding.invitation_image &&
     wedding.invitation_image_mime_type
   ) {
@@ -274,7 +274,7 @@ export async function runWhatsappSchedulerOnce(): Promise<void> {
     const nowIsrael = DateTime.now().setZone(ISRAEL_TIMEZONE);
 
     for (const wedding of weddings) {
-      await processTemplateForWedding(wedding, 'wedding_invitation', nowIsrael);
+      await processTemplateForWedding(wedding, 'wedding_confirmation', nowIsrael);
       await processTemplateForWedding(wedding, 'wedding_reminder', nowIsrael);
       await processTemplateForWedding(wedding, 'wedding_day_before', nowIsrael);
     }

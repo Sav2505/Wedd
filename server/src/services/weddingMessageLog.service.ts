@@ -1,7 +1,7 @@
 import { pool } from '../db/pool';
 
 export type DeliveryStatus = 'pending' | 'sent' | 'delivered' | 'read' | 'failed';
-export type MessageTemplateName = 'wedding_invitation' | 'wedding_reminder' | 'wedding_day_before';
+export type MessageTemplateName = 'wedding_confirmation' | 'wedding_reminder' | 'wedding_day_before';
 
 export interface MessageLogRow {
   id: number;

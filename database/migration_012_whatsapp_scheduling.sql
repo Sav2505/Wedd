@@ -183,7 +183,7 @@ CREATE TABLE IF NOT EXISTS wedding_message_log (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   CONSTRAINT chk_wml_template_name
-    CHECK (template_name IN ('wedding_invitation', 'wedding_reminder', 'wedding_day_before')),
+    CHECK (template_name IN ('wedding_confirmation', 'wedding_reminder', 'wedding_day_before', 'wedding_post_thanks')),
   CONSTRAINT uq_wml_wedding_guest_template UNIQUE (wedding_id, guest_id, template_name)
 );
 

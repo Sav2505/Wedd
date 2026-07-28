@@ -45,10 +45,11 @@ export default function WhatsAppScheduleModal({ open, weddingId, weddingDate, on
     const [invitationDays, setInvitationDays] = useState(30);
     const [reminderDays, setReminderDays] = useState(14);
     const [dayBeforeDays, setDayBeforeDays] = useState(1);
-    const [previewOpen, setPreviewOpen] = useState<{ invitation: boolean; reminder: boolean; dayBefore: boolean }>({
+    const [previewOpen, setPreviewOpen] = useState<{ invitation: boolean; reminder: boolean; dayBefore: boolean, thankYou: boolean }>({
         invitation: false,
         reminder: false,
         dayBefore: false,
+        thankYou: false,
     });
     const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -303,7 +304,7 @@ export default function WhatsAppScheduleModal({ open, weddingId, weddingDate, on
                             </Stack>
 
                             <Stack spacing={1.5}>
-                                <Typography sx={{ fontWeight: 700, color: '#6E5424' }}>תזכורת יום לפני - <span style={{ fontWeight: "normal" }}>לכולם</span></Typography>
+                                <Typography sx={{ fontWeight: 700, color: '#6E5424' }}>תזכורת בסמוך לאירוע - <span style={{ fontWeight: "normal" }}>לכולם</span></Typography>
                                 <TextField
                                     type="number"
                                     label="כמה ימים מראש"
@@ -345,8 +346,10 @@ export default function WhatsAppScheduleModal({ open, weddingId, weddingDate, on
                                 </Collapse>
                             </Stack>
 
+                            <Typography sx={{ fontWeight: 700, mb: 1 }}>ביום שאחרי (נוודא שלא נופל על שבת) תישלח גם הודעת תודה לכל מי שבא :) (עד 5MB, JPG/PNG/WEBP)</Typography>
+
                             <Box sx={{ p: 1.5, borderRadius: 2, border: '1px dashed rgba(201,168,76,0.55)', background: 'rgba(201,168,76,0.06)' }}>
-                                <Typography sx={{ fontWeight: 700, mb: 1 }}>תמונת הזמנה (עד 5MB, JPG/PNG/WEBP)</Typography>
+                                <Typography sx={{ fontWeight: 700, mb: 1 }}>תמונת הזמנה</Typography>
                                 {imagePreviewUrl ? (
                                     <Box sx={{ mb: 1.2 }}>
                                         <Box

@@ -323,7 +323,7 @@ export default function WhatsAppScheduleModal({ open, weddingId, weddingDate, on
                                 )}
                                 <Button
                                     size="small"
-                                    onClick={() => togglePreview('reminder')}
+                                    onClick={() => togglePreview('dayBefore')}
                                     endIcon={
                                         <ExpandMoreIcon
                                             sx={{

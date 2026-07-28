@@ -126,21 +126,21 @@ function formatRsvpUpdatedAt(ts: string | null): string | null {
 }
 
 // פונקציה זו תרד
-function formatWeddingDate(weddingDate: string) {
-  const d = new Date(weddingDate + 'T12:00:00');
+// function formatWeddingDate(weddingDate: string) {
+//   const d = new Date(weddingDate + 'T12:00:00');
 
-  const weekday = d.toLocaleDateString('he-IL', {
-    weekday: 'long',
-  });
+//   const weekday = d.toLocaleDateString('he-IL', {
+//     weekday: 'long',
+//   });
 
-  const date = d.toLocaleDateString('he-IL', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  });
+//   const date = d.toLocaleDateString('he-IL', {
+//     day: 'numeric',
+//     month: 'long',
+//     year: 'numeric',
+//   });
 
-  return `${weekday}, ${date}`;
-}
+//   return `${weekday}, ${date}`;
+// }
 
 // פונקציה זו תרד
 // function buildWhatsAppInviteUrl(weddingId: number, guest: ManagedGuest, brideAndGroom: string, weddingDate: string | undefined): string {

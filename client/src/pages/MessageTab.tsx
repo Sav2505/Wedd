@@ -29,7 +29,7 @@ function Sparkle({
 // ─── Main ───────────────────────────────────────────────────
 
 export default function MessageTab() {
-  const [info, setInfo]       = useState<WeddingInfo | null>(null);
+  const [info, setInfo] = useState<WeddingInfo | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -42,8 +42,8 @@ export default function MessageTab() {
   const fallback =
     'אתם המשפחה והחברים הקרובים שלנו, ואנו כל כך שמחים לחגוג איתכם את היום המיוחד הזה. תודה שאתם כאן, ושאתם חלק מהסיפור שלנו. ❤️';
   const rawMessage = info?.message || fallback;
-  const typed      = useTypewriter(loading ? '' : rawMessage, 24, 800);
-  const isTyping   = !loading && typed.length < rawMessage.length;
+  const typed = useTypewriter(loading ? '' : rawMessage, 24, 800);
+  const isTyping = !loading && typed.length < rawMessage.length;
   const brideAndGroom =
     info ? `${info.groom_name} & ${info.bride_name}` : '';
 
@@ -71,8 +71,8 @@ export default function MessageTab() {
       />
 
       {/* Sparkles */}
-      <Sparkle top="10%" left="8%"    size={16} delay={0} />
-      <Sparkle top="15%" right="10%"  size={12} delay={1.2} />
+      <Sparkle top="10%" left="8%" size={16} delay={0} />
+      <Sparkle top="15%" right="10%" size={12} delay={1.2} />
       <Sparkle bottom="20%" left="12%" size={14} delay={0.7} />
       <Sparkle bottom="15%" right="8%" size={18} delay={1.8} />
 
@@ -93,6 +93,7 @@ export default function MessageTab() {
               fontSize: 48,
               background: 'linear-gradient(135deg, #E0C97A, #C9A84C)',
               WebkitBackgroundClip: 'text',
+              color: '#C9A84C !important',
               WebkitTextFillColor: 'transparent',
               filter: 'drop-shadow(0 3px 8px rgba(201,168,76,0.4))',
             }}
@@ -114,7 +115,7 @@ export default function MessageTab() {
               mb: 0.5,
             }}
           >
-           הקדשה מאיתנו
+            הקדשה מאיתנו
           </Typography>
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1.5, mb: 3 }}>
             <Box sx={{ flex: 1, height: 1, background: 'rgba(201,168,76,0.25)', maxWidth: 80 }} />
@@ -193,7 +194,7 @@ export default function MessageTab() {
             <Typography
               sx={{
                 fontFamily: "'Frank Ruhl Libre', serif",
-                fontSize: '1.2rem',
+                fontSize: '1.32rem',
                 fontWeight: 700,
                 background: 'linear-gradient(135deg, #C9A84C, #9A7833)',
                 WebkitBackgroundClip: 'text',

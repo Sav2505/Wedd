@@ -327,20 +327,20 @@ export default function WhatsAppScheduleModal({ open, weddingId, weddingDate, on
                                     endIcon={
                                         <ExpandMoreIcon
                                             sx={{
-                                                transform: previewOpen.reminder ? 'rotate(180deg)' : 'none',
+                                                transform: previewOpen.dayBefore ? 'rotate(180deg)' : 'none',
                                                 transition: 'transform 0.2s',
                                             }}
                                         />
                                     }
                                     sx={{ alignSelf: 'flex-start', color: '#1f9f51', fontWeight: 600, fontSize: '0.78rem' }}
                                 >
-                                    {previewOpen.reminder ? 'הסתרת תצוגה מקדימה' : 'הצגת תצוגה מקדימה'}
+                                    {previewOpen.dayBefore ? 'הסתרת תצוגה מקדימה' : 'הצגת תצוגה מקדימה'}
                                 </Button>
-                                <Collapse in={previewOpen.reminder} timeout="auto" unmountOnExit>
+                                <Collapse in={previewOpen.dayBefore} timeout="auto" unmountOnExit>
                                     <WhatsAppBubblePreview
-                                        header="היי דן, עדיין מחכים לתשובתך 🙂"
-                                        body={'רק תזכורת קטנה וחמה 💛\nטרם קיבלנו את אישור הגעתך לחתונה שלנו.\n\n📅 מועד האירוע: יום שישי, 12 בספטמבר 2026\n\nנשמח מאוד לדעת אם תוכל/י להצטרף אלינו, כדי שנוכל להיערך בצורה הטובה ביותר 🙏\n\nבאהבה,\nרוני & יובל 💕'}
-                                        buttonLabel="אישור הגעה"
+                                        header="מחר זה קורה, דן! 🎉"
+                                        body={'רק יום נותר עד החתונה שלנו 🥂✨\nאנחנו כל כך נרגשים לחגוג יחד איתך!\n\n📍 מיקום: אולמי הגן הקסום\n🕖 שעת התחלה: 19:00\n\nבאפליקציה שלנו תוכל/י למצוא את כל הפרטים על האירוע, לראות את מיקום הישיבה שלך בשולחנות, וגם להעלות תמונות מהערב לגלריה המשותפת שלנו 📸\n\nמומלץ להגיע כמה דקות מראש, שנתחיל את הערב ברוגע 😊\n\nנתראה מחר!\nבאהבה,\nיובל ונועה 💕'}
+                                        buttonLabel="ניווט לאולם 🧭"
                                     />
                                 </Collapse>
                             </Stack>

@@ -52,7 +52,7 @@ function PreviewCard({ message }: { message: string }) {
         <Typography
           sx={{
             fontFamily: "'Frank Ruhl Libre', serif",
-            fontSize: '0.8rem',
+            fontSize: '0.85rem',
             color: '#C9A84C',
             textAlign: 'center',
             mb: 1,

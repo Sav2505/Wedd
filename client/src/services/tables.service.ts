@@ -20,9 +20,17 @@ function normalizeTable(table: WeddingTableWithGuests): WeddingTableWithGuests {
   };
 }
 
-export async function getAllTables(): Promise<WeddingTableWithGuests[]> {
-  const { data } = await api.get<ApiResponse<WeddingTableWithGuests[]>>('/tables');
-  if (!data.success || !data.data) throw new Error(data.message ?? 'שגיאה בטעינת שולחנות');
+export async function getAllTables(weddingId: number | null): Promise<WeddingTableWithGuests[]> {
+  const { data } = await api.get<ApiResponse<WeddingTableWithGuests[]>>('/tables', {
+    params: {
+      weddingId,
+    },
+  });
+
+  if (!data.success || !data.data) {
+    throw new Error(data.message ?? 'שגיאה בטעינת שולחנות');
+  }
+
   return data.data.map(normalizeTable);
 }
 
@@ -58,7 +66,7 @@ export async function unassignGuest(guestId: string): Promise<void> {
   await api.delete(`/tables/guests/${guestId}`);
 }
 
-export async function getUnassignedGuests(): Promise<Array<{
+export async function getUnassignedGuests(weddingId: number | null): Promise<Array<{
   id: string;
   full_name: string;
   side: string | null;
@@ -67,6 +75,7 @@ export async function getUnassignedGuests(): Promise<Array<{
   number_of_guests?: number;
   effective_plus_count?: number;
   effective_party_size?: number;
+  wedding_id?: number;
 }>> {
   const { data } = await api.get<ApiResponse<Array<{
     id: string;
@@ -77,6 +86,7 @@ export async function getUnassignedGuests(): Promise<Array<{
     number_of_guests?: number;
     effective_plus_count?: number;
     effective_party_size?: number;
+    wedding_id?: number;
   }>>>('/tables/unassigned');
   if (!data.success || !data.data) return [];
   return data.data;

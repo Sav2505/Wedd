@@ -5,9 +5,20 @@ import { RsvpStatus } from '../types';
 
 const RSVP_MAX_GUESTS = Number(process.env.RSVP_MAX_GUESTS ?? 10);
 
-export async function getGuestGroups(_req: Request, res: Response, next: NextFunction): Promise<void> {
+export async function getGuestGroups(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
   try {
-    const groups = await guestsService.listGuestGroups();
+    const weddingId = Number(req.query.wedding_id);
+
+    if (!weddingId) {
+      return next(createError('חסר מזהה חתונה', 400));
+    }
+
+    const groups = await guestsService.listGuestGroups(weddingId);
+
     res.json({ success: true, data: groups });
   } catch (err) {
     next(err);
@@ -47,10 +58,27 @@ export async function deleteGuestGroup(req: Request, res: Response, next: NextFu
   }
 }
 
-export async function getGuests(req: Request, res: Response, next: NextFunction): Promise<void> {
+export async function getGuests(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
   try {
-    const query = typeof req.query.q === 'string' ? req.query.q : undefined;
-    const guests = await guestsService.listGuests(query);
+    const weddingId = Number(req.query.wedding_id);
+  
+    if (!weddingId) {
+      return next(createError('חסר מזהה חתונה', 400));
+    }
+
+    const query = typeof req.query.q === 'string'
+      ? req.query.q
+      : undefined;
+
+    const guests = await guestsService.listGuests(
+      weddingId,
+      query,
+    );
+
     res.json({ success: true, data: guests });
   } catch (err) {
     next(err);

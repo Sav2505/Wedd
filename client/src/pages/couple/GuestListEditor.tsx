@@ -245,17 +245,27 @@ export default function GuestListEditor() {
   useEffect(() => { currentUserRef.current = currentUser; }, [currentUser]);
 
   const reload = useCallback(async () => {
-    const [nextGroups, nextGuests] = await Promise.all([getGuestGroups(), getGuests()]);
+    if (!info?.id) return { nextGroups: [], nextGuests: [] };
+
+    const [nextGroups, nextGuests] = await Promise.all([
+      getGuestGroups(info.id),
+      getGuests('', info.id),
+    ]);
+
     setGroups(nextGroups);
     setAllGuests(nextGuests);
+
     return { nextGroups, nextGuests };
-  }, []);
+  }, [info?.id]);
 
   useEffect(() => {
+    if (!info?.id) return;
+
     reload()
       .catch(() => setError('שגיאה בטעינת רשימת אורחים'))
       .finally(() => setLoading(false));
-  }, []);
+
+  }, [info?.id, reload]);
 
   useEffect(() => {
     if (!search.trim()) {
@@ -418,7 +428,7 @@ export default function GuestListEditor() {
   // }, [info]);
 
   // TO RETURN
-    const handleSendInvitation = useCallback(async (guest: ManagedGuest) => {
+  const handleSendInvitation = useCallback(async (guest: ManagedGuest) => {
     try {
       const digits = guest.phone.replace(/\D/g, '');
       const phone = digits.startsWith('0')
@@ -754,7 +764,7 @@ export default function GuestListEditor() {
           >
             ייצוא לאקסל
           </Button>
-                    <Button
+          <Button
             variant="outlined"
             startIcon={<ScheduleSendIcon />}
             onClick={() => setWhatsappScheduleOpen(true)}

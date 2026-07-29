@@ -2,18 +2,20 @@ import { pool } from '../db/pool';
 import { createError } from '../middleware/errorHandler';
 import { WeddingInfo } from '../types';
 
-export async function getWeddingInfo(
-  weddingId: number,
+export async function getWeddingInfoByGuestId(
+  guestId: string,
 ): Promise<WeddingInfo> {
 
   const { rows } = await pool.query<WeddingInfo>(
     `
-    SELECT *
-    FROM wedding_info
-    WHERE id = $1
+    SELECT wi.*
+    FROM guests g
+    JOIN wedding_info wi
+      ON wi.id = g.wedding_id
+    WHERE g.id = $1
     LIMIT 1
     `,
-    [weddingId],
+    [guestId],
   );
 
   if (rows.length === 0) {
@@ -83,10 +85,10 @@ export async function updateHeroImage(filename: string): Promise<WeddingInfo> {
   return rows[0];
 }
 
-export async function updatePublishTables(toPublishTables: boolean): Promise<WeddingInfo> {
+export async function updatePublishTables(toPublishTables: boolean, weddingId: number): Promise<WeddingInfo> {
   const { rows } = await pool.query<WeddingInfo>(
-    `UPDATE wedding_info SET is_tables_published = $1, updated_at = NOW() WHERE id = 1 RETURNING *`,
-    [toPublishTables],
+    `UPDATE wedding_info SET is_tables_published = $1, updated_at = NOW() WHERE id = $2 RETURNING *`,
+    [toPublishTables, weddingId],
   );
   return rows[0];
 }

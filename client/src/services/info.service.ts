@@ -2,8 +2,22 @@ import api from './api';
 import { ApiResponse, WeddingInfo } from '../types/domain';
 
 export async function getWeddingInfo(): Promise<WeddingInfo> {
-  const { data } = await api.get<ApiResponse<WeddingInfo>>('/info');
-  if (!data.success || !data.data) throw new Error(data.message ?? 'שגיאה בטעינת פרטי החתונה');
+  const storedGuest = localStorage.getItem('wedding_guest');
+
+  if (!storedGuest) {
+    throw new Error('משתמש לא מחובר');
+  }
+
+  const guest = JSON.parse(storedGuest);
+
+  const { data } = await api.get<ApiResponse<WeddingInfo>>(
+    `/info?guestId=${guest.id}`,
+  );
+
+  if (!data.success || !data.data) {
+    throw new Error(data.message ?? 'שגיאה בטעינת פרטי החתונה');
+  }
+
   return data.data;
 }
 
@@ -33,10 +47,13 @@ export async function uploadHeroImage(file: File): Promise<WeddingInfo> {
 }
 
 export async function updatePublishTables(isPublishedTables: boolean): Promise<WeddingInfo> {
+  const weddingId = JSON.parse(localStorage.getItem('wedding_guest') || '{}')?.wedding_id;
+
   const { data } = await api.put<ApiResponse<WeddingInfo>>(
     '/info/update-publish-tables',
     {
       is_published_tables: isPublishedTables,
+      wedding_id: weddingId,
     }
   );
 

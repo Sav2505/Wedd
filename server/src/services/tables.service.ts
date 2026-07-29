@@ -4,11 +4,24 @@ import { createError } from '../middleware/errorHandler';
 
 // ─── Get all tables (with assigned guests) ───────────────────
 
-export async function getAllTables(): Promise<WeddingTableWithGuests[]> {
-  const { rows } = await pool.query<WeddingTableWithGuests>(`
+export async function getAllTablesAll(): Promise<WeddingTableWithGuests[]> {
+  const { rows } = await pool.query(`SELECT * from tables`);
+  return rows;
+}
+export async function getAllTables(weddingId: number): Promise<WeddingTableWithGuests[]> {
+  const { rows } = await pool.query<WeddingTableWithGuests>(
+    `
     SELECT
-      t.id, t.table_number, t.label, t.capacity,
-      t.pos_x, t.pos_y, t.shape, t.orientation, t.created_at,
+      t.id,
+      t.table_number,
+      t.label,
+      t.capacity,
+      t.pos_x,
+      t.pos_y,
+      t.shape,
+      t.orientation,
+      t.created_at,
+
       COALESCE(
         json_agg(
           json_build_object(
@@ -18,31 +31,56 @@ export async function getAllTables(): Promise<WeddingTableWithGuests[]> {
             'plus_count', COALESCE(g.plus_count, 0),
             'rsvp_status', COALESCE(g.rsvp_status, 'PENDING'),
             'number_of_guests', GREATEST(COALESCE(g.number_of_guests, 1), 1),
-            'effective_party_size', CASE
-              WHEN g.rsvp_status = 'COMING' THEN GREATEST(COALESCE(g.number_of_guests, 1), 1)
-              WHEN g.rsvp_status = 'NOT_COMING' THEN 0
+
+            'effective_party_size',
+            CASE
+              WHEN g.rsvp_status = 'COMING'
+                THEN GREATEST(COALESCE(g.number_of_guests, 1), 1)
+
+              WHEN g.rsvp_status = 'NOT_COMING'
+                THEN 0
+
               ELSE 1 + COALESCE(g.plus_count, 0)
             END,
-            'effective_plus_count', GREATEST(
+
+            'effective_plus_count',
+            GREATEST(
               CASE
-                WHEN g.rsvp_status = 'COMING' THEN GREATEST(COALESCE(g.number_of_guests, 1), 1)
-                WHEN g.rsvp_status = 'NOT_COMING' THEN 0
+                WHEN g.rsvp_status = 'COMING'
+                  THEN GREATEST(COALESCE(g.number_of_guests, 1), 1)
+
+                WHEN g.rsvp_status = 'NOT_COMING'
+                  THEN 0
+
                 ELSE 1 + COALESCE(g.plus_count, 0)
               END - 1,
               0
             )
           )
           ORDER BY g.full_name
-        ) FILTER (WHERE g.id IS NOT NULL), '[]'
+        )
+        FILTER (WHERE g.id IS NOT NULL),
+        '[]'
       ) AS guests
+
     FROM tables t
-    LEFT JOIN guests g ON g.table_number = t.table_number AND g.role = 'guest'
+
+    LEFT JOIN guests g
+      ON g.table_number = t.table_number
+      AND g.role = 'guest'
+      AND g.wedding_id = t.wedding_id
+
+    WHERE t.wedding_id = $1
+
     GROUP BY t.id
+
     ORDER BY t.table_number
-  `);
+    `,
+    [weddingId]
+  );
+
   return rows;
 }
-
 // ─── Create table ────────────────────────────────────────────
 
 export async function createTable(

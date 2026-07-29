@@ -8,9 +8,24 @@ export interface GuestRsvpDetails {
   rsvp_updated_at: string | null;
 }
 
-export async function getGuestGroups(): Promise<GuestGroup[]> {
-  const { data } = await api.get<ApiResponse<GuestGroup[]>>('/guests/groups');
-  if (!data.success || !data.data) throw new Error(data.message ?? 'שגיאה בטעינת קבוצות');
+export async function getGuestGroups(weddingId: number | undefined): Promise<GuestGroup[]> {
+  if (!weddingId) {
+    throw new Error('לא נמצא מזהה חתונה');
+  }
+
+  const { data } = await api.get<ApiResponse<GuestGroup[]>>(
+    '/guests/groups',
+    {
+      params: {
+        wedding_id: weddingId,
+      },
+    },
+  );
+
+  if (!data.success || !data.data) {
+    throw new Error(data.message ?? 'שגיאה בטעינת קבוצות');
+  }
+
   return data.data;
 }
 
@@ -30,11 +45,18 @@ export async function deleteGuestGroup(id: string): Promise<void> {
   await api.delete(`/guests/groups/${id}`);
 }
 
-export async function getGuests(q?: string): Promise<ManagedGuest[]> {
+export async function getGuests(q?: string, wedding_id?: number): Promise<ManagedGuest[]> {
   const { data } = await api.get<ApiResponse<ManagedGuest[]>>('/guests', {
-    params: q?.trim() ? { q: q.trim() } : undefined,
+    params: {
+      wedding_id: wedding_id,
+      ...(q?.trim() ? { q: q.trim() } : {}),
+    },
   });
-  if (!data.success || !data.data) throw new Error(data.message ?? 'שגיאה בטעינת אורחים');
+
+  if (!data.success || !data.data) {
+    throw new Error(data.message ?? 'שגיאה בטעינת אורחים');
+  }
+
   return data.data;
 }
 

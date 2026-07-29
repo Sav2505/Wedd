@@ -14,6 +14,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { getPhotos, uploadPhoto, deletePhoto } from '../services/photos.service';
 import { Photo } from '../types/domain';
 import { useAppSelector } from '../store';
+import { getWeddingInfo } from '../services/info.service';
 
 // Base URL for binary photo endpoints (/photos/:id/thumb|full)
 // On prod these are served by the API server (VITE_API_URL), not the current origin
@@ -29,6 +30,7 @@ interface QueueItem {
   status: 'pending' | 'uploading' | 'done' | 'error';
   progress: number;
   errorMsg?: string;
+  weddingId: number | null;
 }
 
 // ─── Drop zone ───────────────────────────────────────────────
@@ -351,14 +353,18 @@ export default function PhotosTab() {
   const [error, setError] = useState<string | null>(null);
   const [lightbox, setLightbox] = useState<Photo | null>(null);
   const [queue, setQueue] = useState<QueueItem[]>([]);
+  const [weddingId, setWeddingId] = useState<number | null>(null);
+
   const uploading = queue.some((q) => q.status === 'pending' || q.status === 'uploading');
 
   // Track photo IDs seen so polling only adds genuinely new ones
   const seenIds = useRef<Set<string>>(new Set());
 
   const load = useCallback(async (silent = false) => {
+    if (!weddingId) return;
+
     try {
-      const data = await getPhotos();
+      const data = await getPhotos(weddingId);
       setPhotos(data);
       data.forEach((p) => seenIds.current.add(p.id));
     } catch (e) {
@@ -366,9 +372,26 @@ export default function PhotosTab() {
     } finally {
       if (!silent) setLoading(false);
     }
+  }, [weddingId]);
+
+  useEffect(() => {
+    const init = async () => {
+      try {
+        const info = await getWeddingInfo();
+        setWeddingId(info.id);
+      } catch {
+        setError('שגיאה בטעינת פרטי החתונה');
+      }
+    };
+
+    init();
   }, []);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    if (weddingId) {
+      load();
+    }
+  }, [weddingId, load]);
 
   // Poll every 30s to show other guests' new uploads
   useEffect(() => {
@@ -384,6 +407,7 @@ export default function PhotosTab() {
     const newItems: QueueItem[] = files.map((file) => ({
       id: `${Date.now()}-${Math.random()}`,
       file,
+      weddingId: weddingId,
       previewUrl: URL.createObjectURL(file),
       status: 'pending',
       progress: 0,
@@ -397,6 +421,7 @@ export default function PhotosTab() {
         const photo = await uploadPhoto(
           guest.id,
           item.file,
+          weddingId,
           undefined,
           (pct) => setQueue((prev) => prev.map((q) => q.id === item.id ? { ...q, progress: pct } : q)),
         );

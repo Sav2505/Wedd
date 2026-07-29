@@ -2,15 +2,19 @@ import { Request, Response, NextFunction } from 'express';
 import * as infoService from '../services/info.service';
 import { createError } from '../middleware/errorHandler';
 
-export async function getInfo(req: Request, res: Response, next: NextFunction): Promise<void> {
+export async function getInfo(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
   try {
-    const guest = (req as Request & { guest?: { wedding_id: number } }).guest;
+    const guestId = req.query.guestId as string;
 
-    if (!guest?.wedding_id) {
-      throw createError('לא נמצאה חתונה למשתמש המחובר', 401);
+    if (!guestId) {
+      throw createError('לא נמצא מזהה משתמש', 400);
     }
 
-    const info = await infoService.getWeddingInfo(guest.wedding_id);
+    const info = await infoService.getWeddingInfoByGuestId(guestId);
 
     res.status(200).json({
       success: true,
@@ -33,7 +37,11 @@ export async function updateInfo(req: Request, res: Response, next: NextFunction
 
 export async function updatePublishTables(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    const updated = await infoService.updatePublishTables(req.body.is_published_tables as boolean);
+    const weddingId = req.body.wedding_id as number;
+    const updated = await infoService.updatePublishTables(req.body.is_published_tables as boolean, weddingId);
+    if (!weddingId) {
+      throw createError('לא נמצא מזהה חתונה', 400);
+    }
     res.status(200).json({ success: true, data: updated });
   } catch (err) {
     next(err);

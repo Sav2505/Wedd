@@ -124,29 +124,46 @@ export default function SeatingEditor() {
 
     const reload = useCallback(async () => {
         try {
-            const [t, u] = await Promise.all([getAllTables(), getUnassignedGuests()]);
+            const [t, u] = await Promise.all([getAllTables(weddingId), getUnassignedGuests(weddingId)]);
             setTables(t);
             setUnassigned(u);
         } catch {
             setError('שגיאה בטעינת נתונים');
         }
-    }, []);
+    }, [weddingId]);
 
     useEffect(() => {
         const init = async () => {
-            await reload();
             try {
                 const info = await getWeddingInfo();
+
+                setWeddingId(info.id);
+
                 if (info.stage_label?.trim()) {
                     setStageLabel(info.stage_label);
                     setIsPublishedTables(info.is_tables_published);
-                    setWeddingId(info.id);
                     window.localStorage.setItem(STAGE_LABEL_STORAGE_KEY, info.stage_label);
                 }
-            } catch { /* non-critical, localStorage fallback already set */ }
+            } catch {
+                setError('שגיאה בטעינת פרטי חתונה');
+            }
         };
-        init().finally(() => setLoading(false));
-    }, [reload]);
+
+        init();
+    }, []);
+
+    useEffect(() => {
+        if (!weddingId) return;
+
+        const load = async () => {
+            setLoading(true);
+            await reload();
+            setLoading(false);
+        };
+
+        load();
+    }, [weddingId, reload]);
+    
     // ── Sync edit fields when selection changes ───────────────
 
     useEffect(() => {

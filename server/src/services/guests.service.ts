@@ -18,18 +18,28 @@ function sanitizePhone(phone: string): string {
   return phone.replace(/[\u200e\u200f\u202a-\u202e\u2066-\u2069\ufeff]/g, '').trim();
 }
 
-export async function listGuestGroups(): Promise<Array<GuestGroup & { guest_count: number }>> {
-  const { rows } = await pool.query<Array<GuestGroup & { guest_count: number }>[number]>(`
+export async function listGuestGroups(
+  weddingId: number,
+): Promise<Array<GuestGroup & { guest_count: number }>> {
+
+  const { rows } = await pool.query<Array<GuestGroup & { guest_count: number }>[number]>(
+    `
     SELECT
       gg.id,
       gg.name,
       gg.created_at,
       COUNT(g.id)::int AS guest_count
     FROM guest_groups gg
-    LEFT JOIN guests g ON g.guest_group_id = gg.id AND g.role = 'guest'
+    LEFT JOIN guests g
+      ON g.guest_group_id = gg.id
+      AND g.role = 'guest'
+      AND g.wedding_id = $1
+    WHERE gg.wedding_id = $1
     GROUP BY gg.id
     ORDER BY gg.created_at ASC
-  `);
+    `,
+    [weddingId],
+  );
 
   return rows;
 }
@@ -64,46 +74,55 @@ export async function deleteGuestGroup(id: string): Promise<void> {
   await pool.query('DELETE FROM guest_groups WHERE id = $1', [id]);
 }
 
-export async function listGuests(query?: string): Promise<ManagedGuest[]> {
+export async function listGuests(
+  weddingId: number,
+  query?: string,
+): Promise<ManagedGuest[]> {
   const where = query?.trim()
     ? `
-      WHERE g.role = 'guest'
-        AND (
-          g.full_name ILIKE $1
-          OR g.phone ILIKE $1
-          OR COALESCE(gg.name, '') ILIKE $1
-        )
-    `
-    : `WHERE g.role = 'guest'`;
+    WHERE g.wedding_id = $1
+      AND g.role = 'guest'
+      AND (
+        g.full_name ILIKE $2
+        OR g.phone ILIKE $2
+        OR COALESCE(gg.name, '') ILIKE $2
+      )
+  `
+    : `
+    WHERE g.wedding_id = $1
+      AND g.role = 'guest'
+  `;
 
-  const params = query?.trim() ? [`%${query.trim()}%`] : [];
+  const params = query?.trim()
+    ? [weddingId, `%${query.trim()}%`]
+    : [weddingId];
 
   const { rows } = await pool.query<ManagedGuest>(`
-    SELECT
-      g.id,
-      COALESCE(NULLIF(g.first_name, ''), split_part(g.full_name, ' ', 1)) AS first_name,
-      COALESCE(
-        NULLIF(g.last_name, ''),
-        NULLIF(trim(substr(g.full_name, length(split_part(g.full_name, ' ', 1)) + 1)), ''),
-        ''
-      ) AS last_name,
-      g.full_name,
-      g.phone,
-      g.side,
-      g.table_number,
-      g.guest_group_id,
-      gg.name AS group_name,
-      g.plus_count,
-      g.rsvp_status,
-      g.number_of_guests,
-      g.rsvp_updated_at,
-      g.created_at,
-      g.gift_amount
-    FROM guests g
-    LEFT JOIN guest_groups gg ON gg.id = g.guest_group_id
-    ${where}
-    ORDER BY gg.name NULLS LAST, g.full_name ASC
-  `, params);
+  SELECT
+    g.id,
+    COALESCE(NULLIF(g.first_name, ''), split_part(g.full_name, ' ', 1)) AS first_name,
+    COALESCE(
+      NULLIF(g.last_name, ''),
+      NULLIF(trim(substr(g.full_name, length(split_part(g.full_name, ' ', 1)) + 1)), ''),
+      ''
+    ) AS last_name,
+    g.full_name,
+    g.phone,
+    g.side,
+    g.table_number,
+    g.guest_group_id,
+    gg.name AS group_name,
+    g.plus_count,
+    g.rsvp_status,
+    g.number_of_guests,
+    g.rsvp_updated_at,
+    g.created_at,
+    g.gift_amount
+  FROM guests g
+  LEFT JOIN guest_groups gg ON gg.id = g.guest_group_id
+  ${where}
+  ORDER BY gg.name NULLS LAST, g.full_name ASC
+`, params);
 
   return rows;
 }

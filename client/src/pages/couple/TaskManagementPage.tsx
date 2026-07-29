@@ -65,7 +65,7 @@ export default function TaskManagementPage() {
     try {
       const [fetchedTasks, fetchedGuests] = await Promise.all([
         getTasks(info.id),
-        getGuests().catch(() => [] as Awaited<ReturnType<typeof getGuests>>),
+        getGuests('', info?.id).catch(() => [] as Awaited<ReturnType<typeof getGuests>>),
       ]);
 
       setTasks(fetchedTasks);

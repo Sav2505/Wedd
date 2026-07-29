@@ -2,9 +2,15 @@ import imageCompression from 'browser-image-compression';
 import api from './api';
 import { ApiResponse, Photo } from '../types/domain';
 
-export async function getPhotos(): Promise<Photo[]> {
-  const { data } = await api.get<ApiResponse<Photo[]>>('/photos');
-  if (!data.success || !data.data) throw new Error(data.message ?? 'שגיאה בטעינת תמונות');
+export async function getPhotos(weddingId: number): Promise<Photo[]> {
+  const { data } = await api.get<ApiResponse<Photo[]>>('/photos', {
+    params: { weddingId },
+  });
+
+  if (!data.success || !data.data) {
+    throw new Error(data.message ?? 'שגיאה בטעינת תמונות');
+  }
+
   return data.data;
 }
 
@@ -31,6 +37,7 @@ async function compressPhoto(file: File): Promise<{ thumb: Blob; full: Blob; mim
 export async function uploadPhoto(
   uploaderId: string,
   file: File,
+  weddingId: number | null,
   caption?: string,
   onProgress?: (pct: number) => void,
 ): Promise<Photo> {
@@ -41,6 +48,9 @@ export async function uploadPhoto(
   form.append('thumb', thumb, 'thumb.jpg');
   form.append('full', full, 'full.jpg');
   form.append('uploaderId', uploaderId);
+  if (weddingId) {
+    form.append('weddingId', String(weddingId));
+  }
   if (caption) form.append('caption', caption);
 
   const { data } = await api.post<ApiResponse<Photo>>('/photos', form, {

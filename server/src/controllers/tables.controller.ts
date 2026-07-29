@@ -2,11 +2,27 @@ import { Request, Response, NextFunction } from 'express';
 import * as tablesService from '../services/tables.service';
 import { createError } from '../middleware/errorHandler';
 
-export async function getTables(_req: Request, res: Response, next: NextFunction): Promise<void> {
+export async function getTables(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    const tables = await tablesService.getAllTables();
-    res.json({ success: true, data: tables });
-  } catch (err) { next(err); }
+    const weddingId = Number(req.query.weddingId);
+
+    if (!weddingId) {
+      res.status(400).json({
+        success: false,
+        message: 'חסר weddingId',
+      });
+      return;
+    }
+
+    const tables = await tablesService.getAllTables(weddingId);
+
+    res.json({
+      success: true,
+      data: tables,
+    });
+  } catch (err) {
+    next(err);
+  }
 }
 
 export async function createTable(req: Request, res: Response, next: NextFunction): Promise<void> {
@@ -57,7 +73,7 @@ export async function assignGuest(req: Request, res: Response, next: NextFunctio
     const { guestId } = req.body as { guestId: string };
     if (!guestId) return next(createError('guestId הוא שדה חובה', 400));
     // Get table_number from id
-    const tables = await tablesService.getAllTables();
+    const tables = await tablesService.getAllTablesAll();
     const table = tables.find(t => t.id === id);
     if (!table) return next(createError('שולחן לא נמצא', 404));
     await tablesService.assignGuest(guestId, table.table_number);

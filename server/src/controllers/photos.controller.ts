@@ -2,10 +2,24 @@ import { Request, Response, NextFunction } from 'express';
 import * as photosService from '../services/photos.service';
 import { createError } from '../middleware/errorHandler';
 
-export async function getPhotos(_req: Request, res: Response, next: NextFunction): Promise<void> {
+export async function getPhotos(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    const photos = await photosService.getAllPhotos();
-    res.status(200).json({ success: true, data: photos });
+    const weddingId = Number(req.query.weddingId);
+
+    if (!weddingId) {
+      res.status(400).json({
+        success: false,
+        message: 'חסר weddingId',
+      });
+      return;
+    }
+
+    const photos = await photosService.getAllPhotos(weddingId);
+
+    res.status(200).json({
+      success: true,
+      data: photos,
+    });
   } catch (err) {
     next(err);
   }
@@ -43,12 +57,18 @@ export async function getPhotoFull(req: Request, res: Response, next: NextFuncti
 
 export async function uploadPhoto(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
+    const weddingId = Number(req.body.weddingId);
+
+    if (!weddingId) {
+      return next(createError('weddingId הוא שדה חובה', 400));
+    }
+
     const uploaderId = req.body.uploaderId as string | undefined;
     if (!uploaderId) return next(createError('uploaderId הוא שדה חובה', 400));
 
     const files = req.files as Record<string, Express.Multer.File[]> | undefined;
     const thumbFile = files?.['thumb']?.[0];
-    const fullFile  = files?.['full']?.[0];
+    const fullFile = files?.['full']?.[0];
 
     if (!thumbFile || !fullFile) {
       return next(createError('שדות thumb ו-full נדרשים', 400));
@@ -56,6 +76,7 @@ export async function uploadPhoto(req: Request, res: Response, next: NextFunctio
 
     const mimeType = thumbFile.mimetype;
     const photo = await photosService.savePhoto(
+      weddingId,
       uploaderId,
       thumbFile.buffer,
       fullFile.buffer,

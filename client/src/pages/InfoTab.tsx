@@ -244,9 +244,11 @@ export default function InfoTab() {
       <GoldCard delay={0.05} sx={{ mb: 2 }}>
         <InfoRow icon={<CalendarMonthIcon sx={{ fontSize: 20 }} />} label="תאריך" value={formatHebrewDate(info.wedding_date)} delay={0.05} />
         <Divider sx={{ borderColor: 'rgba(201,168,76,0.15)' }} />
-        <InfoRow icon={<AccessTimeIcon sx={{ fontSize: 20 }} />} label="שעה" value={`${info.wedding_time.slice(0, 5)}`} delay={0.12} />
+        <InfoRow icon={<AccessTimeIcon sx={{ fontSize: 20 }} />} label="קבלת פנים" value={`${info.wedding_time.slice(0, 5)}`} delay={0.12} />
         <Divider sx={{ borderColor: 'rgba(201,168,76,0.15)' }} />
-        <InfoRow icon={<LocationOnIcon sx={{ fontSize: 20 }} />} label="מיקום" value={`${info.venue_name} — ${info.venue_address}`} delay={0.19} />
+        <InfoRow icon={<AccessTimeIcon sx={{ fontSize: 20 }} />} label="חופה" value={`${info.wedding_canpoy_time.slice(0, 5)}`} delay={0.19} />
+        <Divider sx={{ borderColor: 'rgba(201,168,76,0.15)' }} />
+        <InfoRow icon={<LocationOnIcon sx={{ fontSize: 20 }} />} label="מיקום" value={`${info.venue_name} — ${info.venue_address}`} delay={0.26} />
         {info.dress_code && (
           <>
             <Divider sx={{ borderColor: 'rgba(201,168,76,0.15)' }} />

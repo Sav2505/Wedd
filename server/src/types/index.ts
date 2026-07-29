@@ -63,6 +63,7 @@ export interface WeddingInfo {
   groom_name: string;
   wedding_date: string;
   wedding_time: string;
+  wedding_canpoy_time: string;
   venue_name: string;
   venue_address: string;
   venue_lat: number | null;

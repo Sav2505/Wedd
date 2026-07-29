@@ -48,6 +48,7 @@ CREATE TABLE IF NOT EXISTS wedding_info (
   groom_name      TEXT        NOT NULL DEFAULT 'החתן',
   wedding_date    DATE        NOT NULL,
   wedding_time    TIME        NOT NULL,
+  wedding_canpoy_time TIME NOT NULL DEFAULT '20:30:00',
   venue_name      TEXT        NOT NULL,
   venue_address   TEXT        NOT NULL,
   venue_lat       DECIMAL(10, 7) DEFAULT NULL,

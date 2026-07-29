@@ -20,6 +20,7 @@ interface WeddingInfoRow {
   groom_name: string;
   wedding_date: string;
   wedding_time: string;
+  wedding_canpoy_time: string;
   venue_name: string;
   venue_address: string;
 }
@@ -81,6 +82,7 @@ async function getWeddingScheduleRows(): Promise<Array<WeddingInfoRow & Schedule
       wi.groom_name,
       wi.wedding_date,
       wi.wedding_time,
+      wi.wedding_canpoy_time,
       wi.venue_name,
       wi.venue_address,
       s.wedding_id,
@@ -221,6 +223,7 @@ async function processTemplateForWedding(
           weddingDisplayName,
           weddingDate: wedding.wedding_date,
           weddingTime: wedding.wedding_time,
+          weddingCanpoyTime: wedding.wedding_canpoy_time,
           venueName: wedding.venue_name,
           venueAddress: wedding.venue_address,
           guestUrl,

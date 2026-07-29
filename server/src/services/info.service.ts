@@ -18,6 +18,7 @@ export type WeddingInfoUpdate = Partial<
     | 'groom_name'
     | 'wedding_date'
     | 'wedding_time'
+    | 'wedding_canpoy_time'
     | 'venue_name'
     | 'venue_address'
     | 'venue_lat'
@@ -32,7 +33,7 @@ export type WeddingInfoUpdate = Partial<
 
 export async function updateWeddingInfo(data: WeddingInfoUpdate): Promise<WeddingInfo> {
   const allowed = [
-    'bride_name', 'groom_name', 'wedding_date', 'wedding_time',
+    'bride_name', 'groom_name', 'wedding_date', 'wedding_time', 'wedding_canpoy_time',
     'venue_name', 'venue_address', 'venue_lat', 'venue_lng',
     'dress_code', 'notes', 'message', 'stage_label', 'is_tables_published',
   ] as const;

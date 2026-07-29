@@ -208,6 +208,7 @@ export interface BuildTemplateComponentsInput {
     weddingDisplayName: string;
     weddingDate: string;
     weddingTime: string;
+    weddingCanpoyTime: string;
     venueName: string;
     venueAddress: string;
     guestUrl: string;

@@ -137,6 +137,7 @@ export default function WeddingInfoEditor() {
           groom_name: d.groom_name,
           wedding_date: d.wedding_date?.slice(0, 10) ?? '',
           wedding_time: d.wedding_time?.slice(0, 5) ?? '',
+          wedding_canpoy_time: d.wedding_canpoy_time?.slice(0, 5) ?? '',
           venue_name: d.venue_name,
           venue_address: d.venue_address,
           venue_lat: d.venue_lat != null ? Number(d.venue_lat) : null,
@@ -235,7 +236,7 @@ export default function WeddingInfoEditor() {
 
           {/* ── תאריך ושעה ── */}
           <SectionTitle>מועד האירוע</SectionTitle>
-          <Box sx={{ display: 'flex', gap: 2 }}>
+          <Box sx={{ display: 'flex', gap: 2, flexDirection: 'column', mb: 2 }}>
             <DatePicker
               value={form.wedding_date ? dayjs(form.wedding_date) : null}
               onChange={(newValue) =>
@@ -264,22 +265,40 @@ export default function WeddingInfoEditor() {
                 },
               }}
             />
-            <TextField
-              label="שעה"
-              type="time"
-              fullWidth
-              value={form.wedding_time ?? ''}
-              onChange={set('wedding_time')}
-              sx={fieldSx}
-              InputLabelProps={{ shrink: true }}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <AccessTimeIcon sx={{ color: '#C9A84C', fontSize: 20 }} />
-                  </InputAdornment>
-                ),
-              }}
-            />
+            <Box sx={{ display: 'flex', gap: 2 }}>
+              <TextField
+                label="קבלת פנים"
+                type="time"
+                fullWidth
+                value={form.wedding_time ?? ''}
+                onChange={set('wedding_time')}
+                sx={fieldSx}
+                InputLabelProps={{ shrink: true }}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <AccessTimeIcon sx={{ color: '#C9A84C', fontSize: 20 }} />
+                    </InputAdornment>
+                  ),
+                }}
+              />
+              <TextField
+                label="חופה"
+                type="time"
+                fullWidth
+                value={form.wedding_canpoy_time ?? ''}
+                onChange={set('wedding_canpoy_time')}
+                sx={fieldSx}
+                InputLabelProps={{ shrink: true }}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <AccessTimeIcon sx={{ color: '#C9A84C', fontSize: 20 }} />
+                    </InputAdornment>
+                  ),
+                }}
+              />
+            </Box>
           </Box>
 
           {/* ── מיקום ── */}
@@ -380,7 +399,7 @@ export default function WeddingInfoEditor() {
           )}
 
           {/* ── קוד לבוש ── */}
-          <SectionTitle>פרטים נוספים</SectionTitle>
+          <SectionTitle>פרטים נוספים (לא חובה)</SectionTitle>
           <TextField
             label="קוד לבוש"
             fullWidth

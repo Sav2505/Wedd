@@ -187,46 +187,55 @@ export async function unassignGuest(guestId: string): Promise<void> {
 
 // ─── Unassigned guests list ────────────────────────────────────
 
-export async function getUnassignedGuests(): Promise<Array<Pick<Guest, 'id' | 'full_name' | 'side'> & {
+export async function getUnassignedGuests(
+  wedding_id: number
+): Promise<Array<Pick<Guest, 'id' | 'full_name' | 'side'> & {
   plus_count: number;
   rsvp_status: Guest['rsvp_status'];
   number_of_guests: number;
   effective_plus_count: number;
   effective_party_size: number;
 }>> {
-  const { rows } = await pool.query<Pick<Guest, 'id' | 'full_name' | 'side'> & {
-    plus_count: number;
-    rsvp_status: Guest['rsvp_status'];
-    number_of_guests: number;
-    effective_plus_count: number;
-    effective_party_size: number;
-  }>(
+  const { rows } = await pool.query<
+    Pick<Guest, 'id' | 'full_name' | 'side'> & {
+      plus_count: number;
+      rsvp_status: Guest['rsvp_status'];
+      number_of_guests: number;
+      effective_plus_count: number;
+      effective_party_size: number;
+    }
+  >(
     `
-      SELECT
-        id,
-        full_name,
-        side,
-        COALESCE(plus_count, 0) AS plus_count,
-        COALESCE(rsvp_status, 'PENDING') AS rsvp_status,
-        GREATEST(COALESCE(number_of_guests, 1), 1) AS number_of_guests,
+    SELECT
+      id,
+      full_name,
+      side,
+      COALESCE(plus_count, 0) AS plus_count,
+      COALESCE(rsvp_status, 'PENDING') AS rsvp_status,
+      GREATEST(COALESCE(number_of_guests, 1), 1) AS number_of_guests,
+
+      CASE
+        WHEN rsvp_status = 'COMING' THEN GREATEST(COALESCE(number_of_guests, 1), 1)
+        WHEN rsvp_status = 'NOT_COMING' THEN 0
+        ELSE 1 + COALESCE(plus_count, 0)
+      END AS effective_party_size,
+
+      GREATEST(
         CASE
           WHEN rsvp_status = 'COMING' THEN GREATEST(COALESCE(number_of_guests, 1), 1)
           WHEN rsvp_status = 'NOT_COMING' THEN 0
           ELSE 1 + COALESCE(plus_count, 0)
-        END AS effective_party_size,
-        GREATEST(
-          CASE
-            WHEN rsvp_status = 'COMING' THEN GREATEST(COALESCE(number_of_guests, 1), 1)
-            WHEN rsvp_status = 'NOT_COMING' THEN 0
-            ELSE 1 + COALESCE(plus_count, 0)
-          END - 1,
-          0
-        ) AS effective_plus_count
-      FROM guests
-      WHERE table_number IS NULL
-        AND role = 'guest'
-      ORDER BY full_name
+        END - 1,
+        0
+      ) AS effective_plus_count
+
+    FROM guests
+    WHERE wedding_id = $1
+      AND table_number IS NULL
+      AND role = 'guest'
+
+    ORDER BY full_name
     `,
-  );
+    [wedding_id]);
   return rows;
 }

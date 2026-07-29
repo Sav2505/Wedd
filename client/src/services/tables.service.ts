@@ -66,7 +66,7 @@ export async function unassignGuest(guestId: string): Promise<void> {
   await api.delete(`/tables/guests/${guestId}`);
 }
 
-export async function getUnassignedGuests(weddingId: number | null): Promise<Array<{
+export async function getUnassignedGuests(wedding_id: number | null): Promise<Array<{
   id: string;
   full_name: string;
   side: string | null;
@@ -75,7 +75,6 @@ export async function getUnassignedGuests(weddingId: number | null): Promise<Arr
   number_of_guests?: number;
   effective_plus_count?: number;
   effective_party_size?: number;
-  wedding_id?: number;
 }>> {
   const { data } = await api.get<ApiResponse<Array<{
     id: string;
@@ -86,8 +85,12 @@ export async function getUnassignedGuests(weddingId: number | null): Promise<Arr
     number_of_guests?: number;
     effective_plus_count?: number;
     effective_party_size?: number;
-    wedding_id?: number;
-  }>>>('/tables/unassigned');
+  }>>>('/tables/unassigned', {
+    params: {
+      wedding_id,
+    },
+  });
+
   if (!data.success || !data.data) return [];
   return data.data;
 }

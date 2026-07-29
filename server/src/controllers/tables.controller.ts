@@ -89,9 +89,18 @@ export async function unassignGuest(req: Request, res: Response, next: NextFunct
   } catch (err) { next(err); }
 }
 
-export async function getUnassigned(_req: Request, res: Response, next: NextFunction): Promise<void> {
+export async function getUnassigned(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    const guests = await tablesService.getUnassignedGuests();
+    const wedding_id = Number(req.query.wedding_id);
+
+    if (!wedding_id) {
+      return next(createError('wedding_id is required', 400));
+    }
+
+    const guests = await tablesService.getUnassignedGuests(wedding_id);
+
     res.json({ success: true, data: guests });
-  } catch (err) { next(err); }
+  } catch (err) {
+    next(err);
+  }
 }

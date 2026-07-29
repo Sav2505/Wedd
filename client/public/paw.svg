@@ -1,9 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="#dc6803">
-  <!-- toes -->
-  <ellipse cx="22" cy="28" rx="10" ry="13" />
-  <ellipse cx="42" cy="18" rx="10" ry="13" />
-  <ellipse cx="62" cy="18" rx="10" ry="13" />
-  <ellipse cx="80" cy="28" rx="10" ry="13" />
-  <!-- pad -->
-  <path d="M18,52 Q20,38 50,38 Q80,38 82,52 Q90,70 50,84 Q10,70 18,52 Z" />
-</svg>

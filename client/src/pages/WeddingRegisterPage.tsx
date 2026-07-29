@@ -22,6 +22,7 @@ import 'dayjs/locale/he';
 import FallingPetals from '../components/FallingPetals';
 import { createWeddingRequest } from '../services/weddingRequest.service';
 import { datePickerSx } from './couple/WeddingInfoEditor';
+import { notifyAdminNewWeddingRequest } from '../services/weddingRequestsAdmin.service';
 
 dayjs.locale('he');
 
@@ -137,13 +138,16 @@ export default function WeddingRegisterPage() {
 
         setLoading(true);
         try {
-            await createWeddingRequest({
+            const req = await createWeddingRequest({
                 bride_name: brideName.trim(),
                 groom_name: groomName.trim(),
                 wedding_date: weddingDate.format('YYYY-MM-DD'),
                 email: contactEmail.trim(),
                 phone_number: contactPhone.trim() ?? "",
             });
+            if (req && req.id) {
+                await notifyAdminNewWeddingRequest(req.id);
+            }
             setSuccess(true);
         } catch (err) {
             setError(err instanceof Error ? err.message : 'שגיאה בשליחת הבקשה');

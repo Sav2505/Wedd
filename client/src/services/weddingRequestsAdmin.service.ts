@@ -41,3 +41,15 @@ export async function openWedding(requestId: number, note?: string): Promise<Ope
 
   return data.data;
 }
+
+export async function notifyAdminNewWeddingRequest(
+  requestId: number,
+): Promise<void> {
+  const { data } = await api.post<ApiResponse<null>>(
+    `/wedding-requests/${requestId}/notify-admin`,
+  );
+
+  if (!data.success) {
+    throw new Error(data.message ?? 'שגיאה בשליחת ההתראה למנהל');
+  }
+}

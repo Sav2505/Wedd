@@ -17,6 +17,7 @@ import { initWhatsappScheduler } from './jobs/whatsapp-scheduler.job';
 import { initWhatsappReconciliationJob } from './jobs/whatsapp-reconciliation.job';
 
 import { errorHandler, notFound } from './middleware/errorHandler';
+import mailerRoutes from './routes/mailer.routes';
 
 dotenv.config();
 
@@ -91,6 +92,7 @@ app.use('/weddings', weddingMessageScheduleRoutes);
 
 // API
 app.use('/whatsapp', whatsappRoutes);
+app.use('/api/mail', mailerRoutes);
 
 // ─────────────────────────────────────────────────────────────
 // Health Check

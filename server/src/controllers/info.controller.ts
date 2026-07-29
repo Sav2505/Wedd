@@ -2,10 +2,21 @@ import { Request, Response, NextFunction } from 'express';
 import * as infoService from '../services/info.service';
 import { createError } from '../middleware/errorHandler';
 
-export async function getInfo(_req: Request, res: Response, next: NextFunction): Promise<void> {
+export async function getInfo(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    const info = await infoService.getWeddingInfo();
-    res.status(200).json({ success: true, data: info });
+    const guest = (req as Request & { guest?: { wedding_id: number } }).guest;
+
+    if (!guest?.wedding_id) {
+      throw createError('לא נמצאה חתונה למשתמש המחובר', 401);
+    }
+
+    const info = await infoService.getWeddingInfo(guest.wedding_id);
+
+    res.status(200).json({
+      success: true,
+      data: info,
+    });
+
   } catch (err) {
     next(err);
   }

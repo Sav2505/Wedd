@@ -124,7 +124,7 @@ export default function WeddingInfoEditor() {
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
-
+  console.log(info);
   // local form state
   const [form, setForm] = useState<WeddingInfoUpdate>({});
 

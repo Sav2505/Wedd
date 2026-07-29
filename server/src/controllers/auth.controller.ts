@@ -27,9 +27,12 @@ export async function login(req: Request, res: Response, next: NextFunction): Pr
     if (!weddingId) {
       guest = await authService.loginGroomOrBride(fullName, lastFourDigits);
     } else {
-      guest = await authService.loginGuest(fullName, lastFourDigits, Number(weddingId));
+      guest = await authService.loginGuest(
+        fullName,
+        lastFourDigits,
+        Number(weddingId),
+      );
     }
-
 
     res.status(200).json({ success: true, data: { guest } });
   } catch (err) {

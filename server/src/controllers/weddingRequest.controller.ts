@@ -8,7 +8,7 @@ const createWeddingRequestSchema = z.object({
     groom_name: z.string().trim().min(2, 'שם חתן חייב להכיל לפחות 2 תווים'),
     wedding_date: z.string().trim().min(8, 'תאריך חתונה הוא שדה חובה'),
     email: z.string().trim().email('כתובת אימייל לא תקינה'),
-    phone_number: z.string().trim().min(7, 'מספר טלפון לא תקין'),
+    phone_number: z.string().trim().optional(),
 });
 
 const idParamSchema = z.object({
@@ -96,6 +96,24 @@ export async function openWedding(req: Request, res: Response, next: NextFunctio
         );
 
         res.json({ success: true, data: result });
+    } catch (err) {
+        next(err);
+    }
+}
+
+export async function notifyAdmin(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+        const parsed = idParamSchema.safeParse(req.params);
+        if (!parsed.success) {
+            return next(createError('מזהה בקשה לא תקין', 400));
+        }
+
+        await service.notifyAdmin(parsed.data.id);
+
+        res.json({
+            success: true,
+            data: null,
+        });
     } catch (err) {
         next(err);
     }

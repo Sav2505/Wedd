@@ -1,4 +1,5 @@
 import { DateTime } from 'luxon';
+import { getInvitationImage } from './weddingMessageSchedule.service';
 
 export type SupportedWeddingTemplate =
     | 'wedding_confirmation'
@@ -302,30 +303,34 @@ export function buildTemplateComponents(input: BuildTemplateComponentsInput): un
     }
 }
 
-export async function sendTestMessage(to: string): Promise<unknown> {
+export async function sendTestMessage(to: string, weddingId: number): Promise<unknown> {
+    const schedule = await getInvitationImage(weddingId); // הפונקציה שכבר קיימת אצלכם
+    const mediaId = schedule.invitation_image_media_id;
+
+    if (!mediaId) {
+        throw new Error('No invitation media id found for this wedding - upload an image first');
+    }
+
+    const components = buildTemplateComponents({
+        templateName: 'wedding_confirmation',
+        guestFullName: 'דן כהן',
+        guestFirstName: 'דן',
+        weddingDisplayName: 'שחר ודן',
+        weddingDate: '2026-12-07',
+        weddingTime: '19:30',
+        weddingCanpoyTime: '20:30',
+        venueName: 'הגן בשפיים',
+        venueAddress: 'שפיים',
+        guestUrl: 'https://your-domain.com/guest?n=Dan&p=1234&w=1',
+        invitationImageMediaId: mediaId,
+    });
+
     const result = await sendTemplateMessageWithRetry({
         to,
         templateName: 'wedding_confirmation',
         languageCode: 'he',
-        components: [
-            {
-                type: 'header',
-                parameters: [{ type: 'text', text: 'דן' }],
-            },
-            {
-                type: 'body',
-                parameters: [
-                    { type: 'text', text: 'יום שישי, 12 בספטמבר 2026' },
-                    { type: 'text', text: 'יובל ונועה' },
-                ],
-            },
-            {
-                type: 'button',
-                sub_type: 'url',
-                index: '0',
-                parameters: [{ type: 'text', text: '?n=Dan&p=1234&w=1' }],
-            },
-        ],
+        components,
     });
+
     return result.raw;
 }

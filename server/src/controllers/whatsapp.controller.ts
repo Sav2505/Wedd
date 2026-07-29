@@ -12,7 +12,7 @@ export async function sendWhatsappTest(req: Request, res: Response) {
             });
         }
 
-        const result = await sendTestMessage(to);
+        const result = await sendTestMessage(to, 1);
 
         res.json({
             success: true,

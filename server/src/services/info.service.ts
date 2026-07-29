@@ -1,13 +1,25 @@
 import { pool } from '../db/pool';
+import { createError } from '../middleware/errorHandler';
 import { WeddingInfo } from '../types';
 
-export async function getWeddingInfo(): Promise<WeddingInfo> {
+export async function getWeddingInfo(
+  weddingId: number,
+): Promise<WeddingInfo> {
+
   const { rows } = await pool.query<WeddingInfo>(
-    'SELECT * FROM wedding_info WHERE id = 1 LIMIT 1',
+    `
+    SELECT *
+    FROM wedding_info
+    WHERE id = $1
+    LIMIT 1
+    `,
+    [weddingId],
   );
+
   if (rows.length === 0) {
-    throw new Error('פרטי החתונה לא נמצאו');
+    throw createError('פרטי החתונה לא נמצאו', 404);
   }
+
   return rows[0];
 }
 

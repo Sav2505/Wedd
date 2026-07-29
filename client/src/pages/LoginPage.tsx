@@ -154,6 +154,7 @@ export default function LoginPage() {
     setLoading(true);
     try {
       const { guest } = await login({ fullName: fullName.trim(), lastFourDigits });
+
       dispatch(setGuest(guest));
       navigate('/', { replace: true });
     } catch (err) {

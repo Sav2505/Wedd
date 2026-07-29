@@ -25,7 +25,7 @@ CREATE TABLE IF NOT EXISTS guests (
   rsvp_updated_at TIMESTAMPTZ DEFAULT NULL,
   gift_amount INTEGER     DEFAULT NULL,
   wedding_id  INTEGER     NOT NULL REFERENCES wedding_info(id) ON DELETE CASCADE,
-  CONSTRAINT uq_guests_name_phone UNIQUE (full_name, phone)
+  CONSTRAINT uq_guests_wedding_name_phone UNIQUE (wedding_id, full_name, phone)
 );
 
 -- Index for fast login lookups (full_name + last 4 digits)
@@ -52,23 +52,22 @@ CREATE INDEX IF NOT EXISTS idx_photos_date     ON photos (uploaded_at DESC);
 -- (single-row configuration for the wedding details)
 -- ============================================================
 CREATE TABLE IF NOT EXISTS wedding_info (
-  id              SERIAL      PRIMARY KEY,
-  bride_name      TEXT        NOT NULL DEFAULT 'הכלה',
-  groom_name      TEXT        NOT NULL DEFAULT 'החתן',
-  wedding_date    DATE        NOT NULL,
-  wedding_time    TIME        NOT NULL,
-  wedding_canpoy_time TIME NOT NULL DEFAULT '20:30:00',
-  venue_name      TEXT        NOT NULL,
-  venue_address   TEXT        NOT NULL,
-  venue_lat       DECIMAL(10, 7) DEFAULT NULL,
-  venue_lng       DECIMAL(10, 7) DEFAULT NULL,
-  dress_code      TEXT        DEFAULT NULL,
-  notes           TEXT        DEFAULT NULL,
-  message         TEXT        DEFAULT NULL,   -- Tab 4: message from couple
-  hero_image_url  TEXT        DEFAULT NULL,   -- couple-uploaded header background
-  is_tables_published BOOLEAN   NOT NULL DEFAULT FALSE, -- Tab 3: seating tables published
-  updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  CONSTRAINT single_row CHECK (id = 1)
+  id SERIAL PRIMARY KEY,
+  bride_name TEXT NOT NULL,
+  groom_name TEXT NOT NULL,
+  wedding_date DATE NOT NULL,
+  wedding_time TIME DEFAULT NULL,
+  wedding_canpoy_time TIME DEFAULT '20:30:00',
+  venue_name TEXT DEFAULT NULL,
+  venue_address TEXT DEFAULT NULL,
+  venue_lat DECIMAL(10,7) DEFAULT NULL,
+  venue_lng DECIMAL(10,7) DEFAULT NULL,
+  dress_code TEXT DEFAULT NULL,
+  notes TEXT DEFAULT NULL,
+  message TEXT DEFAULT NULL,
+  hero_image_url TEXT DEFAULT NULL,
+  is_tables_published BOOLEAN NOT NULL DEFAULT FALSE,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 -- ============================================================

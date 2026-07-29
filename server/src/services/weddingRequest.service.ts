@@ -5,16 +5,44 @@ import {
     WeddingRequest,
 } from '../types';
 import { createError } from '../middleware/errorHandler';
-import { buildCoupleCredentialsTemplate, buildFirstContactBitTemplate } from './emailTemplates.service';
-import { sendMailMock } from './email.service';
+import { buildAdminNewWeddingRequestTemplate, buildCoupleCredentialsTemplate, buildFirstContactBitTemplate } from './emailTemplates.service';
 import { generateCoupleLoginCodeFromGuestId } from './auth.service';
+import { sendEmail } from './mailer.service';
+
+function makeCoupleNamesUnique(
+    groomName: string,
+    brideName: string,
+): {
+    groomName: string;
+    brideName: string;
+} {
+    const normalize = (name: string) =>
+        name
+            .trim()
+            .replace(/\s+/g, ' ');
+
+    const groom = normalize(groomName);
+    const bride = normalize(brideName);
+
+    if (groom === bride) {
+        return {
+            groomName: `${groom} חתן`,
+            brideName: `${bride} כלה`,
+        };
+    }
+
+    return {
+        groomName: groom,
+        brideName: bride,
+    };
+}
 
 export interface CreateWeddingRequest {
     bride_name: string;
     groom_name: string;
     wedding_date: string;
     email: string;
-    phone_number: string;
+    phone_number?: string;
 }
 
 interface CoupleGuestRow {
@@ -61,12 +89,17 @@ function toISODateOnly(value: string): string {
 export async function createWeddingRequest(
     data: CreateWeddingRequest,
 ): Promise<WeddingRequest> {
-    const brideName = normalizeWhitespace(data.bride_name);
-    const groomName = normalizeWhitespace(data.groom_name);
+    const {
+        brideName,
+        groomName,
+    } = makeCoupleNamesUnique(
+        normalizeWhitespace(data.groom_name),
+        normalizeWhitespace(data.bride_name),
+    );
     const email = data.email.trim().toLowerCase();
-    const phone = data.phone_number.trim();
+    const phone = data?.phone_number?.trim();
 
-    if (!brideName || !groomName || !email || !phone) {
+    if (!brideName || !groomName || !email) {
         throw createError('כל שדות בקשת ההרשמה הם חובה', 400);
     }
 
@@ -74,23 +107,23 @@ export async function createWeddingRequest(
 
     const { rows } = await pool.query<WeddingRequest>(
         `
-    INSERT INTO wedding_requests
-    (
-      bride_name,
-      groom_name,
-      wedding_date,
-      phone_number,
-      email
-    )
-    VALUES ($1, $2, $3, $4, $5)
-    RETURNING *
-    `,
+        INSERT INTO wedding_requests
+        (
+            bride_name,
+            groom_name,
+            wedding_date,
+            email,
+            phone_number
+            )
+        VALUES ($1, $2, $3, $4, $5)
+        RETURNING *
+        `,
         [
             brideName,
             groomName,
             weddingDate,
-            phone,
             email,
+            phone,
         ],
     );
 
@@ -164,12 +197,17 @@ export async function sendFirstContact(requestId: number): Promise<{
         bitPhone: 'XXX',
     });
 
-    const mailResult = await sendMailMock({
-        to: request.email,
-        subject: template.subject,
-        html: template.html,
-        text: template.text,
-    });
+    let mailResult: { messageId: string };
+    try {
+        mailResult = await sendEmail({
+            to: request.email,
+            subject: template.subject,
+            html: template.html,
+            text: template.text,
+        });
+    } catch (err) {
+        throw createError('שליחת המייל נכשלה, נסה שוב', 502);
+    }
 
     const updated = await pool.query<WeddingRequest>(
         `
@@ -228,34 +266,53 @@ export async function openWedding(
             throw createError('בקשה זו כבר נפתחה בעבר', 409);
         }
 
-        const brideName = normalizeWhitespace(request.bride_name);
-        const groomName = normalizeWhitespace(request.groom_name);
+        let brideName = normalizeWhitespace(request.bride_name);
+        let groomName = normalizeWhitespace(request.groom_name);
         const phone = request.phone_number.trim();
 
-        const existingCouples = await client.query<{ id: string }>(
+        // const existingCouples = await client.query<{ id: string }>(
+        //     `
+        //     SELECT id
+        //     FROM guests
+        //     WHERE role = 'couple'
+        //       AND full_name = ANY($1::text[])
+        //     LIMIT 1
+        //     `,
+        //     [[brideName, groomName]],
+        // );
+
+        // if (existingCouples.rows.length > 0) {
+        //     throw createError('כבר קיימים משתמשי זוג לשמות אלו', 409);
+        // }
+
+        const createdWedding = await client.query<{ id: number }>(
             `
-            SELECT id
-            FROM guests
-            WHERE role = 'couple'
-              AND full_name = ANY($1::text[])
-            LIMIT 1
+            INSERT INTO wedding_info (
+                bride_name,
+                groom_name,
+                wedding_date
+            )
+            VALUES ($1, $2, $3)
+            RETURNING id
             `,
-            [[brideName, groomName]],
+            [
+                brideName,
+                groomName,
+                request.wedding_date,
+            ],
         );
 
-        if (existingCouples.rows.length > 0) {
-            throw createError('כבר קיימים משתמשי זוג לשמות אלו', 409);
-        }
+        const weddingId = createdWedding.rows[0].id;
 
         const createdCouples = await client.query<CoupleGuestRow>(
             `
-            INSERT INTO guests (full_name, phone, table_number, side, role)
+            INSERT INTO guests (full_name, phone, table_number, side, role, wedding_id)
             VALUES
-              ($1, $3, NULL, 'חתן', 'couple'),
-              ($2, $3, NULL, 'כלה', 'couple')
+              ($1, $3, NULL, 'חתן', 'couple', $4),
+              ($2, $3, NULL, 'כלה', 'couple', $4)
             RETURNING id, full_name, side
             `,
-            [groomName, brideName, phone],
+            [groomName, brideName, phone, weddingId],
         );
 
         const credentials = createdCouples.rows.map((row) => ({
@@ -270,7 +327,7 @@ export async function openWedding(
             credentials,
         });
 
-        const mailResult = await sendMailMock({
+        const mailResult = await sendEmail({
             to: request.email,
             subject: credentialsTemplate.subject,
             html: credentialsTemplate.html,
@@ -310,4 +367,63 @@ export async function openWedding(
     } finally {
         client.release();
     }
+}
+
+export async function notifyAdmin(
+    requestId: number,
+): Promise<{
+    request: WeddingRequest;
+    mailLog: {
+        messageId: string;
+        to: string;
+        subject: string;
+    };
+}> {
+    await ensureWeddingRequestsAdminColumns();
+
+    const { rows } = await pool.query<WeddingRequest>(
+        `
+        SELECT *
+        FROM wedding_requests
+        WHERE id = $1
+        LIMIT 1
+        `,
+        [requestId],
+    );
+
+    const request = rows[0];
+
+    if (!request) {
+        throw createError('בקשת הרשמה לא נמצאה', 404);
+    }
+
+    const template = buildAdminNewWeddingRequestTemplate({
+        brideName: request.bride_name,
+        groomName: request.groom_name,
+        weddingDate: request.wedding_date,
+        email: request.email,
+        phone: request.phone_number,
+    });
+
+    let mailResult: { messageId: string };
+    const adminMail = process.env.EMAIL_ADMIN;
+    try {
+        mailResult = await sendEmail({
+            to: adminMail || 'weddflowadd@gmail.com',
+            subject: template.subject,
+            html: template.html,
+            text: template.text,
+        });
+    } catch (err) {
+        throw createError('שליחת מייל למנהל נכשלה', 502);
+    }
+
+    return {
+        request,
+        mailLog: {
+            messageId: mailResult.messageId,
+            to: adminMail || 'weddflowadd@gmail.com',
+            subject: template.subject,
+        },
+    };
 }

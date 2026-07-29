@@ -12,15 +12,16 @@ import {
 import AddIcon from '@mui/icons-material/Add';
 import AssignmentOutlinedIcon from '@mui/icons-material/AssignmentOutlined';
 import { AnimatePresence, motion } from 'framer-motion';
-import { TaskFormData, WeddingInfo, WeddingTask } from '../../types/domain';
+import { ManagedGuest, TaskFormData, WeddingInfo, WeddingTask } from '../../types/domain';
 import { createTask, deleteTask, getTasks, updateTask } from '../../services/tasks.service';
-import { getGuests } from '../../services/guests.service';
+import { getGuests, updateGuest } from '../../services/guests.service';
 import TaskSummaryCards from './tasks/TaskSummaryCards';
 import TaskTable from './tasks/TaskTable';
 import TaskDialog from './tasks/TaskDialog';
 import BudgetAnalytics from './tasks/BudgetAnalytics';
 import { getEffectivePartySize } from '../../utils/effectiveAttendance';
 import { getWeddingInfo } from '../../services/info.service';
+import GuestGiftsTable from './tasks/GuestsGiftsTable';
 
 // ─── Dialog mode ─────────────────────────────────────────────
 
@@ -37,6 +38,7 @@ export default function TaskManagementPage() {
     const stored = localStorage.getItem(AVG_GIFT_KEY);
     return stored ? Number(stored) : 450;
   });
+  const [guests, setGuests] = useState<ManagedGuest[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
@@ -61,15 +63,16 @@ export default function TaskManagementPage() {
     if (!info?.id) return;
 
     try {
-      const [fetchedTasks, guests] = await Promise.all([
+      const [fetchedTasks, fetchedGuests] = await Promise.all([
         getTasks(info.id),
         getGuests().catch(() => [] as Awaited<ReturnType<typeof getGuests>>),
       ]);
 
       setTasks(fetchedTasks);
+      setGuests(fetchedGuests);
 
-      if (guests.length > 0) {
-        const count = guests.reduce((sum, g) => sum + getEffectivePartySize(g), 0);
+      if (fetchedGuests.length > 0) {
+        const count = fetchedGuests.reduce((sum, g) => sum + getEffectivePartySize(g), 0);
         setGuestCount(count);
       }
     } catch (err: unknown) {
@@ -104,6 +107,11 @@ export default function TaskManagementPage() {
     await deleteTask(selectedTask.id);
     setTasks(prev => prev.filter(t => t.id !== selectedTask.id));
     setToast('המשימה נמחקה');
+  }
+
+  async function handleUpdateGiftAmount(guestId: string, amount: number | null): Promise<void> {
+    await updateGuest(guestId, { gift_amount: amount });
+    setGuests(prev => prev.map(g => g.id === guestId ? { ...g, gift_amount: amount } : g));
   }
 
   function openAdd() { setSelectedTask(null); setDialogMode('add'); }
@@ -167,7 +175,7 @@ export default function TaskManagementPage() {
       ) : (
         <>
           {/* ─── Summary Cards ─── */}
-          <TaskSummaryCards tasks={tasks} guestCount={guestCount} avgGift={avgGift} onAvgGiftChange={handleAvgGiftChange} />
+          <TaskSummaryCards tasks={tasks} guests={guests} guestCount={guestCount} avgGift={avgGift} onAvgGiftChange={handleAvgGiftChange} />
 
           {/* ─── Tasks Table ─── */}
           <motion.div
@@ -184,6 +192,21 @@ export default function TaskManagementPage() {
               </Typography>
               <TaskTable tasks={tasks} onEdit={openEdit} onDelete={openDelete} />
             </Box>
+          </motion.div>
+
+          {/* ─── Divider ─── */}
+          <Divider sx={{ my: 4, borderColor: 'rgba(201,168,76,0.25)' }} />
+
+          {/* ─── Guest Gifts ─── */}
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.28, ease: 'easeOut' }}
+          >
+            <GuestGiftsTable
+              guests={guests}
+              onUpdateGiftAmount={handleUpdateGiftAmount}
+            />
           </motion.div>
 
           {/* ─── Divider ─── */}

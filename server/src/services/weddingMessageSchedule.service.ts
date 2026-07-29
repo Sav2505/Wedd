@@ -1,6 +1,7 @@
 import { pool } from '../db/pool';
 import { createError } from '../middleware/errorHandler';
 import { computeWeddingMessageScheduleDates } from '../utils/scheduling.util';
+import { uploadMediaToWhatsApp } from './whatsapp.service';
 
 export interface WeddingMessageScheduleRow {
   id: number;
@@ -13,6 +14,7 @@ export interface WeddingMessageScheduleRow {
   day_before_locked_at: string | null;
   invitation_image_mime_type: string | null;
   invitation_image_filename: string | null;
+  invitation_image_media_id: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -38,6 +40,7 @@ interface InvitationImageRow {
   invitation_image: Buffer | null;
   invitation_image_mime_type: string | null;
   invitation_image_filename: string | null;
+  invitation_image_media_id: string | null;
 }
 
 async function getWeddingDate(weddingId: number): Promise<string> {
@@ -73,6 +76,7 @@ async function ensureScheduleRow(weddingId: number): Promise<WeddingMessageSched
       day_before_locked_at,
       invitation_image_mime_type,
       invitation_image_filename,
+      invitation_image_media_id,
       created_at,
       updated_at
     FROM wedding_message_schedule
@@ -154,6 +158,7 @@ export async function updateWeddingMessageSchedule(
         day_before_locked_at,
         invitation_image_mime_type,
         invitation_image_filename,
+        invitation_image_media_id,
         created_at,
         updated_at
       FROM wedding_message_schedule
@@ -220,6 +225,7 @@ export async function updateWeddingMessageSchedule(
         day_before_locked_at,
         invitation_image_mime_type,
         invitation_image_filename,
+        invitation_image_media_id,
         created_at,
         updated_at
       FROM wedding_message_schedule
@@ -265,6 +271,7 @@ export async function saveInvitationImage(
         day_before_locked_at,
         invitation_image_mime_type,
         invitation_image_filename,
+        invitation_image_media_id,
         created_at,
         updated_at
       FROM wedding_message_schedule
@@ -291,14 +298,27 @@ export async function saveInvitationImage(
       throw createError('חתונה לא נמצאה', 404);
     }
 
+    const mediaId = await uploadMediaToWhatsApp({
+      data: file.buffer,
+      mimeType: file.mimetype,
+      filename: file.originalname,
+    });
+    console.log(`Invitation image uploaded to WhatsApp with media ID: ${mediaId}`);
     await client.query(
       `UPDATE wedding_message_schedule
-       SET invitation_image = $1,
-           invitation_image_mime_type = $2,
-           invitation_image_filename = $3,
-           updated_at = NOW()
-       WHERE wedding_id = $4`,
-      [file.buffer, file.mimetype, file.originalname, weddingId],
+        SET invitation_image = $1,
+          invitation_image_mime_type = $2,
+          invitation_image_filename = $3,
+          invitation_image_media_id = $4,
+          updated_at = NOW()
+        WHERE wedding_id = $5`,
+      [
+        file.buffer,
+        file.mimetype,
+        file.originalname,
+        mediaId,
+        weddingId,
+      ],
     );
 
     const finalResult = await client.query<WeddingMessageScheduleRow>(
@@ -313,6 +333,7 @@ export async function saveInvitationImage(
         day_before_locked_at,
         invitation_image_mime_type,
         invitation_image_filename,
+        invitation_image_media_id,
         created_at,
         updated_at
       FROM wedding_message_schedule
@@ -364,6 +385,7 @@ export async function clearInvitationImage(weddingId: number): Promise<WeddingMe
         day_before_locked_at,
         invitation_image_mime_type,
         invitation_image_filename,
+        invitation_image_media_id,
         created_at,
         updated_at
       FROM wedding_message_schedule
@@ -386,6 +408,7 @@ export async function clearInvitationImage(weddingId: number): Promise<WeddingMe
        SET invitation_image = NULL,
            invitation_image_mime_type = NULL,
            invitation_image_filename = NULL,
+           invitation_image_media_id = NULL,
            updated_at = NOW()
        WHERE wedding_id = $1`,
       [weddingId],
@@ -403,6 +426,7 @@ export async function clearInvitationImage(weddingId: number): Promise<WeddingMe
         day_before_locked_at,
         invitation_image_mime_type,
         invitation_image_filename,
+        invitation_image_media_id,
         created_at,
         updated_at
       FROM wedding_message_schedule
@@ -428,7 +452,7 @@ export async function getInvitationImage(
   const schedule = await ensureScheduleRow(weddingId);
 
   const { rows } = await pool.query<InvitationImageRow>(
-    `SELECT invitation_image, invitation_image_mime_type, invitation_image_filename
+    `SELECT invitation_image, invitation_image_mime_type, invitation_image_filename, invitation_image_media_id
      FROM wedding_message_schedule
      WHERE wedding_id = $1
      LIMIT 1`,

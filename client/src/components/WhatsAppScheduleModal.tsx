@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
     Alert,
+    Backdrop,
     Box,
     Button,
     CircularProgress,
@@ -8,6 +9,7 @@ import {
     DialogActions,
     DialogContent,
     DialogTitle,
+    Paper,
     Stack,
     TextField,
     Typography,
@@ -41,6 +43,7 @@ export default function WhatsAppScheduleModal({ open, weddingId, weddingDate, on
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState<string | null>(null);
+    const [loadingMessage, setLoadingMessage] = useState<string | null>(null);
 
     const [invitationDays, setInvitationDays] = useState(30);
     const [reminderDays, setReminderDays] = useState(14);
@@ -133,6 +136,7 @@ export default function WhatsAppScheduleModal({ open, weddingId, weddingDate, on
         if (!schedule) return;
 
         setSaving(true);
+        setLoadingMessage('שומר את ההגדרות...');
         setError(null);
 
         try {
@@ -147,6 +151,7 @@ export default function WhatsAppScheduleModal({ open, weddingId, weddingDate, on
             setError(err instanceof Error ? err.message : 'שגיאה בשמירת הגדרות תזמון');
         } finally {
             setSaving(false);
+            setLoadingMessage(null);
         }
     }
 
@@ -154,6 +159,7 @@ export default function WhatsAppScheduleModal({ open, weddingId, weddingDate, on
         if (!schedule) return;
         setSaving(true);
         setError(null);
+        setLoadingMessage('מעלה את תמונת ההזמנה ל-WhatsApp...');
 
         try {
             const updated = await uploadWeddingInvitationImage(weddingId, file);
@@ -171,12 +177,14 @@ export default function WhatsAppScheduleModal({ open, weddingId, weddingDate, on
             setError(err instanceof Error ? err.message : 'שגיאה בהעלאת תמונת ההזמנה');
         } finally {
             setSaving(false);
+            setLoadingMessage(null);
         }
     }
 
     async function handleDeleteImage() {
         setSaving(true);
         setError(null);
+        setLoadingMessage('מוחק את תמונת ההזמנה...');
 
         try {
             const updated = await deleteWeddingInvitationImage(weddingId);
@@ -399,7 +407,7 @@ export default function WhatsAppScheduleModal({ open, weddingId, weddingDate, on
                                 </Collapse>
                             </Stack>
 
-                            <Typography sx={{ fontWeight: 700, mb: 1 }}>ביום שאחרי (נוודא שלא נופל על שבת) תישלח גם הודעת תודה לכל מי שבא :) (עד 5MB, JPG/PNG/WEBP)</Typography>
+                            <Typography sx={{ fontWeight: 700, mb: 1 }}>ביום שאחרי (נוודא שלא נופל על שבת) תישלח גם הודעת תודה לכל מי שבא :)</Typography>
 
                             <Box sx={{ p: 1.5, borderRadius: 2, border: '1px dashed rgba(201,168,76,0.55)', background: 'rgba(201,168,76,0.06)' }}>
                                 <Typography sx={{ fontWeight: 700, mb: 1 }}>תמונת הזמנה</Typography>
@@ -472,6 +480,50 @@ export default function WhatsAppScheduleModal({ open, weddingId, weddingDate, on
                     שמירה
                 </Button>
             </DialogActions>
+            <Backdrop
+                open={saving}
+                sx={{
+                    zIndex: (theme) => theme.zIndex.modal + 2,
+                    backdropFilter: 'blur(6px)',
+                    background: 'rgba(255,255,255,.45)',
+                }}
+            >
+                <Paper
+                    elevation={10}
+                    sx={{
+                        px: 5,
+                        py: 4,
+                        borderRadius: 4,
+                        textAlign: 'center',
+                        minWidth: 300,
+                    }}
+                >
+                    <CircularProgress
+                        size={48}
+                        sx={{
+                            color: '#C9A84C',
+                            mb: 2,
+                        }}
+                    />
+
+                    <Typography
+                        sx={{
+                            fontWeight: 700,
+                            fontSize: '1rem',
+                        }}
+                    >
+                        {loadingMessage}
+                    </Typography>
+
+                    <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        sx={{ mt: 1 }}
+                    >
+                        פעולה זו עשויה להימשך מספר שניות...
+                    </Typography>
+                </Paper>
+            </Backdrop>
         </Dialog>
     );
 }

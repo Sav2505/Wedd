@@ -165,6 +165,7 @@ CREATE TABLE IF NOT EXISTS wedding_message_schedule (
   invitation_image_filename VARCHAR(255) DEFAULT NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  invitation_image_media_id VARCHAR(255) DEFAULT NULL,
   CONSTRAINT chk_wms_invitation_days_non_negative CHECK (invitation_days_before >= 0),
   CONSTRAINT chk_wms_reminder_days_non_negative CHECK (reminder_days_before >= 0),
   CONSTRAINT chk_wms_day_before_days_non_negative CHECK (day_before_offset_days >= 0)

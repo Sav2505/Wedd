@@ -16,6 +16,15 @@ CREATE TABLE IF NOT EXISTS guests (
   side        TEXT        CHECK (side IN ('חתן', 'כלה', 'שניהם')) DEFAULT NULL,
   role        TEXT        NOT NULL DEFAULT 'guest' CONSTRAINT chk_guests_role CHECK (role IN ('guest', 'couple')),
   created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  first_name  TEXT        DEFAULT NULL,
+  last_name   TEXT        DEFAULT NULL,
+  guest_group_id UUID     DEFAULT NULL REFERENCES guest_groups(id) ON DELETE SET NULL,
+  plus_count  INTEGER     DEFAULT 0,
+  rsvp_status rsvp_status DEFAULT 'pending',
+  number_of_guests INTEGER     DEFAULT 1,
+  rsvp_updated_at TIMESTAMPTZ DEFAULT NULL,
+  gift_amount INTEGER     DEFAULT NULL,
+  wedding_id  INTEGER     NOT NULL REFERENCES wedding_info(id) ON DELETE CASCADE,
   CONSTRAINT uq_guests_name_phone UNIQUE (full_name, phone)
 );
 

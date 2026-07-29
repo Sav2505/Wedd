@@ -4,7 +4,6 @@ import { pool } from '../db/pool';
 import {
   buildTemplateComponents,
   sendTemplateMessageWithRetry,
-  uploadMediaToWhatsApp,
 } from '../services/whatsapp.service';
 import {
   markLogFailed,
@@ -36,6 +35,7 @@ interface ScheduleRow {
   invitation_image: Buffer | null;
   invitation_image_mime_type: string | null;
   invitation_image_filename: string | null;
+  invitation_image_media_id: string | null;
 }
 
 interface GuestRow {
@@ -94,7 +94,8 @@ async function getWeddingScheduleRows(): Promise<Array<WeddingInfoRow & Schedule
       s.day_before_locked_at,
       s.invitation_image,
       s.invitation_image_mime_type,
-      s.invitation_image_filename
+      s.invitation_image_filename,
+      s.invitation_image_media_id
      FROM wedding_info wi
      JOIN wedding_message_schedule s ON s.wedding_id = wi.id`,
   );
@@ -190,21 +191,10 @@ async function processTemplateForWedding(
   }
 
   const guests = await getEligibleGuests(wedding.id, templateName);
-
-  let invitationMediaId: string | undefined;
-  if (
-    templateName === 'wedding_confirmation' &&
-    wedding.invitation_image &&
-    wedding.invitation_image_mime_type
-  ) {
-    invitationMediaId = await uploadMediaToWhatsApp({
-      data: wedding.invitation_image,
-      mimeType: wedding.invitation_image_mime_type,
-      filename: wedding.invitation_image_filename ?? 'invitation-image',
-    });
-
-    console.log('[WhatsApp Scheduler] Using invitation IMAGE header for template. Ensure Meta template header type is IMAGE.');
-  }
+  const invitationMediaId =
+    templateName === 'wedding_confirmation'
+      ? wedding.invitation_image_media_id ?? undefined
+      : undefined;
 
   for (let i = 0; i < guests.length; i += BATCH_SIZE) {
     const batch = guests.slice(i, i + BATCH_SIZE);

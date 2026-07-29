@@ -52,6 +52,7 @@ export interface WeddingMessageSchedule {
   day_before_locked_at: string | null;
   invitation_image_mime_type: string | null;
   invitation_image_filename: string | null;
+  invitation_image_media_id: string | null;
   has_invitation_image: boolean;
   invitation_send_at: string;
   reminder_send_at: string;

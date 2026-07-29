@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
-import { Box, Card, CardContent, IconButton, InputAdornment, LinearProgress, TextField, Tooltip, Typography } from '@mui/material';
+import { Box, Card, CardContent, IconButton, InputAdornment, LinearProgress, TextField, Tooltip, Typography, Divider } from '@mui/material';
+import { ManagedGuest } from '../../../types/domain';
 import { motion } from 'framer-motion';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import PendingActionsIcon from '@mui/icons-material/PendingActions';
@@ -88,12 +89,13 @@ function SummaryCard({ label, value, sub, icon, accent = '#C9A84C', delay }: Car
 
 interface Props {
   tasks: WeddingTask[];
+  guests: ManagedGuest[];
   guestCount: number;
   avgGift: number;
   onAvgGiftChange: (v: number) => void;
 }
 
-export default function TaskSummaryCards({ tasks, guestCount, avgGift, onAvgGiftChange }: Props) {
+export default function TaskSummaryCards({ tasks, guests, guestCount, avgGift, onAvgGiftChange }: Props) {
   const [editing, setEditing] = useState(false);
   const [draftGift, setDraftGift] = useState<string>('');
 
@@ -113,21 +115,27 @@ export default function TaskSummaryCards({ tasks, guestCount, avgGift, onAvgGift
   }
 
   const stats = useMemo(() => {
-    const total       = tasks.length;
-    const completed   = tasks.filter(t => t.status === 'completed').length;
-    const pending     = tasks.filter(t => !['completed', 'cancelled'].includes(t.status)).length;
-    const budget      = tasks.reduce((s, t) => s + Number(t.total_amount), 0);
-    const paid        = tasks.reduce((s, t) => s + Number(t.paid_amount), 0);
-    const remaining   = budget - paid;
-    const deposits    = tasks.reduce((s, t) => s + Number(t.deposit), 0);
-    const income      = guestCount * avgGift * 0.9;
-    const profitLoss  = income - budget;
-    const paidPct     = budget > 0 ? Math.min(100, (paid / budget) * 100) : 0;
+    const total = tasks.length;
+    const completed = tasks.filter(t => t.status === 'completed').length;
+    const pending = tasks.filter(t => !['completed', 'cancelled'].includes(t.status)).length;
+    const budget = tasks.reduce((s, t) => s + Number(t.total_amount), 0);
+    const paid = tasks.reduce((s, t) => s + Number(t.paid_amount), 0);
+    const remaining = budget - paid;
+    const deposits = tasks.reduce((s, t) => s + Number(t.deposit), 0);
+    const income = guestCount * avgGift * 0.9;
+    const profitLoss = income - budget;
+    const paidPct = budget > 0 ? Math.min(100, (paid / budget) * 100) : 0;
     const completePct = total > 0 ? Math.round((completed / total) * 100) : 0;
-    return { total, completed, pending, budget, paid, remaining, deposits, income, profitLoss, paidPct, completePct };
-  }, [tasks, guestCount, avgGift]);
+
+    // ─── Actual (real) figures based on recorded gift amounts
+    const actualIncome = guests.reduce((s, g) => s + Number(g.gift_amount ?? 0), 0);
+    const actualProfitLoss = actualIncome - budget;
+
+    return { total, completed, pending, budget, paid, remaining, deposits, income, profitLoss, paidPct, completePct, actualIncome, actualProfitLoss };
+  }, [tasks, guests, guestCount, avgGift]);
 
   const isProfitable = stats.profitLoss >= 0;
+  const isActuallyProfitable = stats.actualProfitLoss >= 0;
 
   const cards: CardData[] = [
     {
@@ -265,18 +273,72 @@ export default function TaskSummaryCards({ tasks, guestCount, avgGift, onAvgGift
     },
   ];
 
+  const actualCards: CardData[] = [
+    {
+      label: 'מתנות שהתקבלו בפועל',
+      value: <>{fmt(stats.actualIncome)}</>,
+      sub: (
+        <Typography variant="caption" color="text.secondary">
+          לפי סכומים שתועדו מהאורחים
+        </Typography>
+      ),
+      icon: <PaymentsIcon />,
+      accent: '#26a69a',
+      delay: 0.54,
+    },
+    {
+      label: 'רווח / הפסד בפועל',
+      value: (
+        <Typography
+          component="span"
+          variant="h5"
+          sx={{ fontWeight: 800, color: isActuallyProfitable ? '#2e7d32' : '#c62828', lineHeight: 1.1 }}
+        >
+          {isActuallyProfitable ? '+' : ''}{fmt(stats.actualProfitLoss)}
+        </Typography>
+      ),
+      icon: <CalculateIcon />,
+      accent: isActuallyProfitable ? '#4caf50' : '#ef5350',
+      delay: 0.6,
+    },
+  ];
+
   return (
-    <Box
-      sx={{
-        display: 'grid',
-        gridTemplateColumns: { xs: '1fr 1fr', sm: 'repeat(3, 1fr)', md: 'repeat(3, 1fr)', lg: 'repeat(4, 1fr)' },
-        gap: 2,
-        mb: 3,
-      }}
-    >
-      {cards.map((card, i) => (
-        <SummaryCard key={i} {...card} />
-      ))}
+    <Box>
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr 1fr', sm: 'repeat(3, 1fr)', md: 'repeat(3, 1fr)', lg: 'repeat(4, 1fr)' },
+          gap: 2,
+          mb: 3,
+        }}
+      >
+        {cards.map((card, i) => (
+          <SummaryCard key={i} {...card} />
+        ))}
+      </Box>
+
+      <Divider sx={{ my: 3, borderColor: 'rgba(201,168,76,0.25)' }}>
+        <Typography
+          variant="overline"
+          sx={{ color: '#9A7833', fontWeight: 700, letterSpacing: 1, px: 1 }}
+        >
+          רווח / הפסד בפועל
+        </Typography>
+      </Divider>
+
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr 1fr', sm: 'repeat(3, 1fr)', md: 'repeat(3, 1fr)', lg: 'repeat(4, 1fr)' },
+          gap: 2,
+          mb: 3,
+        }}
+      >
+        {actualCards.map((card, i) => (
+          <SummaryCard key={i} {...card} />
+        ))}
+      </Box>
     </Box>
   );
 }

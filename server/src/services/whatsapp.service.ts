@@ -227,71 +227,79 @@ function formatWeddingDateForMessage(dateValue: string): string {
 export function buildTemplateComponents(input: BuildTemplateComponentsInput): unknown[] {
     const formattedDate = formatWeddingDateForMessage(input.weddingDate);
 
-    const headerComponent =
-        input.templateName === 'wedding_confirmation' && input.invitationImageMediaId
-            ? [{
-                type: 'header',
-                parameters: [{ type: 'image', image: { id: input.invitationImageMediaId } }],
-            }]
-            : [{
-                type: 'header',
-                parameters: [{ type: 'text', text: input.guestFirstName }],
-            }];
-
-    const bodyCommon = [
-        { type: 'text', text: input.guestFirstName },
-        { type: 'text', text: input.weddingDisplayName },
-        { type: 'text', text: formattedDate },
-        { type: 'text', text: input.weddingTime },
-        { type: 'text', text: input.venueName },
-        { type: 'text', text: input.venueAddress },
-    ];
-
-    if (input.templateName === 'wedding_day_before') {
-        return [
-            ...headerComponent,
+    const buttonComponent = {
+        type: 'button',
+        sub_type: 'url',
+        index: '0',
+        parameters: [
             {
-                type: 'body',
-                parameters: bodyCommon,
+                type: 'text',
+                text: input.guestUrl,
             },
-            {
-                type: 'button',
-                sub_type: 'url',
-                index: '0',
-                parameters: [{ type: 'text', text: input.guestUrl }],
-            },
-        ];
+        ],
+    };
+
+    switch (input.templateName) {
+        case 'wedding_confirmation':
+            return [
+                {
+                    type: 'header',
+                    parameters: [
+                        {
+                            type: 'image',
+                            image: {
+                                id: input.invitationImageMediaId!,
+                            },
+                        },
+                    ],
+                },
+                {
+                    type: 'body',
+                    parameters: [
+                        { type: 'text', text: input.guestFirstName },      // {{1}}
+                        { type: 'text', text: formattedDate },             // {{2}}
+                        { type: 'text', text: input.weddingTime },         // {{3}} קבלת פנים
+                        { type: 'text', text: input.weddingCanpoyTime },   // {{4}} חופה
+                        { type: 'text', text: input.weddingDisplayName },  // {{5}}
+                    ],
+                },
+                buttonComponent,
+            ];
+
+        case 'wedding_reminder':
+            return [
+                {
+                    type: 'body',
+                    parameters: [
+                        { type: 'text', text: input.guestFirstName },      // {{1}}
+                        { type: 'text', text: formattedDate },             // {{2}}
+                        { type: 'text', text: input.weddingTime },         // {{3}} קבלת פנים
+                        { type: 'text', text: input.weddingCanpoyTime },   // {{4}} חופה
+                        { type: 'text', text: input.weddingDisplayName },  // {{5}}
+                    ],
+                },
+                buttonComponent,
+            ];
+
+        case 'wedding_day_before':
+            return [
+                {
+                    type: 'body',
+                    parameters: [
+                        { type: 'text', text: input.guestFirstName },      // {{1}}
+                        { type: 'text', text: formattedDate },             // {{2}}
+                        { type: 'text', text: input.venueName },           // {{3}}
+                        { type: 'text', text: input.weddingTime },         // {{4}} קבלת פנים
+                        { type: 'text', text: input.weddingCanpoyTime },   // {{5}} חופה
+                        { type: 'text', text: input.weddingDisplayName },  // {{6}}
+                    ],
+                },
+                buttonComponent,
+            ];
+
+        default:
+            throw new Error(`Unsupported WhatsApp template: ${input.templateName}`);
     }
-
-    if (input.templateName === 'wedding_reminder') {
-        return [
-            ...headerComponent,
-            {
-                type: 'body',
-                parameters: bodyCommon,
-            },
-            {
-                type: 'button',
-                sub_type: 'url',
-                index: '0',
-                parameters: [{ type: 'text', text: input.guestUrl }],
-            },
-        ];
-    }
-
-    return [
-        ...headerComponent,
-        {
-            type: 'body',
-            parameters: bodyCommon,
-        },
-        {
-            type: 'button',
-            sub_type: 'url',
-            index: '0',
-            parameters: [{ type: 'text', text: input.guestUrl }],
-        },
-    ];
 }
 
 export async function sendTestMessage(to: string): Promise<unknown> {

@@ -1,11 +1,11 @@
 import { DateTime } from 'luxon';
-import { pool } from '../db/pool';
+import { pool } from '../../db/pool';
 import {
   buildTemplateComponents,
   sendTemplateMessageWithRetry,
-} from '../services/whatsapp.service';
-import { getInvitationImage } from '../services/weddingMessageSchedule.service';
-import { ISRAEL_TIMEZONE } from '../utils/scheduling.util';
+} from '../../services/whatsapp.service';
+import { getInvitationImage } from '../../services/weddingMessageSchedule.service';
+import { ISRAEL_TIMEZONE } from '../../utils/scheduling.util';
 
 const TEST_IDENTITIES: Array<{ firstName: string; phoneSuffix: string }> = [
   { firstName: 'דן', phoneSuffix: '9899' },

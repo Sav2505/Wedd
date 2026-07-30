@@ -1,6 +1,6 @@
 import cron from 'node-cron';
 import { DateTime } from 'luxon';
-import { buildWeddingSchedulePreview } from './whatsapp-scheduler.job'; // או מהמקום שבו תעביר את הפונקציה
+import { buildWeddingSchedulePreview } from './whatsapp-scheduler.job';
 import { ISRAEL_TIMEZONE } from '../utils/scheduling.util';
 import { sendMail } from '../services/email.service';
 

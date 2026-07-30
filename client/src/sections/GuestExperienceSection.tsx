@@ -10,6 +10,7 @@ const features = [
     'הודעה אישית מהחתן והכלה',
     'גלריה משותפת לכל האורחים',
     'צפייה במיקום שלהם בשולחן (לבחירתכם)',
+    'האורחים נכנסים לאווירה עוד לפני האירוע בעזרת המערכת היפה שלכם'
 ];
 
 export default function GuestExperienceSection() {
@@ -39,7 +40,7 @@ export default function GuestExperienceSection() {
                                 mb: 2,
                             }}
                         >
-                            חוויה אחת לאורחים, בלי בלבול
+                            חוויה נוחה וברורה לאורחים, בלי בלבול
                         </Typography>
                     </motion.div>
 

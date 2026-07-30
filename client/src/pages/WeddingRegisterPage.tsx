@@ -466,7 +466,7 @@ export default function WeddingRegisterPage() {
                                                 {loading ? (
                                                     <CircularProgress size={24} sx={{ color: 'rgba(255,255,255,0.85)' }} />
                                                 ) : (
-                                                    'שליחת בקשה 💍'
+                                                    'שליחת בקשת הרשמה 💍'
                                                 )}
                                             </Button>
                                         </motion.div>

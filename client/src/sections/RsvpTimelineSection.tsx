@@ -75,6 +75,18 @@ export default function RsvpTimelineSection() {
                         </motion.div>
                     ))}
                 </Box>
+                <Typography
+                    align="right"
+                    sx={{
+                        fontFamily: "'Frank Ruhl Libre', serif",
+                        fontWeight: 500,
+                        fontSize: { xs: '1rem', sm: '1.1rem' },
+                        color: palette.textDark,
+                        mt: { sm: 3 },
+                    }}
+                >
+                    * תוכלו לערוך את זמני שליחת ההודעות לפי בחירתכם במערכת
+                </Typography>
             </motion.div>
         </Box>
     );

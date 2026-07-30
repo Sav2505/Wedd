@@ -84,9 +84,13 @@ export default function PricingSection() {
                         </Box>
                     </motion.div>
 
+                    <Typography sx={{ mt: 5, color: palette.gold, fontWeight: 600, fontSize: '0.85rem' }}>
+                        זהו, לא צריך אף אקסל ולא צריך שום אפליקציה נוספת.
+                    </Typography>
+
                     <Typography
                         sx={{
-                            mt: 3.5,
+                            mt: 2,
                             fontFamily: "'Frank Ruhl Libre', serif",
                             fontWeight: 700,
                             fontSize: '1.1rem',

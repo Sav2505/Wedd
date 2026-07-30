@@ -270,6 +270,22 @@ export async function deleteGuest(id: string): Promise<void> {
   if (!rowCount) throw createError('אורח לא נמצא', 404);
 }
 
+export async function getGuestByGuestId(guestId: number): Promise<ManagedGuest> {
+  const { rows } = await pool.query<ManagedGuest>(
+    `
+      SELECT *
+      FROM guests
+      WHERE id = $1
+        AND role = 'guest'
+      LIMIT 1
+    `,
+    [guestId],
+  );
+
+  if (rows.length === 0) throw createError('אורח לא נמצא', 404);
+  return rows[0];
+}
+
 export async function getGuestRsvpById(guestId: string): Promise<GuestRsvpDetails> {
   const { rows } = await pool.query<GuestRsvpDetails>(
     `

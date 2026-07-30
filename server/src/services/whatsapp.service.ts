@@ -1,5 +1,8 @@
 import { DateTime } from 'luxon';
 import { getInvitationImage } from './weddingMessageSchedule.service';
+import { buildGuestUrl } from '../utils/guestUrl';
+import { getGuestByGuestId } from './guests.service';
+import { getWeddingInfoByWeddingId } from './info.service';
 
 export type SupportedWeddingTemplate =
     | 'wedding_confirmation'
@@ -217,12 +220,15 @@ export interface BuildTemplateComponentsInput {
 }
 
 function formatWeddingDateForMessage(dateValue: string): string {
-    return DateTime.fromISO(dateValue, { zone: 'Asia/Jerusalem' }).toLocaleString({
-        weekday: 'long',
-        day: '2-digit',
-        month: 'long',
-        year: 'numeric',
-    });
+    return DateTime
+        .fromISO(dateValue, { zone: 'Asia/Jerusalem' })
+        .setLocale('he')
+        .toLocaleString({
+            weekday: 'long',
+            day: '2-digit',
+            month: 'long',
+            year: 'numeric',
+        });
 }
 
 export function buildTemplateComponents(input: BuildTemplateComponentsInput): unknown[] {
@@ -303,30 +309,78 @@ export function buildTemplateComponents(input: BuildTemplateComponentsInput): un
     }
 }
 
-export async function sendTestMessage(to: string, weddingId: number): Promise<unknown> {
-    const schedule = await getInvitationImage(weddingId); // הפונקציה שכבר קיימת אצלכם
-    const mediaId = schedule.invitation_image_media_id;
+// export async function sendTestMessage(to: string, weddingId: number): Promise<unknown> {
+//     const schedule = await getInvitationImage(weddingId); // הפונקציה שכבר קיימת אצלכם
+//     const mediaId = schedule.invitation_image_media_id;
 
-    if (!mediaId) {
-        throw new Error('No invitation media id found for this wedding - upload an image first');
+//     if (!mediaId) {
+//         throw new Error('No invitation media id found for this wedding - upload an image first');
+//     }
+
+//     const components = buildTemplateComponents({
+//         templateName: 'wedding_confirmation',
+//         guestFullName: 'דן כהן',
+//         guestFirstName: 'דן',
+//         weddingDisplayName: 'שחר ודן',
+//         weddingDate: '2026-12-07',
+//         weddingTime: '19:30',
+//         weddingCanpoyTime: '20:30',
+//         venueName: 'הגן בשפיים',
+//         venueAddress: 'שפיים',
+//         guestUrl: 'https://your-domain.com/guest?n=Dan&p=1234&w=1',
+//         invitationImageMediaId: mediaId,
+//     });
+
+//     const result = await sendTemplateMessageWithRetry({
+//         to,
+//         templateName: 'wedding_confirmation',
+//         languageCode: 'he',
+//         components,
+//     });
+
+//     return result.raw;
+// }
+
+function formatTimeShort(time: string): string {
+    return time.slice(0, 5);
+}
+
+export async function sendGuestInvitation(guestId: number, weddingId: number): Promise<unknown> {
+    const guest = await getGuestByGuestId(guestId);
+    if (!guest) {
+        throw new Error(`Guest not found: ${guestId}`);
     }
+
+    const wedding = await getWeddingInfoByWeddingId(weddingId);
+    if (!wedding) {
+        throw new Error(`Wedding not found: ${weddingId}`);
+    }
+
+    const schedule = await getInvitationImage(weddingId);
+    const mediaId = schedule.invitation_image_media_id;
+    // if (!mediaId) {
+    //     throw new Error('No invitation media id found for this wedding - upload an image first');
+    // }
+
+    const lastFourDigits = guest.phone.replace(/\D/g, '').slice(-4);
+    const guestUrl = buildGuestUrl(guest.full_name, lastFourDigits, weddingId);
 
     const components = buildTemplateComponents({
         templateName: 'wedding_confirmation',
-        guestFullName: 'דן כהן',
-        guestFirstName: 'דן',
-        weddingDisplayName: 'שחר ודן',
-        weddingDate: '2026-12-07',
-        weddingTime: '19:30',
-        weddingCanpoyTime: '20:30',
-        venueName: 'הגן בשפיים',
-        venueAddress: 'שפיים',
-        guestUrl: 'https://your-domain.com/guest?n=Dan&p=1234&w=1',
-        invitationImageMediaId: mediaId,
+        guestFullName: guest.full_name,
+        guestFirstName: guest.first_name,
+        weddingDisplayName: `${wedding.bride_name} ו${wedding.groom_name}`,
+        weddingDate: wedding.wedding_date,
+        weddingTime: formatTimeShort(wedding.wedding_time),
+        weddingCanpoyTime: formatTimeShort(wedding.wedding_canpoy_time),
+        venueName: wedding.venue_name,
+        venueAddress: wedding.venue_address,
+        guestUrl,
+        invitationImageMediaId: mediaId ?? undefined,
     });
 
     const result = await sendTemplateMessageWithRetry({
-        to,
+        to: guest.phone,
         templateName: 'wedding_confirmation',
         languageCode: 'he',
         components,

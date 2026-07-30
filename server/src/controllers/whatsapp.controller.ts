@@ -1,18 +1,25 @@
 import { Request, Response } from 'express';
-import { sendTestMessage } from '../services/whatsapp.service';
+import { sendGuestInvitation } from '../services/whatsapp.service';
 
 export async function sendWhatsappTest(req: Request, res: Response) {
     try {
-        const { to } = req.body;
+        const { guestId, weddingId } = req.body;
 
-        if (!to) {
+        if (!guestId) {
             return res.status(400).json({
                 success: false,
-                message: "Phone number is required",
+                message: 'guestId is required',
             });
         }
 
-        const result = await sendTestMessage(to, 1);
+        if (!weddingId) {
+            return res.status(400).json({
+                success: false,
+                message: 'weddingId is required',
+            });
+        }
+
+        const result = await sendGuestInvitation(guestId, Number(weddingId));
 
         res.json({
             success: true,
@@ -20,7 +27,6 @@ export async function sendWhatsappTest(req: Request, res: Response) {
         });
     } catch (err: any) {
         console.error(err?.raw || err);
-
         res.status(err?.statusCode ?? 500).json({
             success: false,
             message: err?.message ?? 'שגיאה בשליחת הודעת WhatsApp',

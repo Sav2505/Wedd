@@ -110,9 +110,10 @@ export async function updateMyRsvp(payload: {
   return data.data;
 }
 
-export async function sendWhatsappInvitation(to: string): Promise<void> {
+export async function sendWhatsappInvitation(guestId: string, weddingId: number): Promise<void> {
   const { data } = await api.post<ApiResponse<void>>('/whatsapp/send', {
-    to,
+    guestId,
+    weddingId,
   });
 
   if (!data.success) {

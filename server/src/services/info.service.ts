@@ -25,6 +25,24 @@ export async function getWeddingInfoByGuestId(
   return rows[0];
 }
 
+export async function getWeddingInfoByWeddingId(
+  weddingId: number,
+): Promise<WeddingInfo> {
+
+  const { rows } = await pool.query<WeddingInfo>(
+    `
+    SELECT * FROM wedding_info WHERE id = $1;
+    `,
+    [weddingId],
+  );
+
+  if (rows.length === 0) {
+    throw createError('פרטי החתונה לא נמצאו', 404);
+  }
+
+  return rows[0];
+}
+
 export type WeddingInfoUpdate = Partial<
   Pick<
     WeddingInfo,

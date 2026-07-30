@@ -430,19 +430,18 @@ export default function GuestListEditor() {
   // TO RETURN
   const handleSendInvitation = useCallback(async (guest: ManagedGuest) => {
     try {
-      const digits = guest.phone.replace(/\D/g, '');
-      const phone = digits.startsWith('0')
-        ? `972${digits.slice(1)}`
-        : digits;
+      if (!info?.id) {
+        throw new Error('Wedding info not loaded');
+      }
 
-      await sendWhatsappInvitation(phone);
+      await sendWhatsappInvitation(guest.id, info?.id);
 
       setSuccessMessage('הודעת WhatsApp נשלחה בהצלחה 🎉');
     } catch (err) {
       console.error(err);
       setError('שליחת הודעת WhatsApp נכשלה');
     }
-  }, []);
+  }, [info?.id]);
 
   function openCreateGroup() {
     setEditingGroup(null);

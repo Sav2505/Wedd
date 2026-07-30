@@ -40,7 +40,7 @@ export async function sendMailMock(input: MailInput): Promise<MailResult> {
 export async function sendMail(input: MailInput): Promise<MailResult> {
   if (!isSmtpConfigured()) {
     const error = new Error('SMTP is not configured.');
-
+    console.log(error);
     await sendAdminAlert({
       title: 'SMTP is not configured',
       message: `Failed sending mail to ${input.to}`,
@@ -70,8 +70,6 @@ export async function sendMail(input: MailInput): Promise<MailResult> {
       html: input.html,
       text: input.text,
     });
-
-    console.log('Mail sent:', result);
 
     return {
       messageId: result.messageId,

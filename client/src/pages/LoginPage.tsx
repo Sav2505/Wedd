@@ -13,7 +13,7 @@ import PhoneAndroidIcon from '@mui/icons-material/PhoneAndroid';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAppDispatch } from '../store';
-import { logout, setGuest } from '../store/authSlice';
+import { setGuest } from '../store/authSlice';
 import { login } from '../services/auth.service';
 import FallingPetals from '../components/FallingPetals';
 import DramaticWelcomeScreen from '../components/DramaticWelcomeScreen';
@@ -119,7 +119,6 @@ export default function LoginPage() {
   useEffect(() => {
     if (!autoCreds) return;
 
-    dispatch(logout());
     setLoading(true);
     setError(null);
 

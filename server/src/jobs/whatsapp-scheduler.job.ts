@@ -46,7 +46,7 @@ interface GuestRow {
 }
 
 const DEFAULT_CRON =
-  process.env.WHATSAPP_SCHEDULER_CRON ?? '0 14 * * *';
+  process.env.WHATSAPP_SCHEDULER_CRON ?? '0 12 * * *';
 const ENABLED = String(process.env.WHATSAPP_SCHEDULER_ENABLED ?? 'true').toLowerCase() === 'true';
 const RATE_PER_MINUTE = Math.max(1, Number(process.env.WHATSAPP_SEND_RATE_PER_MINUTE ?? 80));
 const BATCH_SIZE = Math.max(1, Number(process.env.WHATSAPP_BATCH_SIZE ?? 20));

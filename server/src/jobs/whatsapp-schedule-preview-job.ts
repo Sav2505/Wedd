@@ -36,7 +36,7 @@ export function initWhatsappSchedulePreviewJob(): void {
     }
 
     const cronExpression =
-        process.env.WHATSAPP_SCHEDULE_PREVIEW_CRON ?? '0 14 * * *';
+        process.env.WHATSAPP_SCHEDULE_PREVIEW_CRON ?? '0 12 * * *';
 
     cron.schedule(
         cronExpression,

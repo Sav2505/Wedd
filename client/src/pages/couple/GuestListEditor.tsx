@@ -34,7 +34,7 @@ import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import RemoveCircleOutlineIcon from '@mui/icons-material/RemoveCircleOutline';
 import PeopleAltIcon from '@mui/icons-material/PeopleAlt';
 import LinkIcon from '@mui/icons-material/Link';
-import WhatsAppIcon from '@mui/icons-material/WhatsApp';
+// import WhatsAppIcon from '@mui/icons-material/WhatsApp';
 import DownloadIcon from '@mui/icons-material/Download';
 import CloseIcon from '@mui/icons-material/Close';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
@@ -53,7 +53,7 @@ import {
   getGuests,
   updateGuest,
   updateGuestGroup,
-  sendWhatsappInvitation,
+  // sendWhatsappInvitation,
 } from '../../services/guests.service';
 import { getWeddingInfo } from '../../services/info.service';
 
@@ -427,21 +427,21 @@ export default function GuestListEditor() {
   //   window.open(buildWhatsAppInviteUrl(info?.id ?? -1, guest, `${info?.bride_name ?? "שחר"} & ${info?.groom_name ?? "שחר"}`, info?.wedding_date ?? "יום שני, 7 בדצמבר 2026"), '_blank', 'noopener,noreferrer');
   // }, [info]);
 
-  // TO RETURN
-  const handleSendInvitation = useCallback(async (guest: ManagedGuest) => {
-    try {
-      if (!info?.id) {
-        throw new Error('Wedding info not loaded');
-      }
+  // For Api Check on Whatsapp
+  // const handleSendInvitation = useCallback(async (guest: ManagedGuest) => {
+  //   try {
+  //     if (!info?.id) {
+  //       throw new Error('Wedding info not loaded');
+  //     }
 
-      await sendWhatsappInvitation(guest.id, info?.id);
+  //     await sendWhatsappInvitation(guest.id, info?.id);
 
-      setSuccessMessage('הודעת WhatsApp נשלחה בהצלחה 🎉');
-    } catch (err) {
-      console.error(err);
-      setError('שליחת הודעת WhatsApp נכשלה');
-    }
-  }, [info?.id]);
+  //     setSuccessMessage('הודעת WhatsApp נשלחה בהצלחה 🎉');
+  //   } catch (err) {
+  //     console.error(err);
+  //     setError('שליחת הודעת WhatsApp נכשלה');
+  //   }
+  // }, [info?.id]);
 
   function openCreateGroup() {
     setEditingGroup(null);
@@ -861,7 +861,6 @@ export default function GuestListEditor() {
               onCreateGuest={openCreateGuest}
               onEditGuest={handleEditGuestOpen}
               onDeleteGuest={handleDeleteGuestOpen}
-              onSendInvitation={handleSendInvitation}
               registerGuestRef={registerGuestRef}
               highlightedGuestId={highlightedGuestId}
             />
@@ -878,7 +877,6 @@ export default function GuestListEditor() {
             onCreateGuest={openCreateGuest}
             onEditGuest={handleEditGuestOpen}
             onDeleteGuest={handleDeleteGuestOpen}
-            onSendInvitation={handleSendInvitation}
             registerGuestRef={registerGuestRef}
             highlightedGuestId={highlightedGuestId}
           />
@@ -1215,7 +1213,6 @@ const GroupAccordionItem = memo(function GroupAccordionItem({
   onCreateGuest,
   onEditGuest,
   onDeleteGuest,
-  onSendInvitation,
   registerGuestRef,
   highlightedGuestId,
 }: {
@@ -1232,7 +1229,6 @@ const GroupAccordionItem = memo(function GroupAccordionItem({
   onCreateGuest: (groupId: string | null) => void;
   onEditGuest: (guest: ManagedGuest) => void;
   onDeleteGuest: (id: string) => void;
-  onSendInvitation: (guest: ManagedGuest) => void;
   registerGuestRef: (id: string, el: HTMLDivElement | null) => void;
   highlightedGuestId: string | null;
 }) {
@@ -1325,7 +1321,6 @@ const GroupAccordionItem = memo(function GroupAccordionItem({
                 guest={guest}
                 onEdit={onEditGuest}
                 onDelete={onDeleteGuest}
-                onSendInvitation={onSendInvitation}
                 registerRef={registerGuestRef}
                 highlighted={highlightedGuestId === guest.id}
               />
@@ -1342,7 +1337,6 @@ const GuestRow = memo(function GuestRow({
   weddingId,
   onEdit,
   onDelete,
-  onSendInvitation,
   registerRef,
   highlighted,
 }: {
@@ -1350,7 +1344,6 @@ const GuestRow = memo(function GuestRow({
   weddingId: number;
   onEdit: (guest: ManagedGuest) => void;
   onDelete: (id: string) => void;
-  onSendInvitation: (guest: ManagedGuest) => void;
   registerRef: (id: string, el: HTMLDivElement | null) => void;
   highlighted: boolean;
 }) {
@@ -1423,7 +1416,7 @@ const GuestRow = memo(function GuestRow({
         </Box>
 
         <Stack direction="row" spacing={0.32}>
-          <Tooltip title="שליחת הזמנה">
+          {/* <Tooltip title="שליחת הזמנה">
             <Button
               size="small"
               variant="outlined"
@@ -1445,7 +1438,7 @@ const GuestRow = memo(function GuestRow({
             >
               שליחת הזמנה
             </Button>
-          </Tooltip>
+          </Tooltip> */}
           <Tooltip title="העתק קישור כניסה">
             <IconButton size="small" onClick={handleCopyLink}>
               <LinkIcon sx={{ fontSize: 18, color: copied ? '#4caf50' : '#A08070' }} />

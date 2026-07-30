@@ -68,8 +68,9 @@ export async function sendMail(input: MailInput): Promise<MailResult> {
   });
 
   try {
+    console.log("1")
     await transporter.verify();
-
+    console.log("2")
     const result = await transporter.sendMail({
       from: `${process.env.EMAIL_ADMIN_NAME} 💍 <${process.env.EMAIL_ADMIN}>`,
       to: input.to,

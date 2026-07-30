@@ -1,5 +1,6 @@
 import nodemailer from 'nodemailer';
 import { sendAdminAlert } from './error.service';
+import { SendEmailResult } from './mailer.service';
 
 export interface MailInput {
   to: string;
@@ -12,81 +13,96 @@ export interface MailResult {
   messageId: string;
 }
 
-function getSmtpConfig() {
-  const isProd = process.env.IS_PROD === 'true';
-
-  return {
-    isProd,
-    host: isProd
-      ? process.env.SMTP_HOST_BREVO
-      : process.env.SMTP_HOST,
-
-    user: isProd
-      ? process.env.SMTP_USER
-      : process.env.EMAIL_ADMIN,
-
-    pass: isProd
-      ? process.env.SMTP_PASS
-      : process.env.EMAIL_CODE,
-  };
-}
-
-function isSmtpConfigured(): boolean {
-  const config = getSmtpConfig();
-
-  return Boolean(
-    config.host &&
-    config.user &&
-    config.pass &&
-    process.env.EMAIL_ADMIN,
-  );
-}
-
-export async function sendMail(input: MailInput): Promise<MailResult> {
-  const config = getSmtpConfig();
-
-  if (!isSmtpConfigured()) {
-    const error = new Error('SMTP is not configured.');
-
-    await sendAdminAlert({
-      title: 'SMTP is not configured',
-      message: `Failed sending mail to ${input.to}`,
-      error,
-    });
-
-    throw error;
+async function sendViaGmailSmtp(input: MailInput): Promise<MailResult> {
+  if (!process.env.EMAIL_ADMIN || !process.env.EMAIL_CODE) {
+    throw new Error('Gmail SMTP credentials are missing');
   }
 
   const transporter = nodemailer.createTransport({
-    host: config.host,
-    port: Number(process.env.SMTP_PORT ?? 587),
-    secure: String(process.env.SMTP_SECURE ?? 'false').toLowerCase() === 'true',
+    host: 'smtp.gmail.com',
+    port: 587,
+    secure: false,
     auth: {
-      user: config.user,
-      pass: config.pass,
+      user: process.env.EMAIL_ADMIN,
+      pass: process.env.EMAIL_CODE,
     },
   });
 
-  try {
-    console.log("1")
-    await transporter.verify();
-    console.log("2")
-    const result = await transporter.sendMail({
-      from: `${process.env.EMAIL_ADMIN_NAME} 💍 <${process.env.EMAIL_ADMIN}>`,
-      to: input.to,
+  await transporter.verify();
+
+  const result = await transporter.sendMail({
+    from: {
+      name: 'WedFlow',
+      address: process.env.EMAIL_ADMIN,
+    },
+    to: input.to,
+    subject: input.subject,
+    html: input.html,
+    text: input.text,
+  });
+
+  return {
+    messageId: result.messageId,
+  };
+}
+
+async function sendViaBrevoApi(input: MailInput): Promise<MailResult> {
+  if (!process.env.BREVO_API_KEY) {
+    throw new Error('BREVO_API_KEY is missing');
+  }
+
+  const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+    method: 'POST',
+    headers: {
+      accept: 'application/json',
+      'api-key': process.env.BREVO_API_KEY,
+      'content-type': 'application/json',
+    },
+    body: JSON.stringify({
+      sender: {
+        name: 'WedFlow',
+        email: process.env.EMAIL_ADMIN,
+      },
+      to: [
+        {
+          email: input.to,
+        },
+      ],
       subject: input.subject,
-      html: input.html,
-      text: input.text,
-    });
+      htmlContent: input.html,
+      textContent: input.text,
+    }),
+  });
 
-    console.log('MAIL SENT', result.messageId);
+  const data = (await response.json()) as SendEmailResult;
 
-    return {
-      messageId: result.messageId,
-    };
+  if (!response.ok) {
+    throw new Error(
+      `Brevo API error ${response.status}: ${JSON.stringify(data)}`
+    );
+  }
+
+  return {
+    messageId: data?.messageId ?? 'BREVO_SENT',
+  };
+}
+
+
+export async function sendMail(input: MailInput): Promise<MailResult> {
+  const isProd = process.env.IS_PROD === 'true';
+
+  try {
+    console.log('MAIL MODE:', isProd ? 'BREVO API' : 'GMAIL SMTP');
+
+    if (isProd) {
+      return await sendViaBrevoApi(input);
+    }
+
+    return await sendViaGmailSmtp(input);
 
   } catch (error) {
-    console.error('SMTP ERROR:', error);
+    console.error('MAIL ERROR:', error);
+
     await sendAdminAlert({
       title: 'Mail sending failed',
       message: `Failed sending mail to ${input.to}`,

@@ -92,8 +92,6 @@ export async function sendMail(input: MailInput): Promise<MailResult> {
   const isProd = process.env.IS_PROD === 'true';
 
   try {
-    console.log('MAIL MODE:', isProd ? 'BREVO API' : 'GMAIL SMTP');
-
     if (isProd) {
       return await sendViaBrevoApi(input);
     }

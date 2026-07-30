@@ -91,7 +91,7 @@ export default function WeddingRequestsAdminPage() {
             setSendingId(requestId);
             const result = await sendFirstContactMail(requestId);
             setItems((prev) => prev.map((row) => (row.id === requestId ? result.request : row)));
-            setMessage(`מייל ראשוני נשלח בהצלחה (${result.mailLog.messageId}).`);
+            setMessage(`מייל ראשוני נשלח בהצלחה.`);
         } catch (err: any) {
             setError(err.message ?? 'שגיאה בשליחת מייל ראשוני');
         } finally {

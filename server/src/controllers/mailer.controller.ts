@@ -1,6 +1,6 @@
 // src/controllers/mailer.controller.ts
 import { Request, Response } from 'express';
-import { resend } from '../services/resend.service';
+import { sendMail } from '../services/email.service';
 
 export async function sendEmailController(req: Request, res: Response) {
   const { to, subject, message } = req.body;
@@ -10,13 +10,14 @@ export async function sendEmailController(req: Request, res: Response) {
   }
 
   try {
-    await resend.emails.send({
-      from: process.env.EMAIL_ADMIN ?? "weddflowapp@gmail.com",
+    sendMail({
       to: to,
       subject: subject,
       html: `<p>${message}</p>`,
+      text: message,
     });
-    res.status(200).json({ success: true });
+
+    res.status(200).json({ success: true, message: 'המייל נשלח בהצלחה' });
   } catch (error) {
     console.error(error);
     res.status(500).json({ success: false, error: (error as Error).message });

@@ -7,7 +7,8 @@ import {
 import { createError } from '../middleware/errorHandler';
 import { buildAdminNewWeddingRequestTemplate, buildCoupleCredentialsTemplate, buildFirstContactBitTemplate } from './emailTemplates.service';
 import { generateCoupleLoginCodeFromGuestId } from './auth.service';
-import { resend } from './resend.service';
+import { sendMail } from './email.service';
+import { SendEmailResult } from './mailer.service';
 
 function makeCoupleNamesUnique(
     groomName: string,
@@ -197,10 +198,9 @@ export async function sendFirstContact(requestId: number): Promise<{
         bitPhone: 'XXX',
     });
 
-    let mailResult;
+    let mailResult: SendEmailResult;
     try {
-        mailResult = await resend.emails.send({
-            from: process.env.EMAIL_ADMIN ?? "weddflowapp@gmail.com",
+        mailResult = await sendMail({
             to: request.email,
             subject: template.subject,
             html: template.html,
@@ -224,7 +224,7 @@ export async function sendFirstContact(requestId: number): Promise<{
     return {
         request: updated.rows[0],
         mailLog: {
-            messageId: mailResult?.data?.id ?? '',
+            messageId: mailResult?.messageId ?? '',
             to: request.email,
             subject: template.subject,
         },
@@ -328,8 +328,7 @@ export async function openWedding(
             credentials,
         });
 
-        const mailResult = await resend.emails.send({
-            from: process.env.EMAIL_ADMIN ?? "weddflowapp@gmail.com",
+        const mailResult: SendEmailResult = await sendMail({
             to: request.email,
             subject: credentialsTemplate.subject,
             html: credentialsTemplate.html,
@@ -358,7 +357,7 @@ export async function openWedding(
             request: updateResult.rows[0],
             credentials,
             mailLog: {
-                messageId: mailResult.data?.id || '',
+                messageId: mailResult.messageId || '',
                 to: request.email,
                 subject: credentialsTemplate.subject,
             },
@@ -407,11 +406,10 @@ export async function notifyAdmin(
         phone: request.phone_number,
     });
 
-    let mailResult;
+    let mailResult: SendEmailResult;
     const adminMail = process.env.EMAIL_ADMIN;
     try {
-        mailResult = await resend.emails.send({
-            from: process.env.EMAIL_ADMIN ?? "weddflowapp@gmail.com",
+        mailResult = await sendMail({
             to: adminMail || 'weddflowapp@gmail.com',
             subject: template.subject,
             html: template.html,
@@ -424,7 +422,7 @@ export async function notifyAdmin(
     return {
         request,
         mailLog: {
-            messageId: mailResult?.data?.id ?? '',
+            messageId: mailResult?.messageId ?? '',
             to: adminMail || 'weddflowadd@gmail.com',
             subject: template.subject,
         },

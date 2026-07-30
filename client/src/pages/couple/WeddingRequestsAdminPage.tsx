@@ -270,7 +270,7 @@ export default function WeddingRequestsAdminPage() {
                                                         <span>
                                                             <IconButton
                                                                 size="small"
-                                                                onClick={() => setOpenDialog({ requestId: row.id, title: `${row.bride_name} ו-${row.groom_name}` })}
+                                                                onClick={() => setOpenDialog({ requestId: row.id, title: `${row.bride_name} & ${row.groom_name}` })}
                                                                 disabled={isOpening || row.status === 'cancelled' || Boolean(row.opened_at)}
                                                                 sx={{ color: row.opened_at ? 'text.disabled' : 'success.main' }}
                                                             >

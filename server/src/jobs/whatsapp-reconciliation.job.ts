@@ -1,11 +1,12 @@
 import cron from 'node-cron';
 import { DateTime } from 'luxon';
-import { sendMail } from '../services/email.service';
+import { sendEmail } from '../services/mailer.service';
 import { getReconciliationIssues } from '../services/weddingMessageLog.service';
 import { ISRAEL_TIMEZONE } from '../utils/scheduling.util';
 
 const DEFAULT_CRON = process.env.WHATSAPP_RECONCILIATION_CRON ?? '0 20 * * *';
-const ENABLED = String(process.env.WHATSAPP_SCHEDULER_ENABLED ?? 'true').toLowerCase() === 'true';
+// תוקן: דגל נפרד מה-scheduler הראשי, כדי שאפשר לכבות אחד בלי השני
+const ENABLED = String(process.env.WHATSAPP_RECONCILIATION_ENABLED ?? 'true').toLowerCase() === 'true';
 
 function escapeHtml(value: string): string {
   return value
@@ -80,7 +81,7 @@ export async function runWhatsappReconciliationOnce(): Promise<void> {
   }
 
   const now = DateTime.now().setZone(ISRAEL_TIMEZONE).toFormat('dd/LL/yyyy HH:mm');
-  await sendMail({
+  await sendEmail({
     to: recipient,
     subject: `דוח חריגות WhatsApp - ${now}`,
     html: buildDigestHtml(issues),

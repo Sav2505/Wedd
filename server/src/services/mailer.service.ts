@@ -13,7 +13,7 @@ transporter.verify((error) => {
     if (error) {
         console.error('❌ שגיאה בהתחברות למייל:', error);
     } else {
-        console.log('✅ מוכן לשלוח מיילים');
+        console.log('✅ Email service is ready to send messages.');
     }
 });
 

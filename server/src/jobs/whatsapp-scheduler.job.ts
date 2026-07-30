@@ -23,7 +23,6 @@ interface WeddingInfoRow {
   venue_name: string;
   venue_address: string;
 }
-
 interface ScheduleRow {
   wedding_id: number;
   invitation_days_before: number;
@@ -37,7 +36,6 @@ interface ScheduleRow {
   invitation_image_filename: string | null;
   invitation_image_media_id: string | null;
 }
-
 interface GuestRow {
   id: string;
   full_name: string;
@@ -47,13 +45,29 @@ interface GuestRow {
   rsvp_status: 'PENDING' | 'COMING' | 'NOT_COMING';
 }
 
-const DEFAULT_CRON = process.env.WHATSAPP_SCHEDULER_CRON ?? '0 6 * * *';
+const DEFAULT_CRON =
+  process.env.WHATSAPP_SCHEDULER_CRON ?? '0 14 * * *';
 const ENABLED = String(process.env.WHATSAPP_SCHEDULER_ENABLED ?? 'true').toLowerCase() === 'true';
 const RATE_PER_MINUTE = Math.max(1, Number(process.env.WHATSAPP_SEND_RATE_PER_MINUTE ?? 80));
 const BATCH_SIZE = Math.max(1, Number(process.env.WHATSAPP_BATCH_SIZE ?? 20));
 const INTERVAL_MS = Math.ceil(60_000 / RATE_PER_MINUTE);
-
 const ADVISORY_LOCK_KEY = 748921;
+
+const IS_PROD = String(process.env.IS_PROD ?? 'false').toLowerCase() === 'true';
+
+const TEST_PHONE_SUFFIX = '9899';
+const TEST_FIRST_NAME = 'דן';
+
+const TEST_NOW_OVERRIDE: string | null =
+  process.env.WHATSAPP_TEST_NOW ?? null;
+
+function getNowIsrael(): DateTime {
+  if (TEST_NOW_OVERRIDE) {
+    const fixed = DateTime.fromISO(TEST_NOW_OVERRIDE, { zone: ISRAEL_TIMEZONE });
+    return fixed;
+  }
+  return DateTime.now().setZone(ISRAEL_TIMEZONE);
+}
 
 async function sleep(ms: number): Promise<void> {
   await new Promise((resolve) => setTimeout(resolve, ms));
@@ -70,10 +84,18 @@ function buildGuestUrl(weddingId: number, fullName: string, phone: string): stri
   return `${base}/?${params.toString()}`;
 }
 
-async function getWeddingScheduleRows(): Promise<Array<WeddingInfoRow & ScheduleRow>> {
-  await pool.query(
-    'INSERT INTO wedding_message_schedule (wedding_id) VALUES (1) ON CONFLICT (wedding_id) DO NOTHING',
+// יוצר שורת schedule לכל חתונה שעדיין אין לה אחת - עובד על כל החתונות, לא רק wedding_id=1
+async function ensureScheduleRowsExist(): Promise<void> {
+  const result = await pool.query(
+    `INSERT INTO wedding_message_schedule (wedding_id)
+     SELECT id FROM wedding_info
+     ON CONFLICT (wedding_id) DO NOTHING
+     RETURNING wedding_id`,
   );
+}
+
+async function getWeddingScheduleRows(): Promise<Array<WeddingInfoRow & ScheduleRow>> {
+  await ensureScheduleRowsExist();
 
   const { rows } = await pool.query<Array<WeddingInfoRow & ScheduleRow>[number]>(
     `SELECT
@@ -103,14 +125,23 @@ async function getWeddingScheduleRows(): Promise<Array<WeddingInfoRow & Schedule
   return rows;
 }
 
-async function getEligibleGuests(weddingId: number, templateName: MessageTemplateName): Promise<GuestRow[]> {
+// שולף אורחים ל-wedding_id ספציפי בלבד; בסביבת בדיקות מגביל לאיש הבדיקה
+async function getEligibleGuests(
+  weddingId: number,
+  templateName: MessageTemplateName,
+  isProd: boolean,
+): Promise<GuestRow[]> {
   const reminderFilter =
     templateName === 'wedding_reminder'
       ? "AND g.rsvp_status <> 'COMING'"
       : '';
 
-  const { rows } = await pool.query<GuestRow>(
-    `SELECT
+  // בסביבת בדיקות (לא IS_PROD) - שולחים אך ורק לאיש הבדיקה, בתוך אותה חתונה
+  const testFilter = !isProd
+    ? `AND g.phone LIKE '%${TEST_PHONE_SUFFIX}' AND TRIM(g.first_name) = '${TEST_FIRST_NAME}'`
+    : '';
+
+  const query = `SELECT
       g.id,
       g.full_name,
       g.first_name,
@@ -125,13 +156,14 @@ async function getEligibleGuests(weddingId: number, templateName: MessageTemplat
      WHERE g.wedding_id = $1
        AND g.role = 'guest'
        ${reminderFilter}
+       ${testFilter}
        AND (
          l.id IS NULL
          OR l.status NOT IN ('sent', 'delivered', 'read')
        )
-     ORDER BY g.created_at ASC`,
-    [weddingId, templateName],
-  );
+     ORDER BY g.created_at ASC`;
+
+  const { rows } = await pool.query<GuestRow>(query, [weddingId, templateName]);
 
   return rows;
 }
@@ -143,7 +175,6 @@ async function maybeLockTemplate(weddingId: number, templateName: MessageTemplat
       : templateName === 'wedding_reminder'
         ? 'reminder_locked_at'
         : 'day_before_locked_at';
-
   await pool.query(
     `UPDATE wedding_message_schedule
      SET ${column} = COALESCE(${column}, NOW()),
@@ -156,14 +187,24 @@ async function maybeLockTemplate(weddingId: number, templateName: MessageTemplat
 function shouldRunForToday(sendAtIso: string, todayIsrael: DateTime): boolean {
   const sendDate = DateTime.fromISO(sendAtIso, { zone: ISRAEL_TIMEZONE }).toISODate();
   const today = todayIsrael.toISODate();
-  return Boolean(sendDate && today && sendDate <= today);
+  const result = Boolean(sendDate && today && sendDate <= today);
+
+  return result;
+}
+
+// עוזר להסרת השניות משעות (HH:MM:SS -> HH:MM)
+function formatTimeShort(time: string | null | undefined): string {
+  if (!time) return '';
+  return time.slice(0, 5);
 }
 
 async function processTemplateForWedding(
   wedding: WeddingInfoRow & ScheduleRow,
   templateName: MessageTemplateName,
   todayIsrael: DateTime,
+  isProd: boolean,
 ): Promise<void> {
+
   const computed = computeWeddingMessageScheduleDates(wedding.wedding_date, {
     invitationDaysBefore: wedding.invitation_days_before,
     reminderDaysBefore: wedding.reminder_days_before,
@@ -175,7 +216,6 @@ async function processTemplateForWedding(
     wedding_reminder: wedding.reminder_locked_at,
     wedding_day_before: wedding.day_before_locked_at,
   };
-
   const dateMap: Record<MessageTemplateName, string> = {
     wedding_confirmation: computed.invitationSendAt,
     wedding_reminder: computed.reminderSendAt,
@@ -185,25 +225,29 @@ async function processTemplateForWedding(
   if (lockMap[templateName]) {
     return;
   }
-
   if (!shouldRunForToday(dateMap[templateName], todayIsrael)) {
     return;
   }
 
-  const guests = await getEligibleGuests(wedding.id, templateName);
+
+  const guests = await getEligibleGuests(wedding.id, templateName, isProd);
   const invitationMediaId =
     templateName === 'wedding_confirmation'
       ? wedding.invitation_image_media_id ?? undefined
       : undefined;
 
+  if (guests.length === 0) {
+    console.log(`[WhatsApp Scheduler] 🧪 No eligible guests for wedding_id=${wedding.id}, template=${templateName} - nothing to send.`);
+  }
+
   for (let i = 0; i < guests.length; i += BATCH_SIZE) {
     const batch = guests.slice(i, i + BATCH_SIZE);
-
     for (const guest of batch) {
+
       const pending = await upsertPendingLog(wedding.id, guest.id, templateName);
       try {
         const guestFirstName = (guest.first_name?.trim() || guest.full_name.split(/\s+/)[0] || '').trim();
-        const weddingDisplayName = `${wedding.groom_name} ו-${wedding.bride_name}`;
+        const weddingDisplayName = `${wedding.bride_name} & ${wedding.groom_name}`;
         const guestUrl = buildGuestUrl(wedding.id, guest.full_name, guest.phone);
 
         const components = buildTemplateComponents({
@@ -212,8 +256,8 @@ async function processTemplateForWedding(
           guestFirstName,
           weddingDisplayName,
           weddingDate: wedding.wedding_date,
-          weddingTime: wedding.wedding_time,
-          weddingCanpoyTime: wedding.wedding_canpoy_time,
+          weddingTime: formatTimeShort(wedding.wedding_time),
+          weddingCanpoyTime: formatTimeShort(wedding.wedding_canpoy_time),
           venueName: wedding.venue_name,
           venueAddress: wedding.venue_address,
           guestUrl,
@@ -227,7 +271,6 @@ async function processTemplateForWedding(
           components,
         }, 3);
 
-        // Add internal API retry attempts to the aggregate counter.
         if (sendResult.attempts > 1) {
           await pool.query(
             `UPDATE wedding_message_log
@@ -237,18 +280,22 @@ async function processTemplateForWedding(
             [pending.attempt_count + (sendResult.attempts - 1), pending.id],
           );
         }
-
         await markLogSent(pending.id, sendResult.messageId);
       } catch (err: any) {
         const message = err?.message ?? 'WhatsApp send failed';
         await markLogFailed(pending.id, message);
       }
-
       await sleep(INTERVAL_MS);
     }
   }
 
-  await maybeLockTemplate(wedding.id, templateName);
+  // חשוב: נועלים את התבנית רק אם באמת בפרודקשן.
+  // אחרת, אחרי שתסיר את פילטר הבדיקה, התבנית תהיה כבר "נעולה" והרשימה המלאה לא תקבל כלום.
+  if (isProd) {
+    await maybeLockTemplate(wedding.id, templateName);
+  } else {
+    console.log(`[WhatsApp Scheduler] 🧪 isProd=false -> NOT locking template "${templateName}" for wedding_id=${wedding.id}`);
+  }
 }
 
 export async function runWhatsappSchedulerOnce(): Promise<void> {
@@ -256,32 +303,35 @@ export async function runWhatsappSchedulerOnce(): Promise<void> {
     'SELECT pg_try_advisory_lock($1)',
     [ADVISORY_LOCK_KEY],
   );
-
   if (!lockResult.rows[0]?.pg_try_advisory_lock) {
-    console.log('[WhatsApp Scheduler] skipped: another run holds advisory lock.');
     return;
   }
-
   try {
+    if (!IS_PROD) {
+      console.log(`[WhatsApp Scheduler] ⚠️ TEST MODE - sending only to ${TEST_FIRST_NAME} / *${TEST_PHONE_SUFFIX}`);
+    }
+
     const weddings = await getWeddingScheduleRows();
-    const nowIsrael = DateTime.now().setZone(ISRAEL_TIMEZONE);
+    const report = await buildWeddingSchedulePreview();
+    console.log(report.text);
+
+    const nowIsrael = getNowIsrael();
 
     for (const wedding of weddings) {
-      await processTemplateForWedding(wedding, 'wedding_confirmation', nowIsrael);
-      await processTemplateForWedding(wedding, 'wedding_reminder', nowIsrael);
-      await processTemplateForWedding(wedding, 'wedding_day_before', nowIsrael);
+      await processTemplateForWedding(wedding, 'wedding_confirmation', nowIsrael, IS_PROD);
+      await processTemplateForWedding(wedding, 'wedding_reminder', nowIsrael, IS_PROD);
+      await processTemplateForWedding(wedding, 'wedding_day_before', nowIsrael, IS_PROD);
     }
   } finally {
     await pool.query('SELECT pg_advisory_unlock($1)', [ADVISORY_LOCK_KEY]);
+    console.log(`[WhatsApp Scheduler] 🧪 ========== runWhatsappSchedulerOnce END ==========\n`);
   }
 }
 
 export function initWhatsappScheduler(): void {
   if (!ENABLED) {
-    console.log('[WhatsApp Scheduler] disabled by env flag.');
     return;
   }
-
   cron.schedule(
     DEFAULT_CRON,
     () => {
@@ -291,6 +341,211 @@ export function initWhatsappScheduler(): void {
     },
     { timezone: ISRAEL_TIMEZONE },
   );
+}
 
-  console.log(`[WhatsApp Scheduler] initialized with cron "${DEFAULT_CRON}" (${ISRAEL_TIMEZONE}).`);
+interface SchedulePreviewReport {
+  text: string;
+  html: string;
+}
+
+export async function buildWeddingSchedulePreview(): Promise<SchedulePreviewReport> {
+  const weddings = await getWeddingScheduleRows();
+
+  let text = `================ WHATSAPP SCHEDULE PREVIEW ================\n\n`;
+  let html = `
+    <div style="font-family:Arial,sans-serif" dir="ltr">
+      <h2>WhatsApp Schedule Preview</h2>
+  `;
+
+  for (const wedding of weddings) {
+    const computed = computeWeddingMessageScheduleDates(wedding.wedding_date, {
+      invitationDaysBefore: wedding.invitation_days_before,
+      reminderDaysBefore: wedding.reminder_days_before,
+      dayBeforeOffsetDays: wedding.day_before_offset_days,
+    });
+
+    const { rows } = await pool.query<{
+      total: string;
+      coming: string;
+      pending: string;
+      not_coming: string;
+    }>(
+      `
+      SELECT
+        COUNT(*)::int AS total,
+        COUNT(*) FILTER (WHERE rsvp_status='COMING')::int AS coming,
+        COUNT(*) FILTER (WHERE rsvp_status='PENDING')::int AS pending,
+        COUNT(*) FILTER (WHERE rsvp_status='NOT_COMING')::int AS not_coming
+      FROM guests
+      WHERE wedding_id=$1
+        AND role='guest'
+      `,
+      [wedding.id],
+    );
+
+    const stats = rows[0];
+
+    text +=
+      `💍 Wedding ID: ${wedding.id}
+👰🤵 ${wedding.bride_name} & ${wedding.groom_name}
+📅 Wedding: ${wedding.wedding_date}
+
+Guests
+------
+Total: ${stats.total}
+Confirmed: ${stats.coming}
+Pending: ${stats.pending}
+Not coming: ${stats.not_coming}
+
+1) wedding_confirmation
+   ${DateTime.fromISO(computed.invitationSendAt).toFormat('dd/LL/yyyy HH:mm')}
+   Recipients: ${stats.total}
+
+2) wedding_reminder
+   ${DateTime.fromISO(computed.reminderSendAt).toFormat('dd/LL/yyyy HH:mm')}
+   Recipients: ${Number(stats.pending) + Number(stats.not_coming)}
+
+3) wedding_day_before
+   ${DateTime.fromISO(computed.dayBeforeSendAt).toFormat('dd/LL/yyyy HH:mm')}
+   Recipients: ${stats.total}
+
+-------------------------------------------------------
+
+`;
+
+    html += `
+      <div style="margin-bottom:30px;border:1px solid #ddd;padding:15px;border-radius:8px;">
+        <h3>Wedding #${wedding.id} - ${wedding.bride_name} & ${wedding.groom_name}</h3>
+
+        <p><b>Date:</b> ${wedding.wedding_date}</p>
+
+        <ul>
+          <li>Total Guests: <b>${stats.total}</b></li>
+          <li>Confirmed: <b>${stats.coming}</b></li>
+          <li>Pending: <b>${stats.pending}</b></li>
+          <li>Not Coming: <b>${stats.not_coming}</b></li>
+        </ul>
+
+        <table border="1" cellspacing="0" cellpadding="6" style="border-collapse:collapse;">
+          <tr>
+            <th>Template</th>
+            <th>Send At</th>
+            <th>Recipients</th>
+          </tr>
+          <tr>
+            <td>wedding_confirmation</td>
+            <td>${DateTime.fromISO(computed.invitationSendAt).toFormat('dd/LL/yyyy HH:mm')}</td>
+            <td>${stats.total}</td>
+          </tr>
+          <tr>
+            <td>wedding_reminder</td>
+            <td>${DateTime.fromISO(computed.reminderSendAt).toFormat('dd/LL/yyyy HH:mm')}</td>
+            <td>${Number(stats.pending) + Number(stats.not_coming)}</td>
+          </tr>
+          <tr>
+            <td>wedding_day_before</td>
+            <td>${DateTime.fromISO(computed.dayBeforeSendAt).toFormat('dd/LL/yyyy HH:mm')}</td>
+            <td>${stats.total}</td>
+          </tr>
+        </table>
+      </div>
+    `;
+  }
+
+  html += `</div>`;
+  text += `================ END SCHEDULE PREVIEW ================`;
+
+  return {
+    text,
+    html,
+  };
+}
+
+async function logWeddingSchedulePreview(
+  weddings: Array<WeddingInfoRow & ScheduleRow>,
+): Promise<void> {
+  console.log('\n================ WHATSAPP SCHEDULE PREVIEW ================\n');
+
+  for (const wedding of weddings) {
+    const computed = computeWeddingMessageScheduleDates(
+      wedding.wedding_date,
+      {
+        invitationDaysBefore: wedding.invitation_days_before,
+        reminderDaysBefore: wedding.reminder_days_before,
+        dayBeforeOffsetDays: wedding.day_before_offset_days,
+      },
+    );
+
+    const { rows: guestStats } = await pool.query<{
+      total_guests: string;
+      pending_guests: string;
+      coming_guests: string;
+      not_coming_guests: string;
+    }>(
+      `
+      SELECT
+        COUNT(*) FILTER (WHERE role = 'guest') AS total_guests,
+        COUNT(*) FILTER (WHERE role = 'guest' AND rsvp_status = 'PENDING') AS pending_guests,
+        COUNT(*) FILTER (WHERE role = 'guest' AND rsvp_status = 'COMING') AS coming_guests,
+        COUNT(*) FILTER (WHERE role = 'guest' AND rsvp_status = 'NOT_COMING') AS not_coming_guests
+      FROM guests
+      WHERE wedding_id = $1
+      `,
+      [wedding.id],
+    );
+
+    const stats = guestStats[0];
+
+    const format = (iso: string) =>
+      DateTime
+        .fromISO(iso, { zone: ISRAEL_TIMEZONE })
+        .toFormat('dd/LL/yyyy HH:mm');
+
+    console.log(`
+💍 Wedding ID: ${wedding.id}
+👰🤵 ${wedding.bride_name} & ${wedding.groom_name}
+📅 Wedding date: ${wedding.wedding_date}
+
+👥 Guests:
+   Total: ${stats.total_guests}
+   ✅ Confirmed: ${stats.coming_guests}
+   ⏳ Pending: ${stats.pending_guests}
+   ❌ Not coming: ${stats.not_coming_guests}
+
+
+📨 MESSAGE SCHEDULE:
+
+1) wedding_confirmation
+   📅 Send at:
+      ${format(computed.invitationSendAt)}
+   👥 Recipients:
+      ${stats.total_guests} guests
+   Rule:
+      EVERY guest
+
+
+2) wedding_reminder
+   📅 Send at:
+      ${format(computed.reminderSendAt)}
+   👥 Recipients:
+      ${Number(stats.pending_guests) + Number(stats.not_coming_guests)} guests
+   Rule:
+      Only guests who did NOT confirm
+      (PENDING + NOT_COMING)
+
+
+3) wedding_day_before
+   📅 Send at:
+      ${format(computed.dayBeforeSendAt)}
+   👥 Recipients:
+      ${stats.total_guests} guests
+   Rule:
+      EVERY guest
+
+
+-------------------------------------------------------------
+`);
+  }
+
+  console.log('================ END SCHEDULE PREVIEW ================\n');
 }

@@ -13,11 +13,15 @@ import requestRoutes from './routes/weddingRequest.routes';
 import whatsappRoutes from './routes/whatsapp.routes';
 import weddingMessageScheduleRoutes from './routes/weddingMessageSchedule.routes';
 import { pool } from './db/pool';
-import { initWhatsappScheduler } from './jobs/whatsapp-scheduler.job';
+import { initWhatsappScheduler, runWhatsappSchedulerOnce } from './jobs/whatsapp-scheduler.job';
 import { initWhatsappReconciliationJob } from './jobs/whatsapp-reconciliation.job';
 
 import { errorHandler, notFound } from './middleware/errorHandler';
 import mailerRoutes from './routes/mailer.routes';
+import { scheduleOneOffTestSendToday1230 } from './jobs/whatsapp-test-send.job';
+import { scheduleOneOffTestSendToday1230Reminder } from './jobs/whatsapp-test-send-reminder.job';
+import { scheduleOneOffTestSendToday1230DayBefore } from './jobs/whatsapp-test-day-before.job';
+import { initWhatsappSchedulePreviewJob } from './jobs/whatsapp-schedule-preview-job';
 
 dotenv.config();
 
@@ -122,6 +126,14 @@ app.listen(PORT, () => {
 
   initWhatsappScheduler();
   initWhatsappReconciliationJob();
+  initWhatsappSchedulePreviewJob();
+
+  // Tests
+  // runWhatsappSchedulerOnce().catch(console.error);
+  // runWhatsappSchedulePreviewOnce().catch(console.error);
+  // scheduleOneOffTestSendToday1230();
+  // scheduleOneOffTestSendToday1230Reminder();
+  // scheduleOneOffTestSendToday1230DayBefore();
 });
 
 // ─────────────────────────────────────────────────────────────

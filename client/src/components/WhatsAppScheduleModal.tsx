@@ -212,6 +212,7 @@ export default function WhatsAppScheduleModal({ open, weddingId, weddingDate, on
             </DialogTitle>
             <DialogContent>
                 <Stack spacing={2} sx={{ mt: 0.5 }}>
+                    <Typography sx={{ ml: 3, fontWeight: 400, color: '#302209', fontSize: "14px" }}>תקבלו למייל כמובן עדכון 24 שעות טרם שליחת ההודעות</Typography>
                     {error && <Alert severity="error">{error}</Alert>}
                     {success && <Alert severity="success" onClose={() => setSuccess(null)}>{success}</Alert>}
 

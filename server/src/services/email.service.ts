@@ -22,7 +22,7 @@ function getSmtpConfig() {
       : process.env.SMTP_HOST,
 
     user: isProd
-      ? process.env.EMAIL_ADMIN
+      ? process.env.SMTP_USER
       : process.env.EMAIL_ADMIN,
 
     pass: isProd
@@ -44,13 +44,6 @@ function isSmtpConfigured(): boolean {
 
 export async function sendMail(input: MailInput): Promise<MailResult> {
   const config = getSmtpConfig();
-
-  console.log('SMTP CONFIG', {
-    mode: config.isProd ? 'BREVO' : 'GMAIL',
-    host: config.host,
-    user: config.user,
-    hasPassword: Boolean(config.pass),
-  });
 
   if (!isSmtpConfigured()) {
     const error = new Error('SMTP is not configured.');
@@ -77,10 +70,8 @@ export async function sendMail(input: MailInput): Promise<MailResult> {
   try {
     await transporter.verify();
 
-    console.log('SMTP READY');
-
     const result = await transporter.sendMail({
-      from: process.env.EMAIL_ADMIN!,
+      from: `${process.env.EMAIL_ADMIN_NAME} 💍 <${process.env.EMAIL_ADMIN}>`,
       to: input.to,
       subject: input.subject,
       html: input.html,
@@ -94,6 +85,7 @@ export async function sendMail(input: MailInput): Promise<MailResult> {
     };
 
   } catch (error) {
+    console.error('SMTP ERROR:', error);
     await sendAdminAlert({
       title: 'Mail sending failed',
       message: `Failed sending mail to ${input.to}`,

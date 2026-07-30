@@ -1,4 +1,3 @@
-import crypto from 'node:crypto';
 import nodemailer from 'nodemailer';
 import { sendAdminAlert } from './error.service';
 
@@ -13,37 +12,46 @@ export interface MailResult {
   messageId: string;
 }
 
-function isSmtpConfigured(): boolean {
-  return Boolean(process.env.SMTP_HOST && process.env.EMAIL_ADMIN && process.env.EMAIL_CODE);
+function getSmtpConfig() {
+  const isProd = process.env.IS_PROD === 'true';
+
+  return {
+    isProd,
+    host: isProd
+      ? process.env.SMTP_HOST_BREVO
+      : process.env.SMTP_HOST,
+
+    user: isProd
+      ? process.env.EMAIL_ADMIN
+      : process.env.EMAIL_ADMIN,
+
+    pass: isProd
+      ? process.env.SMTP_PASS
+      : process.env.EMAIL_CODE,
+  };
 }
 
-export async function sendMailMock(input: MailInput): Promise<MailResult> {
-  const messageId = `MAIL_MOCK_${crypto.randomUUID()}`;
+function isSmtpConfigured(): boolean {
+  const config = getSmtpConfig();
 
-  console.log(
-    JSON.stringify(
-      {
-        kind: 'MAIL_MOCK',
-        messageId,
-        to: input.to,
-        subject: input.subject,
-        textPreview: input.text.slice(0, 220),
-      },
-      null,
-      2,
-    ),
+  return Boolean(
+    config.host &&
+    config.user &&
+    config.pass &&
+    process.env.EMAIL_ADMIN,
   );
-
-  return { messageId };
 }
 
 export async function sendMail(input: MailInput): Promise<MailResult> {
+  const config = getSmtpConfig();
+
   console.log('SMTP CONFIG', {
-    SMTP_HOST: process.env.SMTP_HOST,
-    SMTP_PORT: process.env.SMTP_PORT,
-    EMAIL_ADMIN: process.env.EMAIL_ADMIN,
-    EMAIL_CODE: process.env.EMAIL_CODE ? 'EXISTS' : 'MISSING',
+    mode: config.isProd ? 'BREVO' : 'GMAIL',
+    host: config.host,
+    user: config.user,
+    hasPassword: Boolean(config.pass),
   });
+
   if (!isSmtpConfigured()) {
     const error = new Error('SMTP is not configured.');
 
@@ -57,31 +65,34 @@ export async function sendMail(input: MailInput): Promise<MailResult> {
   }
 
   const transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
+    host: config.host,
     port: Number(process.env.SMTP_PORT ?? 587),
     secure: String(process.env.SMTP_SECURE ?? 'false').toLowerCase() === 'true',
     auth: {
-      user: process.env.EMAIL_ADMIN,
-      pass: process.env.EMAIL_CODE,
+      user: config.user,
+      pass: config.pass,
     },
   });
 
-  await transporter.verify();
-
-  const fromAddress = process.env.EMAIL_ADMIN!;
-
   try {
+    await transporter.verify();
+
+    console.log('SMTP READY');
+
     const result = await transporter.sendMail({
-      from: fromAddress,
+      from: process.env.EMAIL_ADMIN!,
       to: input.to,
       subject: input.subject,
       html: input.html,
       text: input.text,
     });
 
+    console.log('MAIL SENT', result.messageId);
+
     return {
       messageId: result.messageId,
     };
+
   } catch (error) {
     await sendAdminAlert({
       title: 'Mail sending failed',

@@ -38,9 +38,15 @@ export async function sendMailMock(input: MailInput): Promise<MailResult> {
 }
 
 export async function sendMail(input: MailInput): Promise<MailResult> {
+  console.log('SMTP CONFIG', {
+    SMTP_HOST: process.env.SMTP_HOST,
+    SMTP_PORT: process.env.SMTP_PORT,
+    EMAIL_ADMIN: process.env.EMAIL_ADMIN,
+    EMAIL_CODE: process.env.EMAIL_CODE ? 'EXISTS' : 'MISSING',
+  });
   if (!isSmtpConfigured()) {
     const error = new Error('SMTP is not configured.');
-    console.log(error);
+
     await sendAdminAlert({
       title: 'SMTP is not configured',
       message: `Failed sending mail to ${input.to}`,
@@ -59,6 +65,8 @@ export async function sendMail(input: MailInput): Promise<MailResult> {
       pass: process.env.EMAIL_CODE,
     },
   });
+
+  await transporter.verify();
 
   const fromAddress = process.env.EMAIL_ADMIN!;
 

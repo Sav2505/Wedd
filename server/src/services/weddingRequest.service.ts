@@ -7,7 +7,7 @@ import {
 import { createError } from '../middleware/errorHandler';
 import { buildAdminNewWeddingRequestTemplate, buildCoupleCredentialsTemplate, buildFirstContactBitTemplate } from './emailTemplates.service';
 import { generateCoupleLoginCodeFromGuestId } from './auth.service';
-import { sendEmail } from './mailer.service';
+import { resend } from './resend.service';
 
 function makeCoupleNamesUnique(
     groomName: string,
@@ -197,9 +197,10 @@ export async function sendFirstContact(requestId: number): Promise<{
         bitPhone: 'XXX',
     });
 
-    let mailResult: { messageId: string };
+    let mailResult;
     try {
-        mailResult = await sendEmail({
+        mailResult = await resend.emails.send({
+            from: process.env.EMAIL_ADMIN ?? "weddflowapp@gmail.com",
             to: request.email,
             subject: template.subject,
             html: template.html,
@@ -223,7 +224,7 @@ export async function sendFirstContact(requestId: number): Promise<{
     return {
         request: updated.rows[0],
         mailLog: {
-            messageId: mailResult.messageId,
+            messageId: mailResult?.data?.id ?? '',
             to: request.email,
             subject: template.subject,
         },
@@ -327,7 +328,8 @@ export async function openWedding(
             credentials,
         });
 
-        const mailResult = await sendEmail({
+        const mailResult = await resend.emails.send({
+            from: process.env.EMAIL_ADMIN ?? "weddflowapp@gmail.com",
             to: request.email,
             subject: credentialsTemplate.subject,
             html: credentialsTemplate.html,
@@ -356,7 +358,7 @@ export async function openWedding(
             request: updateResult.rows[0],
             credentials,
             mailLog: {
-                messageId: mailResult.messageId,
+                messageId: mailResult.data?.id || '',
                 to: request.email,
                 subject: credentialsTemplate.subject,
             },
@@ -405,11 +407,12 @@ export async function notifyAdmin(
         phone: request.phone_number,
     });
 
-    let mailResult: { messageId: string };
+    let mailResult;
     const adminMail = process.env.EMAIL_ADMIN;
     try {
-        mailResult = await sendEmail({
-            to: adminMail || 'weddflowadd@gmail.com',
+        mailResult = await resend.emails.send({
+            from: process.env.EMAIL_ADMIN ?? "weddflowapp@gmail.com",
+            to: adminMail || 'weddflowapp@gmail.com',
             subject: template.subject,
             html: template.html,
             text: template.text,
@@ -421,7 +424,7 @@ export async function notifyAdmin(
     return {
         request,
         mailLog: {
-            messageId: mailResult.messageId,
+            messageId: mailResult?.data?.id ?? '',
             to: adminMail || 'weddflowadd@gmail.com',
             subject: template.subject,
         },

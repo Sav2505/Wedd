@@ -191,6 +191,7 @@ export async function sendFirstContact(requestId: number): Promise<{
     }
 
     const request = rows[0];
+
     const template = buildFirstContactBitTemplate({
         brideName: request.bride_name,
         groomName: request.groom_name,

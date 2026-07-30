@@ -1,5 +1,6 @@
 import crypto from 'node:crypto';
 import nodemailer from 'nodemailer';
+import { sendAdminAlert } from './error.service';
 
 export interface MailInput {
   to: string;
@@ -13,7 +14,7 @@ export interface MailResult {
 }
 
 function isSmtpConfigured(): boolean {
-  return Boolean(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS);
+  return Boolean(process.env.SMTP_HOST && process.env.EMAIL_ADMIN && process.env.EMAIL_CODE);
 }
 
 export async function sendMailMock(input: MailInput): Promise<MailResult> {
@@ -38,7 +39,15 @@ export async function sendMailMock(input: MailInput): Promise<MailResult> {
 
 export async function sendMail(input: MailInput): Promise<MailResult> {
   if (!isSmtpConfigured()) {
-    return sendMailMock(input);
+    const error = new Error('SMTP is not configured.');
+
+    await sendAdminAlert({
+      title: 'SMTP is not configured',
+      message: `Failed sending mail to ${input.to}`,
+      error,
+    });
+
+    throw error;
   }
 
   const transporter = nodemailer.createTransport({
@@ -46,22 +55,34 @@ export async function sendMail(input: MailInput): Promise<MailResult> {
     port: Number(process.env.SMTP_PORT ?? 587),
     secure: String(process.env.SMTP_SECURE ?? 'false').toLowerCase() === 'true',
     auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS,
+      user: process.env.EMAIL_ADMIN,
+      pass: process.env.EMAIL_CODE,
     },
   });
 
-  const fromAddress = process.env.SOFTWARE_EMAIL ?? process.env.SMTP_USER ?? 'no-reply@localhost';
+  const fromAddress = process.env.EMAIL_ADMIN!;
 
-  const result = await transporter.sendMail({
-    from: fromAddress,
-    to: input.to,
-    subject: input.subject,
-    html: input.html,
-    text: input.text,
-  });
+  try {
+    const result = await transporter.sendMail({
+      from: fromAddress,
+      to: input.to,
+      subject: input.subject,
+      html: input.html,
+      text: input.text,
+    });
 
-  return {
-    messageId: result.messageId,
-  };
+    console.log('Mail sent:', result);
+
+    return {
+      messageId: result.messageId,
+    };
+  } catch (error) {
+    await sendAdminAlert({
+      title: 'Mail sending failed',
+      message: `Failed sending mail to ${input.to}`,
+      error,
+    });
+
+    throw error;
+  }
 }

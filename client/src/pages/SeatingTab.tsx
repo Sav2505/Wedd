@@ -15,7 +15,6 @@ import { WeddingTableWithGuests } from '../types/domain';
 import FloorPlanCanvas from '../components/FloorPlanCanvas';
 import { getEffectivePartySize } from '../utils/effectiveAttendance';
 
-const STAGE_LABEL_STORAGE_KEY = 'wedding.floorPlan.stageLabel';
 const ENTRANCE_POSITION_STORAGE_KEY = 'wedding.floorPlan.entrancePosition';
 
 export default function SeatingTab() {
@@ -27,7 +26,6 @@ export default function SeatingTab() {
   const [dialogTable, setDialogTable] = useState<WeddingTableWithGuests | null>(null);
   const [stageLabel, setStageLabel] = useState('חופה');
   const [entrancePosition, setEntrancePosition] = useState<'right' | 'bottom' | 'left'>('bottom');
-  const [weddingId, setWeddingId] = useState<number | null>(null);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -39,15 +37,14 @@ export default function SeatingTab() {
 
     const fetchData = async () => {
       try {
-        const [tables, info] = await Promise.all([getAllTables(weddingId), getWeddingInfo()]);
+        const info = await getWeddingInfo();
+        const tables = await getAllTables(info.id);
+
         setTables(tables);
+
         if (info.stage_label?.trim()) {
           setStageLabel(info.stage_label);
           setIsTablesPublished(!!info.is_tables_published);
-          setWeddingId(info.id);
-        } else if (typeof window !== 'undefined') {
-          const stored = window.localStorage.getItem(STAGE_LABEL_STORAGE_KEY);
-          if (stored?.trim()) setStageLabel(stored);
         }
       } catch {
         setError('לא ניתן לטעון את מפת הסידור');
@@ -56,7 +53,7 @@ export default function SeatingTab() {
       }
     };
     fetchData();
-  }, [weddingId]);
+  }, []);
 
   // const ownTable = tables.find(t => t.table_number === guest?.table_number) ?? null;
 

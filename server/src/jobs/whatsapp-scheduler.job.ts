@@ -549,3 +549,212 @@ async function logWeddingSchedulePreview(
 
   console.log('================ END SCHEDULE PREVIEW ================\n');
 }
+
+interface WeddingTomorrowEmailTemplate {
+  brideName: string;
+  groomName: string;
+
+  totalGuests: number;
+  confirmedGuests: number;
+  pendingGuests: number;
+  notComingGuests: number;
+
+  messages: Array<{
+    template: 'wedding_confirmation' | 'wedding_reminder' | 'wedding_day_before';
+    sendAt: string;
+    recipients: number;
+  }>;
+}
+
+export function buildTomorrowWhatsappEmail(
+  data: WeddingTomorrowEmailTemplate,
+): { html: string; text: string } {
+  const templateNames: Record<string, string> = {
+    wedding_confirmation: '📨 הזמנה לחתונה',
+    wedding_reminder: '🔔 תזכורת לאישור הגעה',
+    wedding_day_before: '❤️ הודעת יום לפני החתונה',
+  };
+
+  const rowsHtml = data.messages
+    .map(
+      (m) => `
+      <tr>
+        <td style="padding:10px;border-bottom:1px solid #eee;">${templateNames[m.template]}</td>
+        <td style="padding:10px;border-bottom:1px solid #eee;">${m.sendAt}</td>
+        <td style="padding:10px;border-bottom:1px solid #eee;text-align:center;"><b>${m.recipients}</b></td>
+      </tr>
+    `,
+    )
+    .join('');
+
+  const rowsText = data.messages
+    .map(
+      (m) =>
+        `${templateNames[m.template]}
+זמן: ${m.sendAt}
+נמענים: ${m.recipients}`,
+    )
+    .join('\n\n');
+
+  const html = `
+<div dir="rtl" style="
+    font-family:Arial,Helvetica,sans-serif;
+    background:#f8f8f8;
+    padding:35px;
+">
+
+<div style="
+    max-width:760px;
+    margin:auto;
+    background:white;
+    border-radius:14px;
+    overflow:hidden;
+    border:1px solid #ececec;
+">
+
+<div style="
+    background:linear-gradient(135deg,#b88a2d,#d9b55a);
+    color:white;
+    padding:30px;
+    text-align:center;
+">
+    <h1 style="margin:0;">💍 WedFlow</h1>
+    <p style="margin-top:10px;font-size:18px;">
+        מחר תישלחנה הודעות WhatsApp למוזמנים שלכם
+    </p>
+</div>
+
+<div style="padding:35px;">
+
+<h2 style="margin-top:0;">
+שלום ${data.brideName} ו-${data.groomName} ❤️
+</h2>
+
+<p style="font-size:16px;line-height:1.8;">
+רק רצינו לעדכן אתכם שמערכת <b>WedFlow</b> מתוכננת לבצע
+<b>מחר</b> שליחת הודעות WhatsApp אוטומטית למוזמנים שלכם.
+</p>
+
+<p style="font-size:16px;">
+אין צורך לבצע שום פעולה — אנחנו כבר נדאג לכל השאר ✨
+</p>
+
+<hr style="margin:35px 0;">
+
+<h3>📅 ההודעות שיישלחו מחר</h3>
+
+<table style="
+width:100%;
+border-collapse:collapse;
+margin-top:15px;
+">
+<thead>
+<tr style="background:#faf5e8;">
+<th style="padding:12px;">סוג הודעה</th>
+<th style="padding:12px;">שעת שליחה</th>
+<th style="padding:12px;">מספר נמענים</th>
+</tr>
+</thead>
+
+<tbody>
+
+${rowsHtml}
+
+</tbody>
+</table>
+
+<hr style="margin:35px 0;">
+
+<h3>📊 מצב רשימת המוזמנים</h3>
+
+<table style="width:100%;font-size:15px;">
+<tr>
+<td>👥 סך הכל מוזמנים</td>
+<td align="left"><b>${data.totalGuests}</b></td>
+</tr>
+
+<tr>
+<td>✅ אישרו הגעה</td>
+<td align="left"><b>${data.confirmedGuests}</b></td>
+</tr>
+
+<tr>
+<td>⏳ ממתינים לאישור</td>
+<td align="left"><b>${data.pendingGuests}</b></td>
+</tr>
+
+<tr>
+<td>❌ לא מגיעים</td>
+<td align="left"><b>${data.notComingGuests}</b></td>
+</tr>
+</table>
+
+<hr style="margin:35px 0;">
+
+<h3>ℹ️ מה יקרה מחר?</h3>
+
+<p style="line-height:1.8;">
+בשעה המתוכננת המערכת תשלח את הודעות ה־WhatsApp באופן אוטומטי לכל
+המוזמנים הרלוונטיים.
+</p>
+
+<p style="line-height:1.8;">
+לאחר השליחה תוכלו לראות את סטטוסי המסירה והקריאה מתוך מערכת
+WedFlow.
+</p>
+
+<div style="
+margin-top:45px;
+padding-top:25px;
+border-top:1px solid #eee;
+text-align:center;
+color:#777;
+">
+
+<h2 style="margin-bottom:8px;">
+💍 WedFlow
+</h2>
+
+<div>
+החתונה שלכם. בלי כאבי ראש.
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+`;
+
+  const text = `💍 WedFlow
+
+שלום ${data.brideName} ו-${data.groomName},
+
+מחר מערכת WedFlow תשלח הודעות WhatsApp למוזמנים שלכם.
+
+ההודעות שיישלחו:
+
+${rowsText}
+
+------------------------
+
+מצב רשימת המוזמנים:
+
+סה"כ מוזמנים: ${data.totalGuests}
+אישרו: ${data.confirmedGuests}
+ממתינים: ${data.pendingGuests}
+לא מגיעים: ${data.notComingGuests}
+
+אין צורך לבצע שום פעולה.
+המערכת תבצע את השליחה באופן אוטומטי.
+
+WedFlow
+החתונה שלכם. בלי כאבי ראש.`;
+
+  return {
+    html,
+    text,
+  };
+}

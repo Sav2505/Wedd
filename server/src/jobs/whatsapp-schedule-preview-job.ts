@@ -38,6 +38,20 @@ export function initWhatsappSchedulePreviewJob(): void {
     const cronExpression =
         process.env.WHATSAPP_SCHEDULE_PREVIEW_CRON ?? '0 12 * * *';
 
+    console.log(
+        `[WhatsApp Schedule Preview] Server now (UTC): ${DateTime.utc().toFormat('dd/LL/yyyy HH:mm')}`,
+    );
+
+    console.log(
+        `[WhatsApp Schedule Preview] Israel now: ${DateTime.now()
+            .setZone(ISRAEL_TIMEZONE)
+            .toFormat('dd/LL/yyyy HH:mm')}`,
+    );
+
+    console.log(
+        `[WhatsApp Schedule Preview] Cron: "${cronExpression}" | Timezone: ${ISRAEL_TIMEZONE}`,
+    );
+
     cron.schedule(
         cronExpression,
         () => {

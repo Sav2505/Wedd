@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import {
   Box, Typography, TextField, Button, CircularProgress,
-  Alert, Collapse, InputAdornment, Divider,
+  Alert, InputAdornment, Divider,
 } from '@mui/material';
 import SaveOutlinedIcon from '@mui/icons-material/SaveOutlined';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
@@ -21,6 +21,7 @@ import 'dayjs/locale/he';
 import { updateWeddingInfo, WeddingInfoUpdate } from '../../services/info.service';
 import { useWeddingInfo } from '../../hooks/useWeddingInfo';
 import { useWeddingId } from '../../hooks/useWeddingId';
+import LoadingOverlay from '../../components/LoadingOverlay';
 
 dayjs.locale('he');
 
@@ -123,8 +124,9 @@ export default function WeddingInfoEditor() {
   const weddingId = useWeddingId();
   const { info, loading, error: fetchError, refetch } = useWeddingInfo();
   const [saving, setSaving] = useState(false);
-  const [success, setSuccess] = useState(false);
-  const [error, setError] = useState('');
+  const [result, setResult] =
+    useState<'success' | 'error' | null>(null);
+  const [resultMessage, setResultMessage] = useState('');
 
   // local form state
   const [form, setForm] = useState<WeddingInfoUpdate>({});
@@ -151,19 +153,26 @@ export default function WeddingInfoEditor() {
 
   async function handleSave() {
     if (weddingId == null) {
-      setError('לא נמצא מזהה חתונה');
+      setResult('error');
+      setResultMessage('לא נמצא מזהה חתונה');
       return;
     }
+
     setSaving(true);
-    setError('');
-    setSuccess(false);
+
     try {
       await updateWeddingInfo(form, weddingId);
       refetch();
-      setSuccess(true);
-      setTimeout(() => setSuccess(false), 3000);
+
+      setResult('success');
+      setResultMessage('פרטי החתונה נשמרו בהצלחה');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'שגיאה בשמירה');
+      setResult('error');
+      setResultMessage(
+        err instanceof Error
+          ? err.message
+          : 'שגיאה בשמירה'
+      );
     } finally {
       setSaving(false);
     }
@@ -193,14 +202,6 @@ export default function WeddingInfoEditor() {
         transition={{ duration: 0.4, ease: 'easeOut' }}
       >
         <Box sx={{ px: 2, pt: 2, pb: 4, maxWidth: 560, mx: 'auto' }}>
-
-          <Collapse in={success}>
-            <Alert severity="success" sx={{ mb: 2 }}>הפרטים נשמרו בהצלחה ✓</Alert>
-          </Collapse>
-          <Collapse in={Boolean(error)}>
-            <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>
-          </Collapse>
-
           {/* ── שמות ── */}
           <SectionTitle>שמות בני הזוג</SectionTitle>
           <Box sx={{ display: 'flex', gap: 2 }}>
@@ -455,6 +456,16 @@ export default function WeddingInfoEditor() {
           >
             {saving ? 'שומר…' : 'שמור פרטים'}
           </Button>
+          <LoadingOverlay
+            open={saving}
+            message="שומר את פרטי החתונה..."
+            result={result}
+            resultMessage={resultMessage}
+            onResultShown={() => {
+              setResult(null);
+              setResultMessage('');
+            }}
+          />
         </Box>
       </motion.div>
     </LocalizationProvider>

@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
     Alert,
-    Backdrop,
     Box,
     Button,
     CircularProgress,
@@ -9,7 +8,6 @@ import {
     DialogActions,
     DialogContent,
     DialogTitle,
-    Paper,
     Stack,
     TextField,
     Typography,
@@ -29,6 +27,7 @@ import {
 } from '../services/weddingMessageSchedule.service';
 import { WeddingMessageSchedule } from '../types/domain';
 import { computeSchedulePreview, formatScheduleDateTime } from '../utils/scheduling.util';
+import LoadingOverlay from './LoadingOverlay';
 
 interface Props {
     open: boolean;
@@ -41,10 +40,10 @@ export default function WhatsAppScheduleModal({ open, weddingId, weddingDate, on
     const [schedule, setSchedule] = useState<WeddingMessageSchedule | null>(null);
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-    const [success, setSuccess] = useState<string | null>(null);
     const [loadingMessage, setLoadingMessage] = useState<string | null>(null);
-
+    const [result, setResult] =
+        useState<'success' | 'error' | null>(null);
+    const [resultMessage, setResultMessage] = useState('');
     const [invitationDays, setInvitationDays] = useState(30);
     const [reminderDays, setReminderDays] = useState(14);
     const [dayBeforeDays, setDayBeforeDays] = useState(1);
@@ -64,7 +63,6 @@ export default function WhatsAppScheduleModal({ open, weddingId, weddingDate, on
 
         let active = true;
         setLoading(true);
-        setError(null);
 
         getWeddingMessageSchedule(weddingId)
             .then(async (data) => {
@@ -92,7 +90,12 @@ export default function WhatsAppScheduleModal({ open, weddingId, weddingDate, on
             })
             .catch((err) => {
                 if (!active) return;
-                setError(err instanceof Error ? err.message : 'שגיאה בטעינת הגדרות תזמון');
+                setResult('error');
+                setResultMessage(
+                    err instanceof Error
+                        ? err.message
+                        : 'שגיאה בטעינת הגדרות תזמון'
+                );
             })
             .finally(() => {
                 if (active) setLoading(false);
@@ -137,7 +140,6 @@ export default function WhatsAppScheduleModal({ open, weddingId, weddingDate, on
 
         setSaving(true);
         setLoadingMessage('שומר את ההגדרות...');
-        setError(null);
 
         try {
             const updated = await patchWeddingMessageSchedule(weddingId, {
@@ -146,9 +148,16 @@ export default function WhatsAppScheduleModal({ open, weddingId, weddingDate, on
                 day_before_offset_days: dayBeforeLocked ? undefined : dayBeforeDays,
             });
             setSchedule(updated);
-            setSuccess('הגדרות התזמון נשמרו בהצלחה');
+            setResult('success');
+            setResultMessage('הגדרות התזמון נשמרו בהצלחה');
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'שגיאה בשמירת הגדרות תזמון');
+            setResult('error');
+            setResultMessage(
+                err instanceof Error
+                    ? err.message
+                    : 'שגיאה בשמירת הגדרות תזמון'
+            );
+
         } finally {
             setSaving(false);
             setLoadingMessage(null);
@@ -158,7 +167,6 @@ export default function WhatsAppScheduleModal({ open, weddingId, weddingDate, on
     async function handleUploadImage(file: File) {
         if (!schedule) return;
         setSaving(true);
-        setError(null);
         setLoadingMessage('מעלה את תמונת ההזמנה ל-WhatsApp...');
 
         try {
@@ -172,9 +180,15 @@ export default function WhatsAppScheduleModal({ open, weddingId, weddingDate, on
                     return objectUrl;
                 });
             }
-            setSuccess('תמונת ההזמנה נשמרה בהצלחה');
+            setResult('success');
+            setResultMessage('תמונת ההזמנה נשמרה בהצלחה');
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'שגיאה בהעלאת תמונת ההזמנה');
+            setResult('error');
+            setResultMessage(
+                err instanceof Error
+                    ? err.message
+                    : 'שגיאה בהעלאת תמונת ההזמנה'
+            );
         } finally {
             setSaving(false);
             setLoadingMessage(null);
@@ -183,7 +197,6 @@ export default function WhatsAppScheduleModal({ open, weddingId, weddingDate, on
 
     async function handleDeleteImage() {
         setSaving(true);
-        setError(null);
         setLoadingMessage('מוחק את תמונת ההזמנה...');
 
         try {
@@ -193,9 +206,15 @@ export default function WhatsAppScheduleModal({ open, weddingId, weddingDate, on
                 if (prev) URL.revokeObjectURL(prev);
                 return null;
             });
-            setSuccess('תמונת ההזמנה נמחקה');
+            setResult('success');
+            setResultMessage('תמונת ההזמנה נמחקה בהצלחה');
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'שגיאה במחיקת תמונת ההזמנה');
+            setResult('error');
+            setResultMessage(
+                err instanceof Error
+                    ? err.message
+                    : 'שגיאה במחיקת תמונת ההזמנה'
+            );
         } finally {
             setSaving(false);
         }
@@ -213,12 +232,6 @@ export default function WhatsAppScheduleModal({ open, weddingId, weddingDate, on
             <DialogContent>
                 <Stack spacing={2} sx={{ mt: 0.5 }}>
                     <Typography sx={{ ml: 3, fontWeight: 400, color: '#302209', fontSize: "14px" }}>תקבלו למייל כמובן עדכון 24 שעות טרם שליחת ההודעות</Typography>
-                    {error && <Alert severity="error">{error}</Alert>}
-                    {success && <Alert severity="success" onClose={() => setSuccess(null)}>{success}</Alert>}
-
-                    {/* <Alert severity="info">
-            לצירוף תמונה ב-Header של תבנית ההזמנה ב-WhatsApp נדרש שהתבנית ב-Meta תהיה מסוג IMAGE (דורש אישור תבנית מחדש ב-Meta Business Manager).
-          </Alert> */}
 
                     {loading || !schedule ? (
                         <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
@@ -481,50 +494,16 @@ export default function WhatsAppScheduleModal({ open, weddingId, weddingDate, on
                     שמירה
                 </Button>
             </DialogActions>
-            <Backdrop
+            <LoadingOverlay
                 open={saving}
-                sx={{
-                    zIndex: (theme) => theme.zIndex.modal + 2,
-                    backdropFilter: 'blur(6px)',
-                    background: 'rgba(255,255,255,.45)',
+                message={loadingMessage ?? 'שומר נתונים...'}
+                result={result}
+                resultMessage={resultMessage}
+                onResultShown={() => {
+                    setResult(null);
+                    setResultMessage('');
                 }}
-            >
-                <Paper
-                    elevation={10}
-                    sx={{
-                        px: 5,
-                        py: 4,
-                        borderRadius: 4,
-                        textAlign: 'center',
-                        minWidth: 300,
-                    }}
-                >
-                    <CircularProgress
-                        size={48}
-                        sx={{
-                            color: '#C9A84C',
-                            mb: 2,
-                        }}
-                    />
-
-                    <Typography
-                        sx={{
-                            fontWeight: 700,
-                            fontSize: '1rem',
-                        }}
-                    >
-                        {loadingMessage}
-                    </Typography>
-
-                    <Typography
-                        variant="body2"
-                        color="text.secondary"
-                        sx={{ mt: 1 }}
-                    >
-                        פעולה זו עשויה להימשך מספר שניות...
-                    </Typography>
-                </Paper>
-            </Backdrop>
+            />
         </Dialog>
     );
 }

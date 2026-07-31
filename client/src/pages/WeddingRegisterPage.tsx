@@ -26,8 +26,14 @@ import { notifyAdminNewWeddingRequest } from '../services/weddingRequestsAdmin.s
 
 dayjs.locale('he');
 
-// ─── Decorative SVG ring (identical to LoginPage) ──────────
+function isFullName(value: string): boolean {
+    const normalized = value.trim().replace(/\s+/g, ' ');
 
+    // לפחות שתי מילים (שם פרטי + שם משפחה)
+    return normalized.split(' ').length >= 2;
+}
+
+// ─── Decorative SVG ring (identical to LoginPage) ──────────
 function RingsIcon() {
     return (
         <svg
@@ -123,8 +129,8 @@ export default function WeddingRegisterPage() {
         e.preventDefault();
         setError(null);
 
-        if (!brideName.trim() || !groomName.trim()) {
-            setError('נא להזין את שמות בני הזוג');
+        if (!isFullName(brideName) || !isFullName(groomName)) {
+            setError('נא להזין שם מלא של החתן והכלה (שם פרטי + שם משפחה)');
             return;
         }
         if (!weddingDate || !weddingDate.isValid()) {
@@ -320,7 +326,7 @@ export default function WeddingRegisterPage() {
                                         <motion.div variants={itemVariants}>
                                             <TextField
                                                 fullWidth
-                                                label="שם הכלה"
+                                                label="שם מלא של הכלה"
                                                 placeholder="לדוגמה: מיכל טולדנו"
                                                 value={brideName}
                                                 onChange={(e) => setBrideName(e.target.value)}
@@ -340,7 +346,7 @@ export default function WeddingRegisterPage() {
                                         <motion.div variants={itemVariants}>
                                             <TextField
                                                 fullWidth
-                                                label="שם החתן"
+                                                label="שם מלא של החתן"
                                                 placeholder="לדוגמה: עידן אלון"
                                                 value={groomName}
                                                 onChange={(e) => setGroomName(e.target.value)}

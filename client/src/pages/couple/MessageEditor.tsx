@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import {
   Box, Typography, TextField, Button, CircularProgress,
-  Alert, Collapse,
 } from '@mui/material';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import SaveOutlinedIcon from '@mui/icons-material/SaveOutlined';
@@ -9,6 +8,7 @@ import { motion } from 'framer-motion';
 import { updateWeddingInfo } from '../../services/info.service';
 import { useWeddingInfo } from '../../hooks/useWeddingInfo';
 import { useWeddingId } from '../../hooks/useWeddingId';
+import LoadingOverlay from '../../components/LoadingOverlay';
 
 // ─── Floating sparkle ────────────────────────────────────────
 
@@ -89,27 +89,38 @@ function PreviewCard({ message }: { message: string }) {
 
 export default function MessageEditor() {
   const weddingId = useWeddingId();
-  const { info, loading: infoLoading, error: fetchError } = useWeddingInfo();
+  const { info, loading: infoLoading } = useWeddingInfo();
   const [message, setMessage] = useState('');
   const [saving, setSaving] = useState(false);
-  const [success, setSuccess] = useState(false);
-  const [error, setError] = useState('');
+  const [result, setResult] =
+    useState<'success' | 'error' | null>(null);
+  const [resultMessage, setResultMessage] = useState('');
 
   useEffect(() => {
     if (info) setMessage(info.message ?? '');
   }, [info]);
 
   async function handleSave() {
-    if (!weddingId) return;
+    if (!weddingId) {
+      setResult('error');
+      setResultMessage('לא נמצא מזהה חתונה');
+      return;
+    }
+
     setSaving(true);
-    setError('');
-    setSuccess(false);
+
     try {
       await updateWeddingInfo({ message }, weddingId);
-      setSuccess(true);
-      setTimeout(() => setSuccess(false), 3000);
+
+      setResult('success');
+      setResultMessage('ההודעה נשמרה בהצלחה');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'שגיאה בשמירה');
+      setResult('error');
+      setResultMessage(
+        err instanceof Error
+          ? err.message
+          : 'שגיאה בשמירה'
+      );
     } finally {
       setSaving(false);
     }
@@ -147,13 +158,6 @@ export default function MessageEditor() {
             כתבו הודעה אישית לאורחים שלכם
           </Typography>
         </Box>
-
-        <Collapse in={success}>
-          <Alert severity="success" sx={{ mb: 2 }}>ההודעה נשמרה בהצלחה ✓</Alert>
-        </Collapse>
-        <Collapse in={Boolean(error || fetchError)}>
-          <Alert severity="error" sx={{ mb: 2 }}>{error || fetchError}</Alert>
-        </Collapse>
 
         <TextField
           label="הודעה לאורחים"
@@ -196,6 +200,16 @@ export default function MessageEditor() {
         >
           {saving ? 'שומר…' : 'שמור הודעה'}
         </Button>
+        <LoadingOverlay
+          open={saving}
+          message="שומר את ההודעה..."
+          result={result}
+          resultMessage={resultMessage}
+          onResultShown={() => {
+            setResult(null);
+            setResultMessage('');
+          }}
+        />
       </Box>
     </motion.div>
   );

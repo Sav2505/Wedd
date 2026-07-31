@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Box, Typography, IconButton, CircularProgress,
-  Dialog, DialogContent, Skeleton, Tooltip, LinearProgress,
+  Dialog, DialogContent, Skeleton, Tooltip,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
@@ -31,6 +31,175 @@ interface QueueItem {
   progress: number;
   errorMsg?: string;
   weddingId: number | null;
+}
+
+function UploadingPhotoCard({ item }: { item: QueueItem }) {
+  return (
+    <motion.div
+      layout
+      initial={{ opacity: 0, scale: 0.85, y: 12 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      transition={{ duration: 0.35 }}
+      style={{
+        position: 'relative',
+        borderRadius: 16,
+        overflow: 'hidden',
+      }}
+    >
+      <Box
+        component="img"
+        src={item.previewUrl}
+        sx={{
+          width: '100%',
+          aspectRatio: '1',
+          objectFit: 'cover',
+          display: 'block',
+          filter:
+            item.status === 'uploading'
+              ? 'brightness(0.65)'
+              : 'none',
+          transition: '0.3s',
+        }}
+      />
+
+      {item.status === 'uploading' && (
+        <Box
+          sx={{
+            position: 'absolute',
+            inset: 0,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background:
+              'rgba(44,24,16,0.18)',
+          }}
+        >
+          <Box sx={{ textAlign: 'center' }}>
+            <CircularProgress
+              size={30}
+              sx={{
+                color: '#C9A84C',
+              }}
+            />
+
+            <Typography
+              sx={{
+                mt: 1,
+                color: '#fff',
+                fontSize: '0.7rem',
+                fontWeight: 600,
+              }}
+            >
+              מעלה...
+            </Typography>
+          </Box>
+        </Box>
+      )}
+
+      {item.status === 'done' && (
+        <motion.div
+          initial={{
+            scale: 0,
+            opacity: 0,
+          }}
+          animate={{
+            scale: 1,
+            opacity: 1,
+          }}
+          transition={{
+            type: 'spring',
+            stiffness: 400,
+            damping: 20,
+          }}
+          style={{
+            position: 'absolute',
+            top: 6,
+            right: 6,
+          }}
+        >
+          <CheckCircleOutlineIcon
+            sx={{
+              color: '#4CAF50',
+              background: '#fff',
+              borderRadius: '50%',
+              fontSize: 22,
+            }}
+          />
+        </motion.div>
+      )}
+
+      {item.status === 'error' && (
+        <Tooltip title={item.errorMsg ?? 'שגיאה בהעלאה'}>
+          <ErrorOutlineIcon
+            sx={{
+              position: 'absolute',
+              top: 6,
+              right: 6,
+              color: '#E53935',
+              background: '#fff',
+              borderRadius: '50%',
+              fontSize: 22,
+            }}
+          />
+        </Tooltip>
+      )}
+    </motion.div>
+  );
+}
+
+// ─── Progressive Image ──────────────────────────────────────
+
+function ProgressiveImage({
+  src,
+  alt,
+  sx,
+}: {
+  src: string;
+  alt?: string;
+  sx?: any;
+}) {
+  const [loaded, setLoaded] = useState(false);
+
+  return (
+    <Box
+      sx={{
+        position: 'relative',
+        width: '100%',
+        height: '100%',
+        overflow: 'hidden',
+        ...sx,
+      }}
+    >
+      {!loaded && (
+        <Skeleton
+          variant="rectangular"
+          sx={{
+            position: 'absolute',
+            inset: 0,
+            transform: 'none',
+            borderRadius: 'inherit',
+          }}
+        />
+      )}
+
+      <Box
+        component="img"
+        src={src}
+        alt={alt}
+        loading="lazy"
+        onLoad={() => setLoaded(true)}
+        sx={{
+          width: '100%',
+          height: '100%',
+          objectFit: 'cover',
+          display: 'block',
+          opacity: loaded ? 1 : 0,
+          transition: 'opacity .45s ease, transform .35s ease',
+          transform: loaded ? 'scale(1)' : 'scale(1.04)',
+        }}
+      />
+    </Box>
+  );
 }
 
 // ─── Drop zone ───────────────────────────────────────────────
@@ -133,43 +302,24 @@ function UploadQueue({ items, onClear }: { items: QueueItem[]; onClear: () => vo
             </Typography>
           )}
         </Box>
-        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5, p: 1.5 }}>
+        <Box
+          sx={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: 1.5,
+            p: 1.5,
+          }}
+        >
           {items.map((item) => (
-            <Box key={item.id} sx={{ position: 'relative', width: 64, flexShrink: 0 }}>
-              <Box
-                component="img"
-                src={item.previewUrl}
-                sx={{
-                  width: 64, height: 64,
-                  objectFit: 'cover',
-                  borderRadius: 2,
-                  display: 'block',
-                  filter: item.status === 'pending' ? 'grayscale(60%)' : 'none',
-                  transition: 'filter 0.3s',
-                }}
-              />
-              {/* Progress bar overlay */}
-              {item.status === 'uploading' && (
-                <Box sx={{ position: 'absolute', bottom: 0, left: 0, right: 0, borderBottomLeftRadius: 8, borderBottomRightRadius: 8, overflow: 'hidden' }}>
-                  <LinearProgress
-                    variant="determinate"
-                    value={item.progress}
-                    sx={{ height: 3, '& .MuiLinearProgress-bar': { background: '#C9A84C' }, background: 'rgba(255,255,255,0.4)' }}
-                  />
-                </Box>
-              )}
-              {/* Status icon */}
-              {item.status === 'done' && (
-                <CheckCircleOutlineIcon sx={{ position: 'absolute', top: 2, right: 2, fontSize: 18, color: '#4CAF50', background: 'rgba(255,255,255,0.85)', borderRadius: '50%' }} />
-              )}
-              {item.status === 'error' && (
-                <Tooltip title={item.errorMsg ?? 'שגיאה'}>
-                  <ErrorOutlineIcon sx={{ position: 'absolute', top: 2, right: 2, fontSize: 18, color: '#E53935', background: 'rgba(255,255,255,0.85)', borderRadius: '50%' }} />
-                </Tooltip>
-              )}
-              {item.status === 'uploading' && (
-                <CircularProgress size={16} sx={{ position: 'absolute', top: 4, right: 4, color: '#C9A84C' }} />
-              )}
+            <Box
+              key={item.id}
+              sx={{
+                width: 64,
+                height: 64,
+                flexShrink: 0,
+              }}
+            >
+              <UploadingPhotoCard item={item} />
             </Box>
           ))}
         </Box>
@@ -214,19 +364,20 @@ function PhotoCard({
       onClick={() => onOpen(photo)}
     >
       <Box
-        component="img"
-        src={photoSrc(photo.url)}
-        alt={photo.caption ?? 'תמונה מהחתונה'}
-        loading="lazy"
         sx={{
           width: '100%',
           aspectRatio: '1',
-          objectFit: 'cover',
-          display: 'block',
-          transition: 'transform 0.35s ease',
-          '&:hover': { transform: 'scale(1.04)' },
+          overflow: 'hidden',
+          '&:hover img': {
+            transform: 'scale(1.04)',
+          },
         }}
-      />
+      >
+        <ProgressiveImage
+          src={photoSrc(photo.url)}
+          alt={photo.caption ?? 'תמונה מהחתונה'}
+        />
+      </Box>
       <Box
         sx={{
           position: 'absolute',

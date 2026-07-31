@@ -13,13 +13,11 @@ import requestRoutes from './routes/weddingRequest.routes';
 import whatsappRoutes from './routes/whatsapp.routes';
 import weddingMessageScheduleRoutes from './routes/weddingMessageSchedule.routes';
 import { pool } from './db/pool';
-import { initWhatsappScheduler, runWhatsappSchedulerOnce } from './jobs/whatsapp-scheduler.job';
+import { initWhatsappScheduler } from './jobs/whatsapp-scheduler.job';
 import { initWhatsappReconciliationJob } from './jobs/whatsapp-reconciliation.job';
-
 import { errorHandler, notFound } from './middleware/errorHandler';
 import mailerRoutes from './routes/mailer.routes';
 import { initWhatsappSchedulePreviewJob } from './jobs/whatsapp-schedule-preview-job';
-import { initWhatsappScheduleNotificationJob } from './jobs/whatsapp-schedule-notification.job';
 
 dotenv.config();
 

@@ -4,7 +4,7 @@ import { sendEmail } from '../services/mailer.service';
 import { getReconciliationIssues } from '../services/weddingMessageLog.service';
 import { ISRAEL_TIMEZONE } from '../utils/scheduling.util';
 
-const DEFAULT_CRON = process.env.WHATSAPP_RECONCILIATION_CRON ?? '0 20 * * *';
+const DEFAULT_CRON = process.env.WHATSAPP_RECONCILIATION_CRON ?? '0 18 * * *';
 // תוקן: דגל נפרד מה-scheduler הראשי, כדי שאפשר לכבות אחד בלי השני
 const ENABLED = String(process.env.WHATSAPP_RECONCILIATION_ENABLED ?? 'true').toLowerCase() === 'true';
 

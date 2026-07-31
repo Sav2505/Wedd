@@ -233,6 +233,10 @@ export async function sendFirstContact(requestId: number): Promise<{
     };
 }
 
+function getFirstName(fullName: string): string {
+    return fullName.trim().split(/\s+/)[0] || '';
+}
+
 export async function openWedding(
     requestId: number,
     openedBy: string,
@@ -270,6 +274,10 @@ export async function openWedding(
 
         let brideName = normalizeWhitespace(request.bride_name);
         let groomName = normalizeWhitespace(request.groom_name);
+
+        const brideFirstName = getFirstName(brideName);
+        const groomFirstName = getFirstName(groomName);
+
         const phone = request.phone_number.trim();
 
         // const existingCouples = await client.query<{ id: string }>(
@@ -298,8 +306,8 @@ export async function openWedding(
             RETURNING id
             `,
             [
-                brideName,
-                groomName,
+                brideFirstName,
+                groomFirstName,
                 request.wedding_date,
             ],
         );

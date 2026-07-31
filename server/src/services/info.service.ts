@@ -85,8 +85,17 @@ export async function updateWeddingInfo(
 
   for (const key of allowed) {
     if (key in data && data[key] !== undefined) {
+      let value = data[key];
+
+      if (
+        (key === 'wedding_time' || key === 'wedding_canpoy_time') &&
+        value === ''
+      ) {
+        value = null;
+      }
+
       sets.push(`${key} = $${idx++}`);
-      values.push(data[key]);
+      values.push(value);
     }
   }
 

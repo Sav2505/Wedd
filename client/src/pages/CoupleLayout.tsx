@@ -23,6 +23,10 @@ import TaskManagementPage from './couple/TaskManagementPage';
 import WeddingRequestsAdminPage from './couple/WeddingRequestsAdminPage';
 import { useWeddingInfo } from '../hooks/useWeddingInfo';
 
+function getFirstName(fullName: string): string {
+  return fullName.trim().split(/\s+/)[0] || '';
+}
+
 // ─── Tab config ──────────────────────────────────────────────
 
 const BASE_TABS = [
@@ -229,7 +233,9 @@ function OrnamentalHeader({
               lineHeight: 1.2,
             }}
           >
-            {info ? `${info.bride_name} & ${info.groom_name}` : 'החתונה שלנו 💍'}
+            {info
+              ? `${getFirstName(info.bride_name)} & ${getFirstName(info.groom_name)}`
+              : 'החתונה שלנו 💍'}
           </Typography>
           {info?.wedding_date && (
             <Typography sx={{ fontSize: '0.82rem', color: '#A08070', mt: 0.4, fontWeight: 500, letterSpacing: 0.3 }}>

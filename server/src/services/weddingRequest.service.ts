@@ -195,7 +195,7 @@ export async function sendFirstContact(requestId: number): Promise<{
     const template = buildFirstContactBitTemplate({
         brideName: request.bride_name,
         groomName: request.groom_name,
-        amountNis: 149,
+        amountNis: Number(process.env.PRICE) ?? 179,
         bitPhone: 'XXX',
     });
 

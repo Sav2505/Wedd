@@ -86,7 +86,7 @@ function buildGuestUrl(weddingId: number, fullName: string, phone: string): stri
 
 // יוצר שורת schedule לכל חתונה שעדיין אין לה אחת - עובד על כל החתונות, לא רק wedding_id=1
 async function ensureScheduleRowsExist(): Promise<void> {
-  const result = await pool.query(
+  await pool.query(
     `INSERT INTO wedding_message_schedule (wedding_id)
      SELECT id FROM wedding_info
      ON CONFLICT (wedding_id) DO NOTHING
@@ -138,7 +138,7 @@ async function getEligibleGuests(
 
   // בסביבת בדיקות (לא IS_PROD) - שולחים אך ורק לאיש הבדיקה, בתוך אותה חתונה
   const testFilter = !isProd
-    ? `AND g.phone LIKE '%${TEST_PHONE_SUFFIX}' AND TRIM(g.first_name) = '${TEST_FIRST_NAME}'`
+    ? `AND g.phone LIKE '%${TEST_PHONE_SUFFIX}' AND TRIM(g.first_name) = '${TEST_FIRST_NAME} LIMIT 1'`
     : '';
 
   const query = `SELECT
@@ -229,7 +229,6 @@ async function processTemplateForWedding(
     return;
   }
 
-
   const guests = await getEligibleGuests(wedding.id, templateName, isProd);
   const invitationMediaId =
     templateName === 'wedding_confirmation'
@@ -238,6 +237,7 @@ async function processTemplateForWedding(
 
   if (guests.length === 0) {
     console.log(`[WhatsApp Scheduler] 🧪 No eligible guests for wedding_id=${wedding.id}, template=${templateName} - nothing to send.`);
+    return;
   }
 
   for (let i = 0; i < guests.length; i += BATCH_SIZE) {
@@ -404,11 +404,15 @@ Not coming: ${stats.not_coming}
    Recipients: ${stats.total}
 
 2) wedding_reminder
-   ${DateTime.fromISO(computed.reminderSendAt).toFormat('dd/LL/yyyy HH:mm')}
+   ${DateTime.fromISO(computed.reminderSendAt)
+        .setZone(ISRAEL_TIMEZONE)
+        .toFormat('dd/LL/yyyy HH:mm')}
    Recipients: ${Number(stats.pending) + Number(stats.not_coming)}
 
 3) wedding_day_before
-   ${DateTime.fromISO(computed.dayBeforeSendAt).toFormat('dd/LL/yyyy HH:mm')}
+   ${DateTime.fromISO(computed.reminderSendAt)
+        .setZone(ISRAEL_TIMEZONE)
+        .toFormat('dd/LL/yyyy HH:mm')}
    Recipients: ${stats.total}
 
 -------------------------------------------------------
@@ -443,12 +447,16 @@ Not coming: ${stats.not_coming}
           </tr>
           <tr>
             <td>wedding_reminder</td>
-            <td>${DateTime.fromISO(computed.reminderSendAt).toFormat('dd/LL/yyyy HH:mm')}</td>
+            <td>${DateTime.fromISO(computed.invitationSendAt)
+        .setZone(ISRAEL_TIMEZONE)
+        .toFormat('dd/LL/yyyy HH:mm')}</td>
             <td>${Number(stats.pending) + Number(stats.not_coming)}</td>
           </tr>
           <tr>
             <td>wedding_day_before</td>
-            <td>${DateTime.fromISO(computed.dayBeforeSendAt).toFormat('dd/LL/yyyy HH:mm')}</td>
+            <td>${DateTime.fromISO(computed.invitationSendAt)
+        .setZone(ISRAEL_TIMEZONE)
+        .toFormat('dd/LL/yyyy HH:mm')}</td>
             <td>${stats.total}</td>
           </tr>
         </table>

@@ -333,6 +333,7 @@ export default function WhatsAppScheduleModal({ open, weddingId, weddingDate, on
                                 </Button>
                                 <Collapse in={previewOpen.reminder} timeout="auto" unmountOnExit>
                                     <WhatsAppBubblePreview
+                                        image={'none'}
                                         header="רק תזכורת קטנה... 💛"
                                         body={
                                             `שלום יואב 😊
@@ -391,6 +392,7 @@ export default function WhatsAppScheduleModal({ open, weddingId, weddingDate, on
                                 </Button>
                                 <Collapse in={previewOpen.dayBefore} timeout="auto" unmountOnExit>
                                     <WhatsAppBubblePreview
+                                        image={'none'}
                                         header="💍✨ מחר אנחנו מתחתנים ✨💍"
                                         body={
                                             `שלום יואב ❤️
@@ -543,7 +545,9 @@ function WhatsAppBubblePreview({ header, body, buttonLabel, image }: { header: s
                 }}
             >
                 <Box sx={{ p: 1.5, pb: 1 }}>
-                    {image ? (
+                    {image === 'none' ? (
+                        <></>
+                    ) : image ? (
                         <Box
                             component="img"
                             src={image}

@@ -28,8 +28,6 @@ async function sendViaGmailSmtp(input: MailInput): Promise<MailResult> {
     },
   });
 
-  await transporter.verify();
-
   const result = await transporter.sendMail({
     from: {
       name: 'WedFlow',

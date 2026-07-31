@@ -14,7 +14,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { getPhotos, uploadPhoto, deletePhoto } from '../services/photos.service';
 import { Photo } from '../types/domain';
 import { useAppSelector } from '../store';
-import { getWeddingInfo } from '../services/info.service';
+import { useWeddingId } from '../hooks/useWeddingId';
 
 // Base URL for binary photo endpoints (/photos/:id/thumb|full)
 // On prod these are served by the API server (VITE_API_URL), not the current origin
@@ -353,7 +353,7 @@ export default function PhotosTab() {
   const [error, setError] = useState<string | null>(null);
   const [lightbox, setLightbox] = useState<Photo | null>(null);
   const [queue, setQueue] = useState<QueueItem[]>([]);
-  const [weddingId, setWeddingId] = useState<number | null>(null);
+  const weddingId = useWeddingId();
 
   const uploading = queue.some((q) => q.status === 'pending' || q.status === 'uploading');
 
@@ -373,19 +373,6 @@ export default function PhotosTab() {
       if (!silent) setLoading(false);
     }
   }, [weddingId]);
-
-  useEffect(() => {
-    const init = async () => {
-      try {
-        const info = await getWeddingInfo();
-        setWeddingId(info.id);
-      } catch {
-        setError('שגיאה בטעינת פרטי החתונה');
-      }
-    };
-
-    init();
-  }, []);
 
   useEffect(() => {
     if (weddingId) {

@@ -398,7 +398,9 @@ Pending: ${stats.pending}
 Not coming: ${stats.not_coming}
 
 1) wedding_confirmation
-   ${DateTime.fromISO(computed.invitationSendAt).toFormat('dd/LL/yyyy HH:mm')}
+   ${DateTime.fromISO(computed.invitationSendAt)
+        .setZone(ISRAEL_TIMEZONE)
+        .toFormat('dd/LL/yyyy HH:mm')}
    Recipients: ${stats.total}
 
 2) wedding_reminder
@@ -434,7 +436,9 @@ Not coming: ${stats.not_coming}
           </tr>
           <tr>
             <td>wedding_confirmation</td>
-            <td>${DateTime.fromISO(computed.invitationSendAt).toFormat('dd/LL/yyyy HH:mm')}</td>
+            <td>${DateTime.fromISO(computed.invitationSendAt)
+        .setZone(ISRAEL_TIMEZONE)
+        .toFormat('dd/LL/yyyy HH:mm')}</td>
             <td>${stats.total}</td>
           </tr>
           <tr>

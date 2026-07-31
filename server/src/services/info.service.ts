@@ -63,7 +63,16 @@ export type WeddingInfoUpdate = Partial<
   >
 >;
 
-export async function updateWeddingInfo(data: WeddingInfoUpdate): Promise<WeddingInfo> {
+/**
+ * IMPORTANT: weddingId is now a REQUIRED parameter, not hardcoded.
+ * Previously this always wrote to `WHERE id = 1`, meaning every couple
+ * in the system - regardless of which wedding they were editing - had
+ * their changes silently written to wedding #1, overwriting each other.
+ */
+export async function updateWeddingInfo(
+  data: WeddingInfoUpdate,
+  weddingId: number,
+): Promise<WeddingInfo> {
   const allowed = [
     'bride_name', 'groom_name', 'wedding_date', 'wedding_time', 'wedding_canpoy_time',
     'venue_name', 'venue_address', 'venue_lat', 'venue_lng',
@@ -84,22 +93,34 @@ export async function updateWeddingInfo(data: WeddingInfoUpdate): Promise<Weddin
   if (sets.length === 0) throw new Error('אין שדות לעדכון');
 
   sets.push(`updated_at = NOW()`);
-  values.push(1); // WHERE id = $N
+  values.push(weddingId); // WHERE id = $N — now the REAL wedding id, not a constant
 
   const { rows } = await pool.query<WeddingInfo>(
     `UPDATE wedding_info SET ${sets.join(', ')} WHERE id = $${idx} RETURNING *`,
     values,
   );
 
+  if (rows.length === 0) {
+    throw createError('פרטי החתונה לא נמצאו', 404);
+  }
+
   return rows[0];
 }
 
-export async function updateHeroImage(filename: string): Promise<WeddingInfo> {
+/**
+ * IMPORTANT: weddingId is now a REQUIRED parameter, not hardcoded to `id = 1`.
+ */
+export async function updateHeroImage(filename: string, weddingId: number): Promise<WeddingInfo> {
   const heroUrl = `/uploads/${filename}`;
   const { rows } = await pool.query<WeddingInfo>(
-    `UPDATE wedding_info SET hero_image_url = $1, updated_at = NOW() WHERE id = 1 RETURNING *`,
-    [heroUrl],
+    `UPDATE wedding_info SET hero_image_url = $1, updated_at = NOW() WHERE id = $2 RETURNING *`,
+    [heroUrl, weddingId],
   );
+
+  if (rows.length === 0) {
+    throw createError('פרטי החתונה לא נמצאו', 404);
+  }
+
   return rows[0];
 }
 
@@ -108,5 +129,10 @@ export async function updatePublishTables(toPublishTables: boolean, weddingId: n
     `UPDATE wedding_info SET is_tables_published = $1, updated_at = NOW() WHERE id = $2 RETURNING *`,
     [toPublishTables, weddingId],
   );
+
+  if (rows.length === 0) {
+    throw createError('פרטי החתונה לא נמצאו', 404);
+  }
+
   return rows[0];
 }

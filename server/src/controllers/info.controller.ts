@@ -8,13 +8,13 @@ export async function getInfo(
   next: NextFunction
 ): Promise<void> {
   try {
-    const guestId = req.query.guestId as string;
+    const weddingId = req.query.weddingId as string;
 
-    if (!guestId) {
-      throw createError('לא נמצא מזהה משתמש', 400);
+    if (!weddingId || Number.isNaN(Number(weddingId))) {
+      throw createError('לא נמצא מזהה חתונה', 400);
     }
 
-    const info = await infoService.getWeddingInfoByGuestId(guestId);
+    const info = await infoService.getWeddingInfoByWeddingId(Number(weddingId));
 
     res.status(200).json({
       success: true,
@@ -28,7 +28,17 @@ export async function getInfo(
 
 export async function updateInfo(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    const updated = await infoService.updateWeddingInfo(req.body as infoService.WeddingInfoUpdate);
+    const weddingId = req.body.wedding_id as number;
+
+    if (!weddingId) {
+      throw createError('לא נמצא מזהה חתונה', 400);
+    }
+
+    const { wedding_id, ...updateData } = req.body;
+    const updated = await infoService.updateWeddingInfo(
+      updateData as infoService.WeddingInfoUpdate,
+      weddingId,
+    );
     res.status(200).json({ success: true, data: updated });
   } catch (err) {
     next(err);
@@ -52,7 +62,13 @@ export async function uploadHero(req: Request, res: Response, next: NextFunction
   try {
     const file = req.file;
     if (!file) return next(createError('קובץ תמונה הוא שדה חובה', 400));
-    const updated = await infoService.updateHeroImage(file.filename);
+
+    const weddingId = Number(req.body.wedding_id);
+    if (!weddingId || Number.isNaN(weddingId)) {
+      throw createError('לא נמצא מזהה חתונה', 400);
+    }
+
+    const updated = await infoService.updateHeroImage(file.filename, weddingId);
     res.status(200).json({ success: true, data: updated });
   } catch (err) {
     next(err);

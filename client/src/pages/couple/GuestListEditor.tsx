@@ -55,7 +55,7 @@ import {
   updateGuestGroup,
   // sendWhatsappInvitation,
 } from '../../services/guests.service';
-import { getWeddingInfo } from '../../services/info.service';
+import { useWeddingInfo } from '../../hooks/useWeddingInfo';
 
 type SideOption = 'חתן' | 'כלה' | 'שניהם' | null;
 
@@ -216,7 +216,7 @@ export default function GuestListEditor() {
   const [rsvpListLoadingStatus, setRsvpListLoadingStatus] = useState<RsvpStatus | null>(null);
   const [searchLoading, setSearchLoading] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [info, setInfo] = useState<{ id: number; bride_name?: string; groom_name?: string, wedding_date?: string } | null>(null);
+  const { info } = useWeddingInfo();
   const [whatsappScheduleOpen, setWhatsappScheduleOpen] = useState(false);
 
   // --- Post-save feedback: success toast + highlight/scroll to the affected guest ---
@@ -232,10 +232,6 @@ export default function GuestListEditor() {
     } else {
       guestRowRefs.current.delete(id);
     }
-  }, []);
-
-  useEffect(() => {
-    getWeddingInfo().then(setInfo).catch(() => {/* non-critical */ });
   }, []);
 
   const searchRef = useRef(search);

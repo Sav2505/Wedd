@@ -22,16 +22,18 @@ export async function login(req: Request, res: Response, next: NextFunction): Pr
     }
 
     const { fullName, lastFourDigits, weddingId } = parsed.data;
+    const numericWeddingId = weddingId ? Number(weddingId) : undefined;
+
     let guest;
 
-    if (!weddingId) {
-      guest = await authService.loginGroomOrBride(fullName, lastFourDigits);
+    if (numericWeddingId != null) {
+      // Wedding-scoped login: try guest first, then couple - both filtered by weddingId.
+      guest = await authService.loginGuest(fullName, lastFourDigits, numericWeddingId);
     } else {
-      guest = await authService.loginGuest(
-        fullName,
-        lastFourDigits,
-        Number(weddingId),
-      );
+      // No weddingId available (manual entry on the generic /login page).
+      // This path is effectively couple-only in practice, but we still
+      // fall back to a global guest search inside the service for safety.
+      guest = await authService.loginGroomOrBride(fullName, lastFourDigits);
     }
 
     res.status(200).json({ success: true, data: { guest } });

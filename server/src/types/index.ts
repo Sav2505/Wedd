@@ -17,6 +17,7 @@ export interface Guest {
   rsvp_updated_at: string | null;
   created_at: string;
   gift_amount: number | null;
+  wedding_id: number;
 }
 
 export interface GuestGroup {

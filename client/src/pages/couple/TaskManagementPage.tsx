@@ -12,7 +12,7 @@ import {
 import AddIcon from '@mui/icons-material/Add';
 import AssignmentOutlinedIcon from '@mui/icons-material/AssignmentOutlined';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ManagedGuest, TaskFormData, WeddingInfo, WeddingTask } from '../../types/domain';
+import { ManagedGuest, TaskFormData, WeddingTask } from '../../types/domain';
 import { createTask, deleteTask, getTasks, updateTask } from '../../services/tasks.service';
 import { getGuests, updateGuest } from '../../services/guests.service';
 import TaskSummaryCards from './tasks/TaskSummaryCards';
@@ -20,8 +20,8 @@ import TaskTable from './tasks/TaskTable';
 import TaskDialog from './tasks/TaskDialog';
 import BudgetAnalytics from './tasks/BudgetAnalytics';
 import { getEffectivePartySize } from '../../utils/effectiveAttendance';
-import { getWeddingInfo } from '../../services/info.service';
 import GuestGiftsTable from './tasks/GuestsGiftsTable';
+import { useWeddingInfo } from '../../hooks/useWeddingInfo';
 
 // ─── Dialog mode ─────────────────────────────────────────────
 
@@ -42,7 +42,7 @@ export default function TaskManagementPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
-  const [info, setInfo] = useState<WeddingInfo | null>(null);
+  const { info } = useWeddingInfo();
 
   const [dialogMode, setDialogMode] = useState<DialogMode>('closed');
   const [selectedTask, setSelectedTask] = useState<WeddingTask | null>(null);
@@ -54,11 +54,6 @@ export default function TaskManagementPage() {
   }
 
   // ─── Load data ───────────────────────────────────────────
-
-  useEffect(() => {
-    getWeddingInfo().then(setInfo).catch(() => { });
-  }, []);
-
   const reload = useCallback(async () => {
     if (!info?.id) return;
 

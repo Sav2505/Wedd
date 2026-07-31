@@ -24,7 +24,8 @@ import PublicIcon from '@mui/icons-material/Public';
 import LockIcon from '@mui/icons-material/Lock';
 import FloorPlanCanvas from '../../components/FloorPlanCanvas';
 import { WeddingTableWithGuests } from '../../types/domain';
-import { getWeddingInfo, updateWeddingInfo, updatePublishTables } from '../../services/info.service';
+import { updatePublishTables, updateWeddingInfo } from '../../services/info.service';
+import { useWeddingInfo } from '../../hooks/useWeddingInfo';
 import {
     getAllTables,
     createTable,
@@ -83,6 +84,8 @@ function getGuestChipStyle(rsvpStatus?: 'PENDING' | 'COMING' | 'NOT_COMING') {
 // ─── Component ───────────────────────────────────────────────
 
 export default function SeatingEditor() {
+    const { info } = useWeddingInfo();
+    const weddingId = info?.id ?? null;
     const [tables, setTables] = useState<WeddingTableWithGuests[]>([]);
     const [unassigned, setUnassigned] = useState<UnassignedGuest[]>([]);
     const [loading, setLoading] = useState(true);
@@ -118,7 +121,6 @@ export default function SeatingEditor() {
     const [editCap, setEditCap] = useState(10);
     const [guestToAdd, setGuestToAdd] = useState<UnassignedGuest | null>(null);
     const [confirmedGuestToAdd, setConfirmedGuestToAdd] = useState<UnassignedGuest | null>(null);
-    const [weddingId, setWeddingId] = useState<number | null>(null);
 
     // ── Load data ─────────────────────────────────────────────
 
@@ -133,24 +135,11 @@ export default function SeatingEditor() {
     }, [weddingId]);
 
     useEffect(() => {
-        const init = async () => {
-            try {
-                const info = await getWeddingInfo();
-
-                setWeddingId(info.id);
-
-                if (info.stage_label?.trim()) {
-                    setStageLabel(info.stage_label);
-                    setIsPublishedTables(info.is_tables_published);
-                    window.localStorage.setItem(STAGE_LABEL_STORAGE_KEY, info.stage_label);
-                }
-            } catch {
-                setError('שגיאה בטעינת פרטי חתונה');
-            }
-        };
-
-        init();
-    }, []);
+        if (!info?.stage_label?.trim()) return;
+        setStageLabel(info.stage_label);
+        setIsPublishedTables(info.is_tables_published);
+        window.localStorage.setItem(STAGE_LABEL_STORAGE_KEY, info.stage_label);
+    }, [info]);
 
     useEffect(() => {
         if (!weddingId) return;
@@ -163,7 +152,7 @@ export default function SeatingEditor() {
 
         load();
     }, [weddingId, reload]);
-    
+
     // ── Sync edit fields when selection changes ───────────────
 
     useEffect(() => {
@@ -205,7 +194,8 @@ export default function SeatingEditor() {
     async function handleSaveStageLabelToServer() {
         setIsSavingLabel(true);
         try {
-            await updateWeddingInfo({ stage_label: stageLabel.trim() || 'חופה' });
+            if (!weddingId) return;
+            await updateWeddingInfo({ stage_label: stageLabel.trim() || 'חופה' }, weddingId);
             window.localStorage.setItem(STAGE_LABEL_STORAGE_KEY, stageLabel.trim() || 'חופה');
             setLabelSaved(true);
             setTimeout(() => setLabelSaved(false), 2500);
@@ -223,7 +213,8 @@ export default function SeatingEditor() {
         setIsSavingPublish(true);
 
         try {
-            await updatePublishTables(nextValue);
+            if (!weddingId) return;
+            await updatePublishTables(nextValue, weddingId);
         } catch {
             setIsPublishedTables(!nextValue);
             setError('שגיאה בעדכון מצב פרסום ההושבה');

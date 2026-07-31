@@ -13,7 +13,6 @@ import LogoutIcon from '@mui/icons-material/LogoutOutlined';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useAppDispatch, useAppSelector } from '../store';
 import { logout } from '../store/authSlice';
-import { getWeddingInfo } from '../services/info.service';
 import { WeddingInfo } from '../types/domain';
 import WeddingInfoEditor from './couple/WeddingInfoEditor';
 import MessageEditor from './couple/MessageEditor';
@@ -22,6 +21,7 @@ import GuestListEditor from './couple/GuestListEditor';
 import PhotosTab from './PhotosTab';
 import TaskManagementPage from './couple/TaskManagementPage';
 import WeddingRequestsAdminPage from './couple/WeddingRequestsAdminPage';
+import { useWeddingInfo } from '../hooks/useWeddingInfo';
 
 // ─── Tab config ──────────────────────────────────────────────
 
@@ -281,6 +281,7 @@ function OrnamentalHeader({
 // ─── Main ────────────────────────────────────────────────────
 
 export default function CoupleLayout() {
+  const { info } = useWeddingInfo();
   const dispatch = useAppDispatch();
   const guest = useAppSelector((s) => s.auth.guest);
   const isDanHavivAdmin = guest?.role === 'couple' && guest?.full_name?.trim() === 'דן חביב';
@@ -292,11 +293,6 @@ export default function CoupleLayout() {
     : BASE_PANELS;
 
   const [activeTab, setActiveTab] = useState(0);
-  const [info, setInfo] = useState<WeddingInfo | null>(null);
-
-  useEffect(() => {
-    getWeddingInfo().then(setInfo).catch(() => { /* non-critical */ });
-  }, []);
 
   useEffect(() => {
     if (activeTab >= tabs.length) {

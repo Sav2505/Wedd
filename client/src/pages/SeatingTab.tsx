@@ -10,14 +10,17 @@ import StarIcon from '@mui/icons-material/Star';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAppSelector } from '../store';
 import { getAllTables } from '../services/tables.service';
-import { getWeddingInfo } from '../services/info.service';
 import { WeddingTableWithGuests } from '../types/domain';
 import FloorPlanCanvas from '../components/FloorPlanCanvas';
 import { getEffectivePartySize } from '../utils/effectiveAttendance';
+import { useWeddingId } from '../hooks/useWeddingId';
+import { useWeddingInfo } from '../hooks/useWeddingInfo';
 
 const ENTRANCE_POSITION_STORAGE_KEY = 'wedding.floorPlan.entrancePosition';
 
 export default function SeatingTab() {
+  const weddingId = useWeddingId();
+  const { info } = useWeddingInfo();
   const guest = useAppSelector((s) => s.auth.guest);
   const [isTablesPublished, setIsTablesPublished] = useState(true);
   const [tables, setTables] = useState<WeddingTableWithGuests[]>([]);
@@ -37,15 +40,17 @@ export default function SeatingTab() {
 
     const fetchData = async () => {
       try {
-        const info = await getWeddingInfo();
-        const tables = await getAllTables(info.id);
+        if (!weddingId || !info) return;
+
+        const tables = await getAllTables(weddingId);
 
         setTables(tables);
 
         if (info.stage_label?.trim()) {
           setStageLabel(info.stage_label);
-          setIsTablesPublished(!!info.is_tables_published);
         }
+
+        setIsTablesPublished(!!info.is_tables_published);
       } catch {
         setError('לא ניתן לטעון את מפת הסידור');
       } finally {
@@ -53,7 +58,7 @@ export default function SeatingTab() {
       }
     };
     fetchData();
-  }, []);
+  }, [weddingId, info]);
 
   // const ownTable = tables.find(t => t.table_number === guest?.table_number) ?? null;
 

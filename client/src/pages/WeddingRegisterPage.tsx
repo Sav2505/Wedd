@@ -321,7 +321,7 @@ export default function WeddingRegisterPage() {
                                             <TextField
                                                 fullWidth
                                                 label="שם הכלה"
-                                                placeholder="לדוגמה: מיכל"
+                                                placeholder="לדוגמה: מיכל טולדנו"
                                                 value={brideName}
                                                 onChange={(e) => setBrideName(e.target.value)}
                                                 disabled={loading}
@@ -341,7 +341,7 @@ export default function WeddingRegisterPage() {
                                             <TextField
                                                 fullWidth
                                                 label="שם החתן"
-                                                placeholder="לדוגמה: יוסי"
+                                                placeholder="לדוגמה: עידן אלון"
                                                 value={groomName}
                                                 onChange={(e) => setGroomName(e.target.value)}
                                                 disabled={loading}

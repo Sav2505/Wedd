@@ -18,8 +18,9 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { heIL } from '@mui/x-date-pickers/locales';
 import dayjs from 'dayjs';
 import 'dayjs/locale/he';
-import { getWeddingInfo, updateWeddingInfo, WeddingInfoUpdate } from '../../services/info.service';
-import { WeddingInfo } from '../../types/domain';
+import { updateWeddingInfo, WeddingInfoUpdate } from '../../services/info.service';
+import { useWeddingInfo } from '../../hooks/useWeddingInfo';
+import { useWeddingId } from '../../hooks/useWeddingId';
 
 dayjs.locale('he');
 
@@ -119,8 +120,8 @@ export const datePickerSx = {
 // ─── Main ────────────────────────────────────────────────────
 
 export default function WeddingInfoEditor() {
-  const [info, setInfo] = useState<WeddingInfo | null>(null);
-  const [loading, setLoading] = useState(true);
+  const weddingId = useWeddingId();
+  const { info, loading, error: fetchError, refetch } = useWeddingInfo();
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
@@ -129,37 +130,36 @@ export default function WeddingInfoEditor() {
   const [form, setForm] = useState<WeddingInfoUpdate>({});
 
   useEffect(() => {
-    getWeddingInfo()
-      .then((d) => {
-        setInfo(d);
-        setForm({
-          bride_name: d.bride_name,
-          groom_name: d.groom_name,
-          wedding_date: d.wedding_date?.slice(0, 10) ?? '',
-          wedding_time: d.wedding_time?.slice(0, 5) ?? '',
-          wedding_canpoy_time: d.wedding_canpoy_time?.slice(0, 5) ?? '',
-          venue_name: d.venue_name,
-          venue_address: d.venue_address,
-          venue_lat: d.venue_lat != null ? Number(d.venue_lat) : null,
-          venue_lng: d.venue_lng != null ? Number(d.venue_lng) : null,
-          dress_code: d.dress_code ?? '',
-          notes: d.notes ?? '',
-        });
-      })
-      .catch(() => setError('שגיאה בטעינת הנתונים'))
-      .finally(() => setLoading(false));
-  }, []);
+    if (!info) return;
+    setForm({
+      bride_name: info.bride_name,
+      groom_name: info.groom_name,
+      wedding_date: info.wedding_date?.slice(0, 10) ?? '',
+      wedding_time: info.wedding_time?.slice(0, 5) ?? '',
+      wedding_canpoy_time: info.wedding_canpoy_time?.slice(0, 5) ?? '',
+      venue_name: info.venue_name,
+      venue_address: info.venue_address,
+      venue_lat: info.venue_lat != null ? Number(info.venue_lat) : null,
+      venue_lng: info.venue_lng != null ? Number(info.venue_lng) : null,
+      dress_code: info.dress_code ?? '',
+      notes: info.notes ?? '',
+    });
+  }, [info]);
 
   const set = (key: keyof WeddingInfoUpdate) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setForm((prev) => ({ ...prev, [key]: e.target.value }));
 
   async function handleSave() {
+    if (weddingId == null) {
+      setError('לא נמצא מזהה חתונה');
+      return;
+    }
     setSaving(true);
     setError('');
     setSuccess(false);
     try {
-      const updated = await updateWeddingInfo(form);
-      setInfo(updated);
+      await updateWeddingInfo(form, weddingId);
+      refetch();
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
     } catch (err) {
@@ -177,8 +177,8 @@ export default function WeddingInfoEditor() {
     );
   }
 
-  if (!info && error) {
-    return <Alert severity="error" sx={{ m: 2 }}>{error}</Alert>;
+  if (!info && fetchError) {
+    return <Alert severity="error" sx={{ m: 2 }}>{fetchError}</Alert>;
   }
 
   return (

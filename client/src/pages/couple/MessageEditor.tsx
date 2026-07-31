@@ -3,10 +3,12 @@ import {
   Box, Typography, TextField, Button, CircularProgress,
   Alert, Collapse,
 } from '@mui/material';
-import FavoriteIcon     from '@mui/icons-material/Favorite';
+import FavoriteIcon from '@mui/icons-material/Favorite';
 import SaveOutlinedIcon from '@mui/icons-material/SaveOutlined';
-import { motion }       from 'framer-motion';
-import { getWeddingInfo, updateWeddingInfo } from '../../services/info.service';
+import { motion } from 'framer-motion';
+import { updateWeddingInfo } from '../../services/info.service';
+import { useWeddingInfo } from '../../hooks/useWeddingInfo';
+import { useWeddingId } from '../../hooks/useWeddingId';
 
 // ─── Floating sparkle ────────────────────────────────────────
 
@@ -45,9 +47,9 @@ function PreviewCard({ message }: { message: string }) {
           overflow: 'hidden',
         }}
       >
-        <Sparkle x="5%"  y="10%" delay={0}   />
+        <Sparkle x="5%" y="10%" delay={0} />
         <Sparkle x="90%" y="15%" delay={1.1} />
-        <Sparkle x="50%" y="5%"  delay={2.3} />
+        <Sparkle x="50%" y="5%" delay={2.3} />
 
         <Typography
           sx={{
@@ -86,25 +88,24 @@ function PreviewCard({ message }: { message: string }) {
 // ─── Main ─────────────────────────────────────────────────────
 
 export default function MessageEditor() {
+  const weddingId = useWeddingId();
+  const { info, loading: infoLoading, error: fetchError } = useWeddingInfo();
   const [message, setMessage] = useState('');
-  const [loading, setLoading] = useState(true);
-  const [saving,  setSaving]  = useState(false);
+  const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
-  const [error,   setError]   = useState('');
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    getWeddingInfo()
-      .then((d) => setMessage(d.message ?? ''))
-      .catch(() => setError('שגיאה בטעינת ההודעה'))
-      .finally(() => setLoading(false));
-  }, []);
+    if (info) setMessage(info.message ?? '');
+  }, [info]);
 
   async function handleSave() {
+    if (!weddingId) return;
     setSaving(true);
     setError('');
     setSuccess(false);
     try {
-      await updateWeddingInfo({ message });
+      await updateWeddingInfo({ message }, weddingId);
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
     } catch (err) {
@@ -114,7 +115,7 @@ export default function MessageEditor() {
     }
   }
 
-  if (loading) {
+  if (infoLoading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
         <CircularProgress sx={{ color: '#C9A84C' }} />
@@ -150,8 +151,8 @@ export default function MessageEditor() {
         <Collapse in={success}>
           <Alert severity="success" sx={{ mb: 2 }}>ההודעה נשמרה בהצלחה ✓</Alert>
         </Collapse>
-        <Collapse in={Boolean(error)}>
-          <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>
+        <Collapse in={Boolean(error || fetchError)}>
+          <Alert severity="error" sx={{ mb: 2 }}>{error || fetchError}</Alert>
         </Collapse>
 
         <TextField

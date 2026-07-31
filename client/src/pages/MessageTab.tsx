@@ -1,11 +1,9 @@
-import { useEffect, useState } from 'react';
 import { Box, Typography, Skeleton } from '@mui/material';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import { motion } from 'framer-motion';
-import { getWeddingInfo } from '../services/info.service';
-import { WeddingInfo } from '../types/domain';
 import { useTypewriter } from '../hooks/useTypewriter';
+import { useWeddingInfo } from '../hooks/useWeddingInfo';
 
 // ─── Floating sparkle decoration ────────────────────────────
 
@@ -29,19 +27,15 @@ function Sparkle({
 // ─── Main ───────────────────────────────────────────────────
 
 export default function MessageTab() {
-  const [info, setInfo] = useState<WeddingInfo | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    getWeddingInfo()
-      .then(setInfo)
-      .catch(() => null)
-      .finally(() => setLoading(false));
-  }, []);
-
+  const { info, loading, error } = useWeddingInfo();
   const fallback =
     'אתם המשפחה והחברים הקרובים שלנו, ואנו כל כך שמחים לחגוג איתכם את היום המיוחד הזה. תודה שאתם כאן, ושאתם חלק מהסיפור שלנו. ❤️';
-  const rawMessage = info?.message || fallback;
+
+  const rawMessage =
+    !error && info?.message
+      ? info.message
+      : fallback;
+
   const typed = useTypewriter(loading ? '' : rawMessage, 24, 800);
   const isTyping = !loading && typed.length < rawMessage.length;
   const brideAndGroom =

@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react';
 import {
   Box, Typography, Skeleton, Chip, Divider,
 } from '@mui/material';
@@ -10,11 +9,11 @@ import NoteIcon from '@mui/icons-material/Note';
 import DirectionsCarIcon from '@mui/icons-material/DirectionsCar';
 import MapIcon from '@mui/icons-material/Map';
 import { motion } from 'framer-motion';
-import { getWeddingInfo } from '../services/info.service';
 import { WeddingInfo } from '../types/domain';
 import GoldCard from '../components/GoldCard';
 import CountdownTimer from '../components/CountdownTimer';
 import WeddingRegisterCTA from '../components/WeddingRegisterCTA';
+import { useWeddingInfo } from '../hooks/useWeddingInfo';
 
 // ─── helpers ────────────────────────────────────────────────
 
@@ -184,23 +183,28 @@ function InfoSkeleton() {
 // ─── Main ───────────────────────────────────────────────────
 
 export default function InfoTab() {
-  const [info, setInfo] = useState<WeddingInfo | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const {
+    info,
+    loading,
+    error,
+  } = useWeddingInfo();
 
-  useEffect(() => {
-    getWeddingInfo()
-      .then(setInfo)
-      .catch((e: Error) => setError(e.message))
-      .finally(() => setLoading(false));
-  }, []);
+  if (loading) {
+    return <InfoSkeleton />;
+  }
 
-  if (loading) return <InfoSkeleton />;
-
-  if (error || !info) {
+  if (error) {
     return (
       <Box sx={{ p: 4, textAlign: 'center' }}>
-        <Typography color="error">{error ?? 'שגיאה בטעינה'}</Typography>
+        <Typography color="error">{error}</Typography>
+      </Box>
+    );
+  }
+
+  if (!info) {
+    return (
+      <Box sx={{ p: 4, textAlign: 'center' }}>
+        <Typography color="error">לא נמצאו פרטי חתונה.</Typography>
       </Box>
     );
   }

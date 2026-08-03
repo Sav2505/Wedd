@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Box, Tab, Tabs, Typography, IconButton, Tooltip } from '@mui/material';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import PhotoLibraryOutlinedIcon from '@mui/icons-material/PhotoLibraryOutlined';
@@ -15,9 +15,10 @@ import SeatingTab from './SeatingTab';
 import MessageTab from './MessageTab';
 import AttendanceStatusTab from './AttendanceStatusTab';
 import { useWeddingInfo } from '../hooks/useWeddingInfo';
-import LoadingOverlay from '../components/LoadingOverlay';
-import { getMyRsvp } from '../services/guests.service';
-import { RsvpStatus } from '../types/domain';
+import DramaticWelcomeScreen from '../components/DramaticWelcomeScreen';
+
+// ─── Show welcome screen once per page load ────────────────
+let _welcomeShown = false;
 
 // ─── Tab config ──────────────────────────────────────────────
 
@@ -270,36 +271,16 @@ export default function MainLayout() {
   const { info, loading: infoLoading } = useWeddingInfo();
   const guest = useAppSelector((s) => s.auth.guest);
   const [activeTab, setActiveTab] = useState(0);
-  
-  const [rsvpLoading, setRsvpLoading] = useState(true);
-  const [rsvpData, setRsvpData] = useState<{ status: RsvpStatus; count: number } | null>(null);
+  const [showWelcome, setShowWelcome] = useState(
+    !_welcomeShown && sessionStorage.getItem('wedding.welcomeShown') !== '1'
+  );
 
-  useEffect(() => {
-    let active = true;
-    setRsvpLoading(true);
-    getMyRsvp()
-      .then((data) => {
-        if (active) {
-          setRsvpData({
-            status: data.rsvp_status,
-            count: data.number_of_guests || 1,
-          });
-        }
-      })
-      .catch(() => {
-        // Fallback silently if it fails
-      })
-      .finally(() => {
-        if (active) setRsvpLoading(false);
-      });
-
-    return () => {
-      active = false;
-    };
+  const handleWelcomeComplete = useCallback(() => {
+    _welcomeShown = true;
+    sessionStorage.setItem('wedding.welcomeShown', '1');
+    setShowWelcome(false);
   }, []);
 
-  const totalLoading = infoLoading || rsvpLoading;
-  
   useEffect(() => {
     if (!guest || guest.role !== 'guest' || guest.rsvp_status !== 'PENDING') return;
 
@@ -309,6 +290,16 @@ export default function MainLayout() {
       sessionStorage.removeItem('wedding.forceRsvpGuestId');
     }
   }, [guest]);
+
+  if (showWelcome) {
+    return (
+      <DramaticWelcomeScreen
+        firstName={guest?.full_name?.split(' ')[0] ?? 'אורח/ת'}
+        ready={!infoLoading}
+        onComplete={handleWelcomeComplete}
+      />
+    );
+  }
 
   return (
     <Box
@@ -322,8 +313,6 @@ export default function MainLayout() {
         flexDirection: 'column',
       }}
     >
-      <LoadingOverlay open={totalLoading} message="טוען פרטי אירוע..." />
-
       {/* ── Header ─────────────────────────────────────────── */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
@@ -355,13 +344,12 @@ export default function MainLayout() {
             exit="exit"
           >
             {activeTab === TABS.length - 1
-              ? <AttendanceStatusTab 
-                  initialRsvp={rsvpData}
+              ? <AttendanceStatusTab
                   onSaved={(nextStatus) => {
                     if (nextStatus === 'COMING') {
                       setActiveTab(0);
                     }
-                  }} 
+                  }}
                 />
               : TABS[activeTab].component}
           </motion.div>

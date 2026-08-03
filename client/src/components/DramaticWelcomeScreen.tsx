@@ -1,27 +1,37 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Box, Typography } from '@mui/material';
 import { motion } from 'framer-motion';
 import FallingPetals from './FallingPetals';
 
 interface Props {
   firstName: string;
+  /** Set to true when the app data is ready — triggers the exit animation.
+   *  Defaults to true (immediately ready) for backwards-compatible usage. */
+  ready?: boolean;
   onComplete: () => void;
 }
 
 type Phase = 'enter' | 'exit';
 
-export default function DramaticWelcomeScreen({ firstName, onComplete }: Props) {
+export default function DramaticWelcomeScreen({ firstName, ready = true, onComplete }: Props) {
   const [phase, setPhase] = useState<Phase>('enter');
+  const mountTimeRef = useRef(Date.now());
 
   useEffect(() => {
-    const exitTimer = window.setTimeout(() => setPhase('exit'), 0);
-    const doneTimer = window.setTimeout(() => onComplete(), 0);
+    if (!ready) return;
+    // Ensure the enter animation (~1.35s) has had time to complete before exiting.
+    // If data loads slower than 1.4s, we exit immediately (no extra wait).
+    const elapsed = Date.now() - mountTimeRef.current;
+    const delay = Math.max(0, 1400 - elapsed);
+
+    const exitTimer = window.setTimeout(() => setPhase('exit'), delay);
+    const doneTimer = window.setTimeout(() => onComplete(), delay + 600);
 
     return () => {
       window.clearTimeout(exitTimer);
       window.clearTimeout(doneTimer);
     };
-  }, [onComplete]);
+  }, [ready, onComplete]);
 
   return (
     <Box
@@ -147,7 +157,7 @@ export default function DramaticWelcomeScreen({ firstName, onComplete }: Props) 
             ? { opacity: 0, y: -24, scale: 1.03, filter: 'blur(2px)' }
             : { opacity: 1, y: 0, scale: 1, filter: 'blur(0px)' }
         }
-        transition={{ duration: phase === 'exit' ? 2.2 : 1.35, ease: 'easeOut' }}
+        transition={{ duration: phase === 'exit' ? 0.6 : 1.35, ease: 'easeOut' }}
         style={{ width: '100%', maxWidth: 780, position: 'relative', zIndex: 1 }}
       >
         <Box

@@ -168,7 +168,10 @@ export default function LoginPage() {
     return (
       <DramaticWelcomeScreen
         firstName={greetingName || 'אורח יקר'}
-        onComplete={() => navigate('/', { replace: true })}
+        onComplete={() => {
+          sessionStorage.setItem('wedding.welcomeShown', '1');
+          navigate('/', { replace: true });
+        }}
       />
     );
   }

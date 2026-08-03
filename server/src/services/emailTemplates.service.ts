@@ -847,3 +847,194 @@ color:#B8944A;
     text,
   };
 }
+
+// ---------------------------------------------------------------------------
+// buildTomorrowWhatsappNotificationEmail
+// ---------------------------------------------------------------------------
+
+export interface TomorrowWhatsappScheduledMessage {
+  templateName: 'wedding_confirmation' | 'wedding_reminder' | 'wedding_day_before';
+  sendAt: string;
+  recipientCount: number;
+  messageHeader: string;
+  messageBody: string;
+}
+
+export function buildTomorrowWhatsappNotificationEmail(input: {
+  brideName: string;
+  groomName: string;
+  totalGuests: number;
+  confirmedGuests: number;
+  pendingGuests: number;
+  notComingGuests: number;
+  scheduledMessages: TomorrowWhatsappScheduledMessage[];
+  /** 'מחר' for normal case, 'מחרתיים' when today is Friday and sends fall on Sunday */
+  sendLabel: 'מחר' | 'מחרתיים';
+}): { html: string; text: string; subject: string } {
+  const coupleTitle = `${input.brideName} ו${input.groomName}`;
+  const sl = input.sendLabel;
+  const subject = `💬 ${sl} ישלחו הודעות WhatsApp למוזמנים | ${coupleTitle}`;
+
+  const templateLabels: Record<string, string> = {
+    wedding_confirmation: '📨 הזמנה לחתונה',
+    wedding_reminder: '🔔 תזכורת לאישור הגעה',
+    wedding_day_before: '❤️ הודעת יום לפני החתונה',
+  };
+
+  const messagesHtml = input.scheduledMessages
+    .map((msg) => {
+      const bodyHtml = escapeHtml(msg.messageBody)
+        .split('\n')
+        .map((line) => line.trim())
+        .join('<br>');
+
+      return `
+<div style="margin-bottom:28px;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:10px;">
+    <tr>
+      <td style="padding:10px 14px;background:#FFF8E9;border-right:4px solid #C9A84C;border-radius:8px;">
+        <div style="font-size:15px;font-weight:700;color:#B8944A;">${templateLabels[msg.templateName] ?? msg.templateName}</div>
+        <div style="font-size:13px;color:#777;margin-top:4px;">שליחה: ${escapeHtml(msg.sendAt)} | ${msg.recipientCount} נמענים</div>
+      </td>
+    </tr>
+  </table>
+  <div style="
+    max-width:380px;
+    background:#dcf8c6;
+    border-radius:12px 12px 2px 12px;
+    padding:12px 16px;
+    font-family:Arial,sans-serif;
+    font-size:13.5px;
+    line-height:1.7;
+    color:#111;
+    box-shadow:0 1px 3px rgba(0,0,0,.14);
+    margin-right:auto;
+  ">
+    <div style="font-weight:700;margin-bottom:6px;">${escapeHtml(msg.messageHeader)}</div>
+    <div>${bodyHtml}</div>
+    <div style="
+      margin-top:8px;
+      background:#25d366;
+      color:#fff;
+      border-radius:6px;
+      padding:5px 10px;
+      font-size:12px;
+      font-weight:700;
+      display:inline-block;
+    ">לאישור הגעה ←</div>
+  </div>
+</div>`;
+    })
+    .join('');
+
+  const summaryRowsHtml = input.scheduledMessages
+    .map(
+      (msg) => `
+    <tr>
+      <td style="padding:10px 14px;border-bottom:1px solid #eee;">${templateLabels[msg.templateName] ?? msg.templateName}</td>
+      <td style="padding:10px 14px;border-bottom:1px solid #eee;">${escapeHtml(msg.sendAt)}</td>
+      <td style="padding:10px 14px;border-bottom:1px solid #eee;text-align:center;"><b>${msg.recipientCount}</b></td>
+    </tr>`,
+    )
+    .join('');
+
+  const html = `
+<div dir="rtl" style="margin:0;padding:0;background:#F8F5EF;font-family:Arial,Helvetica,sans-serif;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="padding:32px 16px;">
+<tr><td align="center">
+
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+  style="max-width:620px;background:#fff;border-radius:18px;overflow:hidden;border:1px solid rgba(201,168,76,.28);box-shadow:0 8px 28px rgba(0,0,0,.06);">
+
+<!-- HEADER -->
+<tr>
+  <td align="center" style="background:linear-gradient(135deg,#C9A84C,#B8944A);padding:38px;">
+    <img src="https://weddingsandd.onrender.com/WedFlowIcon.svg" alt="WedFlow" width="70" height="70" style="display:block;border-radius:50%;margin:0 auto;"/>
+    <div style="margin-top:20px;display:inline-block;padding:16px 28px;background:rgba(255,255,255,.18);border-radius:14px;border:1px solid rgba(255,255,255,.25);">
+      <div style="font-size:28px;font-weight:700;color:#fff;">WedFlow</div>
+      <div style="margin-top:4px;font-size:15px;color:#fff;">💬 ${sl} ישלחו הודעות WhatsApp</div>
+    </div>
+  </td>
+</tr>
+
+<!-- BODY -->
+<tr>
+<td style="padding:36px 36px 10px;">
+
+  <h2 style="margin:0 0 16px;font-size:23px;color:#2A2A2A;">שלום ${escapeHtml(coupleTitle)}! 💛</h2>
+
+  <p style="margin:0 0 22px;font-size:15px;line-height:1.9;color:#555;">
+    רצינו להודיע לכם ש${sl} מערכת <b>WedFlow</b> תשלח אוטומטית הודעות WhatsApp למוזמנים שלכם.
+    <br>אין צורך לבצע שום פעולה — אנחנו כבר נדאג לכל השאר ✨
+  </p>
+
+  <h3 style="margin:0 0 12px;font-size:17px;color:#2A2A2A;">📅 הודעות שיישלחו ${sl}</h3>
+  <table style="width:100%;border-collapse:collapse;margin-bottom:28px;">
+    <thead>
+      <tr style="background:#faf5e8;">
+        <th style="padding:10px 14px;text-align:right;font-size:13px;">סוג הודעה</th>
+        <th style="padding:10px 14px;text-align:right;font-size:13px;">שעת שליחה</th>
+        <th style="padding:10px 14px;text-align:center;font-size:13px;">נמענים</th>
+      </tr>
+    </thead>
+    <tbody>${summaryRowsHtml}</tbody>
+  </table>
+
+  <h3 style="margin:0 0 16px;font-size:17px;color:#2A2A2A;">👀 כך תיראה ההודעה למוזמנים שלכם</h3>
+  ${messagesHtml}
+
+  <hr style="margin:28px 0;border:none;border-top:1px solid #eee;">
+
+  <h3 style="margin:0 0 12px;font-size:17px;color:#2A2A2A;">📊 מצב רשימת המוזמנים</h3>
+  <table style="width:100%;font-size:15px;line-height:2.2;">
+    <tr><td>👥 סה"כ מוזמנים</td><td align="left"><b>${input.totalGuests}</b></td></tr>
+    <tr><td>✅ אישרו הגעה</td><td align="left"><b>${input.confirmedGuests}</b></td></tr>
+    <tr><td>⏳ ממתינים לאישור</td><td align="left"><b>${input.pendingGuests}</b></td></tr>
+    <tr><td>❌ לא מגיעים</td><td align="left"><b>${input.notComingGuests}</b></td></tr>
+  </table>
+
+</td>
+</tr>
+
+<!-- FOOTER -->
+<tr>
+  <td align="center" style="padding:28px;background:#FAFAFA;">
+    <p style="margin:0 0 6px;font-size:15px;color:#555;">מאחלים לכם חתונה מרגשת ובלתי נשכחת 💛</p>
+    <p style="margin:0;font-weight:700;color:#B8944A;">צוות WedFlow</p>
+  </td>
+</tr>
+
+</table>
+
+<p style="margin:18px 0 0;font-size:11px;color:#A89A86;text-align:center;">
+  קיבלתם מייל זה כי ${sl} מתוכננת שליחת הודעות WhatsApp לאורחי החתונה שלכם במערכת WedFlow.
+</p>
+
+</td></tr>
+</table>
+</div>
+`;
+
+  const summaryText = input.scheduledMessages
+    .map(
+      (msg) =>
+        `${templateLabels[msg.templateName] ?? msg.templateName}\nשליחה: ${msg.sendAt} | ${msg.recipientCount} נמענים`,
+    )
+    .join('\n\n');
+
+  const text =
+    `שלום ${coupleTitle},\n\n` +
+    `${sl} מערכת WedFlow תשלח הודעות WhatsApp למוזמנים שלכם.\n\n` +
+    `הודעות שיישלחו:\n\n${summaryText}\n\n` +
+    `------------------------\n\n` +
+    `מצב רשימת המוזמנים:\n` +
+    `סה"כ מוזמנים: ${input.totalGuests}\n` +
+    `אישרו: ${input.confirmedGuests}\n` +
+    `ממתינים: ${input.pendingGuests}\n` +
+    `לא מגיעים: ${input.notComingGuests}\n\n` +
+    `אין צורך לבצע שום פעולה.\n` +
+    `המערכת תבצע את השליחה באופן אוטומטי.\n\n` +
+    `WedFlow\nהחתונה שלכם. בלי כאבי ראש.`;
+
+  return { html, text, subject };
+}

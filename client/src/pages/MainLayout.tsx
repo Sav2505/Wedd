@@ -16,6 +16,8 @@ import MessageTab from './MessageTab';
 import AttendanceStatusTab from './AttendanceStatusTab';
 import { useWeddingInfo } from '../hooks/useWeddingInfo';
 import LoadingOverlay from '../components/LoadingOverlay';
+import { getMyRsvp } from '../services/guests.service';
+import { RsvpStatus } from '../types/domain';
 
 // ─── Tab config ──────────────────────────────────────────────
 
@@ -265,9 +267,38 @@ function OrnamentalHeader({
 
 export default function MainLayout() {
   const dispatch = useAppDispatch();
-  const { info, loading } = useWeddingInfo();
+  const { info, loading: infoLoading } = useWeddingInfo();
   const guest = useAppSelector((s) => s.auth.guest);
   const [activeTab, setActiveTab] = useState(0);
+  
+  const [rsvpLoading, setRsvpLoading] = useState(true);
+  const [rsvpData, setRsvpData] = useState<{ status: RsvpStatus; count: number } | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    setRsvpLoading(true);
+    getMyRsvp()
+      .then((data) => {
+        if (active) {
+          setRsvpData({
+            status: data.rsvp_status,
+            count: data.number_of_guests || 1,
+          });
+        }
+      })
+      .catch(() => {
+        // Fallback silently if it fails
+      })
+      .finally(() => {
+        if (active) setRsvpLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const totalLoading = infoLoading || rsvpLoading;
   
   useEffect(() => {
     if (!guest || guest.role !== 'guest' || guest.rsvp_status !== 'PENDING') return;
@@ -291,7 +322,7 @@ export default function MainLayout() {
         flexDirection: 'column',
       }}
     >
-      <LoadingOverlay open={loading} message="טוען פרטי אירוע..." />
+      <LoadingOverlay open={totalLoading} message="טוען פרטי אירוע..." />
 
       {/* ── Header ─────────────────────────────────────────── */}
       <motion.div
@@ -324,11 +355,14 @@ export default function MainLayout() {
             exit="exit"
           >
             {activeTab === TABS.length - 1
-              ? <AttendanceStatusTab onSaved={(nextStatus) => {
-                if (nextStatus === 'COMING') {
-                  setActiveTab(0);
-                }
-              }} />
+              ? <AttendanceStatusTab 
+                  initialRsvp={rsvpData}
+                  onSaved={(nextStatus) => {
+                    if (nextStatus === 'COMING') {
+                      setActiveTab(0);
+                    }
+                  }} 
+                />
               : TABS[activeTab].component}
           </motion.div>
         </AnimatePresence>

@@ -22,9 +22,9 @@ export default function SeatingTab() {
   const weddingId = useWeddingId();
   const { info } = useWeddingInfo();
   const guest = useAppSelector((s) => s.auth.guest);
-  const [isTablesPublished, setIsTablesPublished] = useState(true);
   const [tables, setTables] = useState<WeddingTableWithGuests[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isTablesPublished, setIsTablesPublished] = useState(info ? !!info.is_tables_published : false);
   const [error, setError] = useState<string | null>(null);
   const [dialogTable, setDialogTable] = useState<WeddingTableWithGuests | null>(null);
   const [stageLabel, setStageLabel] = useState('חופה');
@@ -39,9 +39,9 @@ export default function SeatingTab() {
     }
 
     const fetchData = async () => {
-      try {
-        if (!weddingId || !info) return;
+      if (!weddingId || !info) return;
 
+      try {
         const tables = await getAllTables(weddingId);
 
         setTables(tables);
@@ -125,8 +125,11 @@ export default function SeatingTab() {
 
         {/* ── Loading / Error ─────────────────────────────── */}
         {loading && (
-          <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
-            <CircularProgress sx={{ color: '#C9A84C' }} size={36} />
+          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', py: 8, gap: 2 }}>
+            <CircularProgress sx={{ color: '#C9A84C' }} size={40} thickness={4} />
+            <Typography variant="body2" sx={{ color: '#A08070', fontWeight: 500, letterSpacing: '0.02em' }}>
+              טוען את מפת ההושבה... ✨
+            </Typography>
           </Box>
         )}
 

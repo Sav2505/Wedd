@@ -29,6 +29,7 @@ const RSVP_MAX_GUESTS = Number(import.meta.env.VITE_RSVP_MAX_GUESTS ?? 10);
 
 type Props = {
   onSaved?: (status: RsvpStatus) => void;
+  initialRsvp?: { status: RsvpStatus; count: number } | null;
 };
 
 type SaveOutcome = 'COMING' | 'NOT_COMING' | null;
@@ -106,13 +107,13 @@ function StatusCard({
   );
 }
 
-export default function AttendanceStatusTab({ onSaved }: Props) {
+export default function AttendanceStatusTab({ onSaved, initialRsvp }: Props) {
   const dispatch = useAppDispatch();
   const guest = useAppSelector((s) => s.auth.guest);
 
-  const [status, setStatus] = useState<RsvpStatus>('PENDING');
-  const [count, setCount] = useState(1);
-  const [loading, setLoading] = useState(true);
+  const [status, setStatus] = useState<RsvpStatus>(initialRsvp?.status ?? 'PENDING');
+  const [count, setCount] = useState(initialRsvp?.count ?? 1);
+  const [fetching, setFetching] = useState(!initialRsvp);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -133,14 +134,15 @@ export default function AttendanceStatusTab({ onSaved }: Props) {
   }, [saveOutcome]);
 
   useEffect(() => {
+    if (initialRsvp) return; // Skip if we already got initial data
     getMyRsvp()
       .then((data) => {
         setStatus(data.rsvp_status);
         setCount(Math.max(1, Math.min(RSVP_MAX_GUESTS, data.number_of_guests || 1)));
       })
       .catch((e) => setError(e instanceof Error ? e.message : 'שגיאה בטעינת סטטוס נוכחות'))
-      .finally(() => setLoading(false));
-  }, []);
+      .finally(() => setFetching(false));
+  }, [initialRsvp]);
 
   const cardPalettes = useMemo(() => ({
     COMING: {
@@ -195,7 +197,7 @@ export default function AttendanceStatusTab({ onSaved }: Props) {
     }
   }
 
-  if (loading) {
+  if (fetching) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
         <CircularProgress sx={{ color: '#C9A84C' }} />

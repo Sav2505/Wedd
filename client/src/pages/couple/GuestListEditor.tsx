@@ -214,7 +214,7 @@ export default function GuestListEditor() {
   const [deleteGroupId, setDeleteGroupId] = useState<string | null>(null);
   const [rsvpListStatus, setRsvpListStatus] = useState<RsvpStatus | null>(null);
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
-  const [rsvpListLoadingStatus, setRsvpListLoadingStatus] = useState<RsvpStatus | null>(null);
+  // const [rsvpListLoadingStatus, setRsvpListLoadingStatus] = useState<RsvpStatus | null>(null);
   const [searchLoading, setSearchLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const { info } = useWeddingInfo();
@@ -391,16 +391,16 @@ export default function GuestListEditor() {
     return '';
   }, [rsvpListStatus]);
 
-  function handleOpenRsvpList(status: RsvpStatus) {
-    if (rsvpListLoadingStatus) return;
-    setRsvpListLoadingStatus(status);
+  // function handleOpenRsvpList(status: RsvpStatus) {
+  //   if (rsvpListLoadingStatus) return;
+  //   setRsvpListLoadingStatus(status);
 
-    // Small defer lets the loading state render before heavy dialog content mounts.
-    window.setTimeout(() => {
-      setRsvpListStatus(status);
-      setRsvpListLoadingStatus(null);
-    }, 140);
-  }
+  //   // Small defer lets the loading state render before heavy dialog content mounts.
+  //   window.setTimeout(() => {
+  //     setRsvpListStatus(status);
+  //     setRsvpListLoadingStatus(null);
+  //   }, 140);
+  // }
 
   const handleEditGuestOpen = useCallback((guest: ManagedGuest) => {
     setEditingGuest(guest);

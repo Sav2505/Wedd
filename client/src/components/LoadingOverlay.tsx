@@ -6,6 +6,7 @@ import {
     Typography,
     Snackbar,
     Alert,
+    Box,
 } from '@mui/material';
 
 interface LoadingOverlayProps {
@@ -48,48 +49,70 @@ export default function LoadingOverlay({
                 open={open}
                 sx={{
                     zIndex: (theme) => theme.zIndex.modal + 2,
-                    backdropFilter: 'blur(6px)',
-                    background: 'rgba(255,255,255,.45)',
+                    backdropFilter: 'blur(10px)',
+                    background: 'rgba(253, 251, 244, 0.40)', // Warm romantic touch
                 }}
             >
                 <Paper
-                    elevation={10}
+                    elevation={0}
                     sx={{
                         px: 5,
-                        py: 4,
-                        borderRadius: 4,
+                        py: 5,
+                        borderRadius: 6,
                         textAlign: 'center',
-                        minWidth: 300,
+                        minWidth: 320,
+                        border: '1px solid rgba(201,168,76,0.3)',
+                        background: 'linear-gradient(135deg, rgba(255,255,255,0.92) 0%, rgba(255, 252, 245, 0.96) 100%)',
+                        boxShadow: '0 16px 40px rgba(154,120,51,0.15), inset 0 1px 0 rgba(255,255,255,0.8)',
                     }}
                 >
-
-                    <CircularProgress
-                        size={48}
-                        sx={{
-                            color: '#C9A84C',
-                            mb: 2,
-                        }}
-                    />
-
+                    <Box sx={{ position: 'relative', display: 'inline-flex', mb: 3 }}>
+                        <CircularProgress
+                            size={56}
+                            thickness={3.6}
+                            sx={{
+                                color: '#C9A84C',
+                            }}
+                        />
+                        <Box
+                            sx={{
+                                top: 0,
+                                left: 0,
+                                bottom: 0,
+                                right: 0,
+                                position: 'absolute',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                            }}
+                        >
+                            <Typography sx={{ fontSize: '1.25rem', userSelect: 'none' }}>✨</Typography>
+                        </Box>
+                    </Box>
 
                     <Typography
                         sx={{
                             fontWeight: 700,
-                            fontSize: '1rem',
+                            fontSize: '1.15rem',
+                            color: '#2C1810',
+                            fontFamily: "'Frank Ruhl Libre', serif",
+                            letterSpacing: '0.01em',
                         }}
                     >
                         {message}
                     </Typography>
 
-
                     <Typography
                         variant="body2"
-                        color="text.secondary"
-                        sx={{ mt: 1 }}
+                        sx={{
+                            mt: 1.2,
+                            color: '#A08070',
+                            fontWeight: 400,
+                            letterSpacing: '0.02em',
+                        }}
                     >
-                        פעולה זו עשויה להימשך מספר שניות...
+                        כמה רגעים והכל מוכן...
                     </Typography>
-
                 </Paper>
             </Backdrop>
 

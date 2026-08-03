@@ -210,42 +210,20 @@ export default function InfoTab() {
   }
 
   return (
-    <Box sx={{ p: { xs: 2, sm: 3 } }}>
-      {/* Hero heading */}
-      <motion.div
-        initial={{ opacity: 0, y: -16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, ease: 'easeOut' }}
-      >
-        <Box sx={{ textAlign: 'center', mb: 3.5 }}>
-          <Typography
-            variant="h4"
-            sx={{
-              fontFamily: "'Frank Ruhl Libre', serif",
-              fontWeight: 700,
-              background: 'linear-gradient(135deg, #C9A84C, #9A7833)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              mb: 0.5,
-            }}
-          >
-            {info.groom_name} &amp; {info.bride_name}
-          </Typography>
-          <Typography variant="body2" sx={{ color: '#A08070' }}>
-            מתחתנים! 🎉
-          </Typography>
-        </Box>
-      </motion.div>
-
-      {/* Divider */}
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 3 }}>
-        <Box sx={{ flex: 1, height: 1, background: 'rgba(201,168,76,0.25)' }} />
-        <Typography sx={{ color: '#C9A84C' }}>✦</Typography>
-        <Box sx={{ flex: 1, height: 1, background: 'rgba(201,168,76,0.25)' }} />
-      </Box>
-
+    <Box sx={{ p: { xs: 2, sm: 2 } }}>
       {/* Info rows */}
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.8, mt: -3 }}>
+        <Box sx={{ flex: 1, height: '1px', background: 'rgba(201,168,76,0.22)' }} />
+        <Typography sx={{ color: '#C9A84C', fontSize: '0.8rem' }}>✦</Typography>
+        <Box sx={{ flex: 1, height: '1px', background: 'rgba(201,168,76,0.22)' }} />
+      </Box>
       <GoldCard delay={0.05} sx={{ mb: 2 }}>
+        <Typography
+          variant="caption"
+          sx={{ fontSize: "14px", color: '#A08070', display: 'block', mb: 0.5, fontWeight: 500 }}
+        >
+          פרטי האירוע
+        </Typography>
         <InfoRow icon={<CalendarMonthIcon sx={{ fontSize: 20 }} />} label="תאריך" value={formatHebrewDate(info.wedding_date)} delay={0.05} />
         <Divider sx={{ borderColor: 'rgba(201,168,76,0.15)' }} />
         <InfoRow icon={<AccessTimeIcon sx={{ fontSize: 20 }} />} label="קבלת פנים" value={`${info.wedding_time.slice(0, 5)}`} delay={0.12} />
@@ -299,7 +277,6 @@ export default function InfoTab() {
           </Box>
         </motion.div>
       )}
-
       {/* Sign up */}
       <GoldCard delay={0.4} sx={{ mt: 2, textAlign: 'center' }}>
         <WeddingRegisterCTA mt={1} />

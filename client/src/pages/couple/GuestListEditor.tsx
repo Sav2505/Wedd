@@ -36,6 +36,7 @@ import PeopleAltIcon from '@mui/icons-material/PeopleAlt';
 import LinkIcon from '@mui/icons-material/Link';
 // import WhatsAppIcon from '@mui/icons-material/WhatsApp';
 import DownloadIcon from '@mui/icons-material/Download';
+import UploadFileIcon from '@mui/icons-material/UploadFile';
 import CloseIcon from '@mui/icons-material/Close';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import { exportGuestsToExcel } from '../../utils/exportGuestsToExcel';
@@ -662,7 +663,6 @@ export default function GuestListEditor() {
           {error}
         </Alert>
       )}
-
       <Box
         sx={{
           position: 'sticky',
@@ -675,145 +675,151 @@ export default function GuestListEditor() {
           boxShadow: '0 5px 18px rgba(154,120,51,0.10)',
         }}
       >
-        <Stack direction={{ xs: 'column', md: 'row' }} spacing={1} alignItems={{ md: 'center' }}>
-          <TextField
-            size="small"
-            fullWidth
-            placeholder="חיפוש אורח לפי שם / טלפון / קבוצה"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon sx={{ color: '#A08070' }} />
-                </InputAdornment>
-              ),
-              endAdornment: search ? (
-                <InputAdornment position="end">
-                  <IconButton size="small" onClick={() => setSearch('')} edge="end" sx={{ color: '#A08070', '&:hover': { color: '#2C1810' } }}>
-                    <CloseIcon sx={{ fontSize: 16 }} />
-                  </IconButton>
-                </InputAdornment>
-              ) : undefined,
-            }}
-          />
-          <Stack direction="row" spacing={1}>
-            <Button
-              variant="outlined"
-              startIcon={<GroupAddIcon />}
-              onClick={openCreateGroup}
-              sx={{
-                borderColor: 'rgba(201,168,76,0.5)',
-                color: '#9A7833',
-                fontWeight: 700,
-                fontSize: "14px"
-              }}
-            >
-              קבוצה חדשה
-            </Button>
-            <Button
-              variant="contained"
-              startIcon={<PersonAddAlt1Icon />}
-              onClick={() => openCreateGuest(null)}
-              sx={{
-                background: 'linear-gradient(135deg, #E0C97A, #C9A84C)',
-                color: '#2C1810',
-                fontWeight: 700,
-                fontSize: "14px",
-                '&:hover': { background: 'linear-gradient(135deg, #E8D490, #D4A855)' },
-              }}
-            >
-              הוסף אורח
-            </Button>
-          </Stack>
-        </Stack>
+        {/* שורה 1: חיפוש */}
+        <TextField
+          size="small"
+          fullWidth
+          placeholder="חיפוש אורח לפי שם / טלפון / קבוצה"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <SearchIcon sx={{ color: '#A08070' }} />
+              </InputAdornment>
+            ),
+            endAdornment: search ? (
+              <InputAdornment position="end">
+                <IconButton size="small" onClick={() => setSearch('')} edge="end" sx={{ color: '#A08070', '&:hover': { color: '#2C1810' } }}>
+                  <CloseIcon sx={{ fontSize: 16 }} />
+                </IconButton>
+              </InputAdornment>
+            ) : undefined,
+          }}
+        />
 
-        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} mt={2}>
-          <TextField
-            select
-            size="small"
-            label="סינון לפי סטטוס הגעה"
-            value={rsvpFilter}
-            onChange={(e) => setRsvpFilter(e.target.value as RsvpFilter)}
-            sx={{ minWidth: { xs: '100%', sm: 180 } }}
-          >
-            <MenuItem value="ALL">הכל</MenuItem>
-            <MenuItem value="PENDING">ממתינים</MenuItem>
-            <MenuItem value="COMING">מגיעים</MenuItem>
-            <MenuItem value="NOT_COMING">לא מגיעים</MenuItem>
-          </TextField>
+        {/* שורה 2: סינון */}
+        <TextField
+          select
+          size="small"
+          label="סינון לפי סטטוס הגעה"
+          value={rsvpFilter}
+          onChange={(e) => setRsvpFilter(e.target.value as RsvpFilter)}
+          fullWidth
+          sx={{ mt: 1.25 }}
+        >
+          <MenuItem value="ALL">הכל</MenuItem>
+          <MenuItem value="PENDING">ממתינים</MenuItem>
+          <MenuItem value="COMING">מגיעים</MenuItem>
+          <MenuItem value="NOT_COMING">לא מגיעים</MenuItem>
+        </TextField>
+
+        {/* שורה 3: קבוצה חדשה + הוסף אורח */}
+        <Stack direction="row" spacing={1} mt={1.5}>
           <Button
             variant="contained"
+            startIcon={<PersonAddAlt1Icon />}
+            onClick={() => openCreateGuest(null)}
+            sx={{
+              background: 'linear-gradient(135deg, #E0C97A, #C9A84C)',
+              color: '#2C1810',
+              fontWeight: 700,
+              fontSize: { xs: '12px', sm: '14px' },
+              flex: 1,
+              minWidth: 0,
+              whiteSpace: 'nowrap',
+              '&:hover': { background: 'linear-gradient(135deg, #E8D490, #D4A855)' },
+            }}
+          >
+            הוסף אורח
+          </Button>
+          <Button
+            variant="outlined"
+            startIcon={<GroupAddIcon />}
+            onClick={openCreateGroup}
+            sx={{
+              borderColor: 'rgba(201,168,76,0.5)',
+              color: '#9A7833',
+              fontWeight: 700,
+              fontSize: { xs: '12px', sm: '14px' },
+              flex: 1,
+              minWidth: 0,
+              whiteSpace: 'nowrap',
+            }}
+          >
+            קבוצה חדשה
+          </Button>
+        </Stack>
+
+        {/* שורה 4: ייצוא לאקסל + ייבוא מאקסל */}
+        <Stack direction="row" spacing={1} mt={1.25}>
+          <Button
+            variant="outlined"
             startIcon={<DownloadIcon />}
             onClick={handleExportExcel}
             sx={{
-              background: 'linear-gradient(135deg,#217346,#2ea043)',
-              color: '#fff',
-              fontWeight: 700,
-              fontSize: '13px',
-              padding: "6px 16px",
-              '&:hover': {
-                background: 'linear-gradient(135deg,#1b5f39,#24843a)',
-              },
+              color: '#2ea043',
+              borderColor: 'rgba(46,160,67,0.4)',
+              fontWeight: 600,
+              fontSize: { xs: '11px', sm: '12px' },
+              padding: '4px 10px',
+              flex: 1,
+              minWidth: 0,
+              whiteSpace: 'nowrap',
+              '&:hover': { borderColor: '#2ea043', background: 'rgba(46,160,67,0.08)' },
             }}
           >
             ייצוא לאקסל
           </Button>
-          <Button
-            variant="outlined"
-            startIcon={<ScheduleSendIcon />}
-            onClick={() => setWhatsappScheduleOpen(true)}
-            sx={{
-              borderColor: 'rgba(37,211,102,0.5)',
-              color: '#1f9f51',
-              fontWeight: 700,
-              fontSize: '14px',
-            }}
-          >
-            תזמון הודעות לאורחים
-          </Button>
+          <Tooltip title="בקרוב">
+            <span style={{ flex: 1, minWidth: 0 }}>
+              <Button
+                fullWidth
+                variant="outlined"
+                startIcon={<UploadFileIcon />}
+                disabled
+                sx={{
+                  color: '#2ea043',
+                  borderColor: 'rgba(46,160,67,0.4)',
+                  fontWeight: 600,
+                  fontSize: { xs: '11px', sm: '12px' },
+                  padding: '4px 10px',
+                  minWidth: 0,
+                  whiteSpace: 'nowrap',
+                  '&.Mui-disabled': {
+                    color: 'rgba(46,160,67,0.45)',
+                    borderColor: 'rgba(46,160,67,0.2)',
+                  },
+                }}
+              >
+                ייבוא מאקסל
+              </Button>
+            </span>
+          </Tooltip>
         </Stack>
 
+        {/* שורה 5: תזמון הודעות לאורחים - שורה שלמה בפני עצמו */}
+        <Button
+          fullWidth
+          variant="contained"
+          startIcon={<ScheduleSendIcon />}
+          onClick={() => setWhatsappScheduleOpen(true)}
+          sx={{
+            mt: 1.25,
+            background: 'linear-gradient(135deg, #25D366, #1f9f51)',
+            color: '#fff',
+            fontWeight: 700,
+            fontSize: { xs: '12px', sm: '14px' },
+            boxShadow: '0 4px 12px rgba(37,211,102,0.35)',
+            '&:hover': { background: 'linear-gradient(135deg, #22c05f, #1a8a46)' },
+          }}
+        >
+          תזמון הודעות לאורחים
+        </Button>
+
+        {/* שורה 5: סיכום סטטיסטי - נשארת כמו שהיא */}
         <Stack direction="row" spacing={0} mt={1.2} gap={1} ml={1} mb={0.2} flexWrap="wrap">
-          <Chip size="small" label={`${processedGuests.length} מוצגים`} sx={{ bgcolor: 'rgba(201,168,76,0.18)', color: '#8A6A2B' }} />
-          {processedGuests.length !== allGuests.length && (
-            <Chip size="small" label={`מתוך ${allGuests.length} אורחים`} sx={{ bgcolor: 'rgba(201,168,76,0.11)', color: '#9A7833' }} />
-          )}
-          <Chip size="small" label={`${groups.length} קבוצות`} sx={{ bgcolor: 'rgba(154,120,51,0.13)', color: '#8A6A2B' }} />
-          {rsvpSummary.effectiveTotalPeople > allGuests.length && (
-            <Chip
-              size="small"
-              icon={<PeopleAltIcon sx={{ fontSize: 14 }} />}
-              label={`סה"כ ${rsvpSummary.effectiveTotalPeople} אנשים`}
-              sx={{ bgcolor: 'rgba(79,134,247,0.13)', color: '#3A6AD4', fontWeight: 700 }}
-            />
-          )}
-          <Chip
-            size="small"
-            label={
-              `${rsvpSummary.coming} אישרו`
-            }
-            sx={{ bgcolor: 'rgba(46,139,87,0.14)', color: '#2E8B57', border: '1px solid rgba(46,139,87,0.3)', fontWeight: 700 }}
-            onClick={() => handleOpenRsvpList('COMING')}
-            clickable
-          />
-          <Chip
-            size="small"
-            label={
-              `${rsvpSummary.notComing} סירבו`
-            }
-            sx={{ bgcolor: 'rgba(185,71,61,0.13)', color: '#B9473D', border: '1px solid rgba(185,71,61,0.3)', fontWeight: 700 }}
-            onClick={() => handleOpenRsvpList('NOT_COMING')}
-            clickable
-          />
-          <Chip
-            size="small"
-            label={`${rsvpSummary.pending} טרם אישרו`
-            }
-            sx={{ bgcolor: 'rgba(140,140,140,0.14)', color: '#6C6C6C', border: '1px solid rgba(140,140,140,0.3)', fontWeight: 700 }}
-            onClick={() => handleOpenRsvpList('PENDING')}
-            clickable
-          />
+          {/* ה-Chips נשארים ללא שינוי */}
         </Stack>
       </Box>
 

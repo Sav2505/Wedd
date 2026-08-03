@@ -33,7 +33,7 @@ const BASE_TABS = [
   { label: 'פרטי האירוע', icon: <EditCalendarOutlinedIcon sx={{ fontSize: 22 }} /> },
   { label: 'הודעה לאורחים', icon: <FavoriteBorderIcon sx={{ fontSize: 22 }} /> },
   { label: 'מעקב משימות', icon: <AssignmentOutlinedIcon sx={{ fontSize: 22 }} /> },
-  { label: 'רשימת אורחים', icon: <Groups2Icon sx={{ fontSize: 22 }} /> },
+  { label: 'אורחים והזמנות', icon: <Groups2Icon sx={{ fontSize: 22 }} /> },
   { label: 'הושבה', icon: <TableBarIcon sx={{ fontSize: 22 }} /> },
   { label: 'גלריה', icon: <PhotoLibraryOutlinedIcon sx={{ fontSize: 22 }} /> },
 ] as const;

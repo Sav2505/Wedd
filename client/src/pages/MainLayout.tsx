@@ -14,6 +14,8 @@ import PhotosTab from './PhotosTab';
 import SeatingTab from './SeatingTab';
 import MessageTab from './MessageTab';
 import AttendanceStatusTab from './AttendanceStatusTab';
+import { useWeddingInfo } from '../hooks/useWeddingInfo';
+import LoadingOverlay from '../components/LoadingOverlay';
 
 // ─── Tab config ──────────────────────────────────────────────
 
@@ -141,9 +143,10 @@ function BotanicalSVG() {
 // ─── Ornamental header (adapted for guest layout) ─────────────
 
 function OrnamentalHeader({
-  guest, activeTab, onTabChange, onLogout,
+  guest, couple, activeTab, onTabChange, onLogout,
 }: {
   guest: { full_name: string; table_number?: number | null } | null;
+  couple: string;
   activeTab: number;
   onTabChange: (v: number) => void;
   onLogout: () => void;
@@ -199,7 +202,7 @@ function OrnamentalHeader({
               lineHeight: 1.2,
             }}
           >
-            החתונה שלנו 💍
+            {couple} 💍
           </Typography>
           {guest && (
             <Typography sx={{ fontSize: '0.82rem', color: '#A08070', mt: 0.4, fontWeight: 500, letterSpacing: 0.3 }}>
@@ -262,9 +265,10 @@ function OrnamentalHeader({
 
 export default function MainLayout() {
   const dispatch = useAppDispatch();
+  const { info, loading } = useWeddingInfo();
   const guest = useAppSelector((s) => s.auth.guest);
   const [activeTab, setActiveTab] = useState(0);
-
+  
   useEffect(() => {
     if (!guest || guest.role !== 'guest' || guest.rsvp_status !== 'PENDING') return;
 
@@ -287,6 +291,8 @@ export default function MainLayout() {
         flexDirection: 'column',
       }}
     >
+      <LoadingOverlay open={loading} message="טוען פרטי אירוע..." />
+
       {/* ── Header ─────────────────────────────────────────── */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
@@ -295,6 +301,7 @@ export default function MainLayout() {
       >
         <OrnamentalHeader
           guest={guest}
+          couple={info?.bride_name ? `${info?.bride_name} & ${info?.groom_name}` : "החתונה שלנו"}
           activeTab={activeTab}
           onTabChange={setActiveTab}
           onLogout={() => dispatch(logout())}

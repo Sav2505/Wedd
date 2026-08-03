@@ -410,7 +410,7 @@ Not coming: ${stats.not_coming}
    Recipients: ${Number(stats.pending) + Number(stats.not_coming)}
 
 3) wedding_day_before
-   ${DateTime.fromISO(computed.reminderSendAt)
+   ${DateTime.fromISO(computed.dayBeforeSendAt)
         .setZone(ISRAEL_TIMEZONE)
         .toFormat('dd/LL/yyyy HH:mm')}
    Recipients: ${stats.total}
@@ -447,14 +447,14 @@ Not coming: ${stats.not_coming}
           </tr>
           <tr>
             <td>wedding_reminder</td>
-            <td>${DateTime.fromISO(computed.invitationSendAt)
+            <td>${DateTime.fromISO(computed.reminderSendAt)
         .setZone(ISRAEL_TIMEZONE)
         .toFormat('dd/LL/yyyy HH:mm')}</td>
             <td>${Number(stats.pending) + Number(stats.not_coming)}</td>
           </tr>
           <tr>
             <td>wedding_day_before</td>
-            <td>${DateTime.fromISO(computed.invitationSendAt)
+            <td>${DateTime.fromISO(computed.dayBeforeSendAt)
         .setZone(ISRAEL_TIMEZONE)
         .toFormat('dd/LL/yyyy HH:mm')}</td>
             <td>${stats.total}</td>

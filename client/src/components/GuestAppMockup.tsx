@@ -174,6 +174,7 @@ export default function GuestAppMockup() {
             sx={{
                 mx: 'auto',
                 maxWidth: 360,
+                height: "fit-content",
                 borderRadius: '26px',
                 overflow: 'hidden',
                 background:
@@ -215,14 +216,14 @@ export default function GuestAppMockup() {
                         mt: 0.5,
                     }}
                 >
-                    החתונה שלנו 💍
+                    שחר &amp; דן 💍
                 </Typography>
 
                 <Typography
                     align="center"
                     sx={{ position: 'relative', zIndex: 2, fontSize: '0.68rem', color: '#A08070', mt: 0.3, mb: 1.8, fontWeight: 500 }}
                 >
-                    שלום, שיר !
+                    שלום, שיר כהן !
                     <Box
                         component="span"
                         sx={{
@@ -270,23 +271,6 @@ export default function GuestAppMockup() {
 
             {/* ── Info tab content, matching InfoTab.tsx ── */}
             <Box sx={{ px: 2.2, py: 2 }}>
-                <Typography
-                    align="center"
-                    sx={{
-                        fontFamily: "'Frank Ruhl Libre', serif",
-                        fontWeight: 700,
-                        fontSize: '1.05rem',
-                        background: 'linear-gradient(135deg, #C9A84C, #9A7833)',
-                        WebkitBackgroundClip: 'text',
-                        WebkitTextFillColor: 'transparent',
-                    }}
-                >
-                    שחר &amp; דן
-                </Typography>
-                <Typography align="center" sx={{ color: '#A08070', fontSize: '0.72rem', mb: 1.4 }}>
-                    מתחתנים! 🎉
-                </Typography>
-
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.8 }}>
                     <Box sx={{ flex: 1, height: '1px', background: 'rgba(201,168,76,0.22)' }} />
                     <Typography sx={{ color: '#C9A84C', fontSize: '0.8rem' }}>✦</Typography>
@@ -302,6 +286,12 @@ export default function GuestAppMockup() {
                         pb: 1,
                     }}
                 >
+                    <Typography
+                        variant="caption"
+                        sx={{ fontSize: "11px", color: '#A08070', display: 'block', mb: 0.2, fontWeight: 500, mt: 1, ml: 0.25 }}
+                    >
+                        פרטי האירוע
+                    </Typography>
                     <InfoRow icon={<CalendarMonthIcon sx={{ fontSize: 16 }} />} label="תאריך" value="יום חמישי, 12 בנובמבר 2026" />
                     <Box sx={{ height: '1px', background: 'rgba(201,168,76,0.12)' }} />
                     <InfoRow icon={<AccessTimeIcon sx={{ fontSize: 16 }} />} label="שעה" value="19:30" />
@@ -310,44 +300,55 @@ export default function GuestAppMockup() {
                 </Box>
 
                 {/* Map buttons, matching MapButtons */}
-                <Box sx={{ display: 'flex', gap: 1, mt: 1.6 }}>
-                    <Box
-                        sx={{
-                            flex: 1,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            gap: 0.6,
-                            py: 1,
-                            borderRadius: 50,
-                            background: 'linear-gradient(135deg, #E0C97A, #C9A84C)',
-                            color: '#fff',
-                            fontWeight: 600,
-                            fontSize: '0.72rem',
-                            boxShadow: '0 4px 14px rgba(201,168,76,0.35)',
-                        }}
-                    >
-                        <DirectionsCarIcon sx={{ fontSize: 14 }} />
-                        ניווט ב-Waze
-                    </Box>
-                    <Box
-                        sx={{
-                            flex: 1,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            gap: 0.6,
-                            py: 1,
-                            borderRadius: 50,
-                            border: '1.5px solid rgba(201,168,76,0.5)',
-                            color: '#9A7833',
-                            fontWeight: 600,
-                            fontSize: '0.72rem',
-                            background: 'rgba(255,255,255,0.6)',
-                        }}
-                    >
-                        <MapIcon sx={{ fontSize: 14 }} />
-                        Google Maps
+                <Box
+                    sx={{
+                        borderRadius: '16px',
+                        background: 'rgba(255,255,255,0.7)',
+                        border: '1px solid rgba(201,168,76,0.16)',
+                        px: 1.6,
+                        pb: 1,
+                        mt: 1
+                    }}
+                >
+                    <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
+                        <Box
+                            sx={{
+                                flex: 1,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: 0.6,
+                                py: 1,
+                                borderRadius: 50,
+                                background: 'linear-gradient(135deg, #E0C97A, #C9A84C)',
+                                color: '#fff',
+                                fontWeight: 600,
+                                fontSize: '0.72rem',
+                                boxShadow: '0 4px 14px rgba(201,168,76,0.35)',
+                            }}
+                        >
+                            <DirectionsCarIcon sx={{ fontSize: 14 }} />
+                            ניווט ב-Waze
+                        </Box>
+                        <Box
+                            sx={{
+                                flex: 1,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: 0.6,
+                                py: 1,
+                                borderRadius: 50,
+                                border: '1.5px solid rgba(201,168,76,0.5)',
+                                color: '#9A7833',
+                                fontWeight: 600,
+                                fontSize: '0.72rem',
+                                background: 'rgba(255,255,255,0.6)',
+                            }}
+                        >
+                            <MapIcon sx={{ fontSize: 14 }} />
+                            Google Maps
+                        </Box>
                     </Box>
                 </Box>
             </Box>

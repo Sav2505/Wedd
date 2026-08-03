@@ -67,6 +67,7 @@ export default function GuestExperienceSection() {
 
                 <motion.div {...scrollReveal} variants={fadeUpCard}>
                     <GuestAppMockup />
+                    <Typography sx={{ mt: 2, ml: 6, fontSize: "14px", color: "rgba(0, 0, 0, 0.88)" }}>רק דוגמא קטנה ממה שהאורח רואה .. :)</Typography>
                 </motion.div>
             </Box>
         </Box>

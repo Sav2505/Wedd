@@ -1,4 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
+
+export interface MessageEditorHandle {
+  isDirty: boolean;
+  save: () => Promise<boolean>;
+}
 import {
   Box, Typography, TextField, Button, CircularProgress,
 } from '@mui/material';
@@ -87,7 +92,7 @@ function PreviewCard({ message }: { message: string }) {
 
 // ─── Main ─────────────────────────────────────────────────────
 
-export default function MessageEditor() {
+const MessageEditor = forwardRef<MessageEditorHandle>(function MessageEditor(_, ref) {
   const weddingId = useWeddingId();
   const { info, loading: infoLoading } = useWeddingInfo();
   const [message, setMessage] = useState('');
@@ -95,16 +100,20 @@ export default function MessageEditor() {
   const [result, setResult] =
     useState<'success' | 'error' | null>(null);
   const [resultMessage, setResultMessage] = useState('');
+  const [isDirty, setIsDirty] = useState(false);
 
   useEffect(() => {
-    if (info) setMessage(info.message ?? '');
+    if (info) {
+      setMessage(info.message ?? '');
+      setIsDirty(false);
+    }
   }, [info]);
 
-  async function handleSave() {
+  async function handleSave(): Promise<boolean> {
     if (!weddingId) {
       setResult('error');
       setResultMessage('לא נמצא מזהה חתונה');
-      return;
+      return false;
     }
 
     setSaving(true);
@@ -114,6 +123,8 @@ export default function MessageEditor() {
 
       setResult('success');
       setResultMessage('ההודעה נשמרה בהצלחה');
+      setIsDirty(false);
+      return true;
     } catch (err) {
       setResult('error');
       setResultMessage(
@@ -121,10 +132,13 @@ export default function MessageEditor() {
           ? err.message
           : 'שגיאה בשמירה'
       );
+      return false;
     } finally {
       setSaving(false);
     }
   }
+
+  useImperativeHandle(ref, () => ({ isDirty, save: handleSave }), [isDirty]);
 
   if (infoLoading) {
     return (
@@ -165,7 +179,7 @@ export default function MessageEditor() {
           multiline
           rows={7}
           value={message}
-          onChange={(e) => setMessage(e.target.value)}
+          onChange={(e) => { setMessage(e.target.value); setIsDirty(true); }}
           placeholder="כתבו כאן את ההודעה האישית שלכם לאורחים…"
           sx={{
             '& .MuiOutlinedInput-root': {
@@ -213,4 +227,6 @@ export default function MessageEditor() {
       </Box>
     </motion.div>
   );
-}
+});
+
+export default MessageEditor;

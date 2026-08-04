@@ -1,6 +1,7 @@
-import { useState, useEffect, type ReactElement } from 'react';
+import { useState, useEffect, useRef, type ReactElement } from 'react';
 import {
   Box, Tab, Tabs, Typography, IconButton, Tooltip, Fade,
+  Button, Dialog, DialogContent, DialogActions,
 } from '@mui/material';
 import EditCalendarOutlinedIcon from '@mui/icons-material/EditCalendarOutlined';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
@@ -10,12 +11,13 @@ import Groups2Icon from '@mui/icons-material/Groups2';
 import AssignmentOutlinedIcon from '@mui/icons-material/AssignmentOutlined';
 import ManageAccountsOutlinedIcon from '@mui/icons-material/ManageAccountsOutlined';
 import LogoutIcon from '@mui/icons-material/LogoutOutlined';
+import SaveOutlinedIcon from '@mui/icons-material/SaveOutlined';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useAppDispatch, useAppSelector } from '../store';
 import { logout } from '../store/authSlice';
 import { WeddingInfo } from '../types/domain';
-import WeddingInfoEditor from './couple/WeddingInfoEditor';
-import MessageEditor from './couple/MessageEditor';
+import WeddingInfoEditor, { WeddingInfoEditorHandle } from './couple/WeddingInfoEditor';
+import MessageEditor, { MessageEditorHandle } from './couple/MessageEditor';
 import SeatingEditor from './couple/SeatingEditor';
 import GuestListEditor from './couple/GuestListEditor';
 import PhotosTab from './PhotosTab';
@@ -37,15 +39,6 @@ const BASE_TABS = [
   { label: 'הושבה', icon: <TableBarIcon sx={{ fontSize: 22 }} /> },
   { label: 'גלריה', icon: <PhotoLibraryOutlinedIcon sx={{ fontSize: 22 }} /> },
 ] as const;
-
-const BASE_PANELS = [
-  <WeddingInfoEditor />,
-  <MessageEditor />,
-  <TaskManagementPage />,
-  <GuestListEditor />,
-  <SeatingEditor />,
-  <PhotosTab />,
-];
 
 // ─── Panel animation ─────────────────────────────────────────
 
@@ -283,7 +276,99 @@ function OrnamentalHeader({
     </Box>
   );
 }
+// ─── Unsaved changes modal ────────────────────────────────
 
+type EditorHandle = { isDirty: boolean; save: () => Promise<boolean> };
+
+function UnsavedChangesModal({
+  open, onSave, onDiscard, onStay,
+}: {
+  open: boolean;
+  onSave: () => void | Promise<void>;
+  onDiscard: () => void;
+  onStay: () => void;
+}) {
+  return (
+    <Dialog
+      open={open}
+      onClose={onStay}
+      PaperProps={{
+        sx: {
+          direction: 'rtl',
+          borderRadius: 4,
+          background: 'linear-gradient(160deg, #FEFCF5 0%, #F9F0DC 70%, #FAF7F2 100%)',
+          border: '1px solid rgba(201,168,76,0.35)',
+          boxShadow: '0 24px 64px rgba(154,120,51,0.22), 0 4px 16px rgba(0,0,0,0.06)',
+          maxWidth: 360,
+          width: 'calc(100% - 32px)',
+          overflow: 'hidden',
+          p: 0,
+        },
+      }}
+    >
+      <Box sx={{ height: 4, background: 'linear-gradient(90deg, #C9A84C, #E0C97A, #9A7833, #E0C97A, #C9A84C)' }} />
+      <DialogContent sx={{ textAlign: 'center', pt: 3.5, pb: 1.5, px: 3 }}>
+        <Box
+          sx={{
+            width: 60, height: 60, borderRadius: '50%',
+            background: 'rgba(201,168,76,0.1)',
+            border: '1.5px solid rgba(201,168,76,0.3)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            mx: 'auto', mb: 2,
+          }}
+        >
+          <SaveOutlinedIcon sx={{ color: '#C9A84C', fontSize: 28 }} />
+        </Box>
+        <Typography
+          sx={{
+            fontFamily: "'Frank Ruhl Libre', serif",
+            fontSize: '1.2rem', fontWeight: 700, color: '#2C1810', mb: 1,
+          }}
+        >
+          יש לך שינויים שלא נשמרו
+        </Typography>
+        <Typography variant="body2" sx={{ color: '#A08070', lineHeight: 1.8, fontSize: '0.9rem' }}>
+          ביצעת שינויים בדף זה אך טרם שמרת אותם.
+          <br />
+          מה ברצונך לעשות לפני המעבר?
+        </Typography>
+      </DialogContent>
+      <DialogActions sx={{ flexDirection: 'column', gap: 1, px: 2.5, pb: 3, pt: 1.5 }}>
+        <Button
+          fullWidth variant="contained"
+          onClick={onSave}
+          sx={{
+            background: 'linear-gradient(135deg, #C9A84C, #9A7833)',
+            color: '#FAF7F2', fontWeight: 700, borderRadius: 50,
+            py: 1.3, fontSize: '0.95rem',
+            boxShadow: '0 4px 16px rgba(201,168,76,0.35)',
+            '&:hover': { background: 'linear-gradient(135deg, #E0C97A, #C9A84C)' },
+          }}
+        >
+          שמור ועבור לדף הבא
+        </Button>
+        <Button
+          fullWidth variant="outlined"
+          onClick={onDiscard}
+          sx={{
+            borderColor: 'rgba(201,168,76,0.4)', color: '#9A7833',
+            borderRadius: 50, py: 1.1, fontSize: '0.9rem',
+            '&:hover': { borderColor: '#C9A84C', background: 'rgba(201,168,76,0.06)' },
+          }}
+        >
+          עבור ללא שמירה
+        </Button>
+        <Button
+          fullWidth
+          onClick={onStay}
+          sx={{ color: '#B0957A', borderRadius: 50, py: 0.8, fontSize: '0.85rem' }}
+        >
+          הישאר בדף
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+}
 // ─── Main ────────────────────────────────────────────────────
 
 export default function CoupleLayout() {
@@ -294,11 +379,65 @@ export default function CoupleLayout() {
   const tabs = isDanHavivAdmin
     ? [...BASE_TABS, { label: 'בקשות הרשמה', icon: <ManageAccountsOutlinedIcon sx={{ fontSize: 22 }} /> }]
     : BASE_TABS;
-  const panels = isDanHavivAdmin
-    ? [...BASE_PANELS, <WeddingRequestsAdminPage />]
-    : BASE_PANELS;
+  const weddingInfoRef = useRef<WeddingInfoEditorHandle>(null);
+  const messageEditorRef = useRef<MessageEditorHandle>(null);
+
+  const basePanels = [
+    <WeddingInfoEditor ref={weddingInfoRef} />,
+    <MessageEditor ref={messageEditorRef} />,
+    <TaskManagementPage />,
+    <GuestListEditor />,
+    <SeatingEditor />,
+    <PhotosTab />,
+  ];
+  const panels = isDanHavivAdmin ? [...basePanels, <WeddingRequestsAdminPage />] : basePanels;
 
   const [activeTab, setActiveTab] = useState(0);
+  const [pendingTab, setPendingTab] = useState<number | null>(null);
+  const [showUnsavedModal, setShowUnsavedModal] = useState(false);
+
+  function getActiveEditorRef(): EditorHandle | null {
+    if (activeTab === 0) return weddingInfoRef.current;
+    if (activeTab === 1) return messageEditorRef.current;
+    return null;
+  }
+
+  function handleTabChange(newTab: number) {
+    const ref = getActiveEditorRef();
+    if (ref?.isDirty) {
+      setPendingTab(newTab);
+      setShowUnsavedModal(true);
+      return;
+    }
+    setActiveTab(newTab);
+  }
+
+  async function handleSaveAndSwitch() {
+    const pendingTabValue = pendingTab;
+    setShowUnsavedModal(false);
+    setPendingTab(null);
+    const ref = getActiveEditorRef();
+    if (ref) {
+      const success = await ref.save();
+      if (success && pendingTabValue !== null) {
+        setActiveTab(pendingTabValue);
+      }
+    } else if (pendingTabValue !== null) {
+      setActiveTab(pendingTabValue);
+    }
+  }
+
+  function handleDiscard() {
+    const pendingTabValue = pendingTab;
+    setShowUnsavedModal(false);
+    setPendingTab(null);
+    if (pendingTabValue !== null) setActiveTab(pendingTabValue);
+  }
+
+  function handleStay() {
+    setShowUnsavedModal(false);
+    setPendingTab(null);
+  }
 
   useEffect(() => {
     if (activeTab >= tabs.length) {
@@ -327,7 +466,7 @@ export default function CoupleLayout() {
           info={info}
           guest={guest}
           activeTab={activeTab}
-          onTabChange={setActiveTab}
+          onTabChange={handleTabChange}
           onLogout={() => dispatch(logout())}
           tabs={tabs as Array<{ label: string; icon: ReactElement }>}
         />
@@ -353,6 +492,13 @@ export default function CoupleLayout() {
           </motion.div>
         </AnimatePresence>
       </Box>
+
+      <UnsavedChangesModal
+        open={showUnsavedModal}
+        onSave={handleSaveAndSwitch}
+        onDiscard={handleDiscard}
+        onStay={handleStay}
+      />
     </Box>
   );
 }

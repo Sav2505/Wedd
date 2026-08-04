@@ -1,4 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
+
+export interface WeddingInfoEditorHandle {
+  isDirty: boolean;
+  save: () => Promise<boolean>;
+}
 import {
   Box, Typography, TextField, Button, CircularProgress,
   Alert, InputAdornment, Divider,
@@ -120,13 +125,14 @@ export const datePickerSx = {
 
 // ─── Main ────────────────────────────────────────────────────
 
-export default function WeddingInfoEditor() {
+const WeddingInfoEditor = forwardRef<WeddingInfoEditorHandle>(function WeddingInfoEditor(_, ref) {
   const weddingId = useWeddingId();
   const { info, loading, error: fetchError, refetch } = useWeddingInfo();
   const [saving, setSaving] = useState(false);
   const [result, setResult] =
     useState<'success' | 'error' | null>(null);
   const [resultMessage, setResultMessage] = useState('');
+  const [isDirty, setIsDirty] = useState(false);
 
   // local form state
   const [form, setForm] = useState<WeddingInfoUpdate>({});
@@ -146,16 +152,19 @@ export default function WeddingInfoEditor() {
       dress_code: info.dress_code ?? '',
       notes: info.notes ?? '',
     });
+    setIsDirty(false);
   }, [info]);
 
-  const set = (key: keyof WeddingInfoUpdate) => (e: React.ChangeEvent<HTMLInputElement>) =>
+  const set = (key: keyof WeddingInfoUpdate) => (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm((prev) => ({ ...prev, [key]: e.target.value }));
+    setIsDirty(true);
+  };
 
-  async function handleSave() {
+  async function handleSave(): Promise<boolean> {
     if (weddingId == null) {
       setResult('error');
       setResultMessage('לא נמצא מזהה חתונה');
-      return;
+      return false;
     }
 
     setSaving(true);
@@ -166,6 +175,8 @@ export default function WeddingInfoEditor() {
 
       setResult('success');
       setResultMessage('פרטי החתונה נשמרו בהצלחה');
+      setIsDirty(false);
+      return true;
     } catch (err) {
       setResult('error');
       setResultMessage(
@@ -173,10 +184,13 @@ export default function WeddingInfoEditor() {
           ? err.message
           : 'שגיאה בשמירה'
       );
+      return false;
     } finally {
       setSaving(false);
     }
   }
+
+  useImperativeHandle(ref, () => ({ isDirty, save: handleSave }), [isDirty]);
 
   if (loading) {
     return (
@@ -240,12 +254,13 @@ export default function WeddingInfoEditor() {
           <Box sx={{ display: 'flex', gap: 2, flexDirection: 'column', mb: 2 }}>
             <DatePicker
               value={form.wedding_date ? dayjs(form.wedding_date) : null}
-              onChange={(newValue) =>
+              onChange={(newValue) => {
                 setForm((prev) => ({
                   ...prev,
                   wedding_date: newValue && newValue.isValid() ? newValue.format('YYYY-MM-DD') : '',
-                }))
-              }
+                }));
+                setIsDirty(true);
+              }}
               format="DD/MM/YYYY"
               slots={{
                 openPickerIcon: CalendarMonthIcon,
@@ -355,9 +370,10 @@ export default function WeddingInfoEditor() {
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
               />
               <ClickHandler
-                onPick={(lat, lng) =>
-                  setForm((prev) => ({ ...prev, venue_lat: lat, venue_lng: lng }))
-                }
+                onPick={(lat, lng) => {
+                  setForm((prev) => ({ ...prev, venue_lat: lat, venue_lng: lng }));
+                  setIsDirty(true);
+                }}
               />
               {form.venue_lat != null && form.venue_lng != null && (
                 <Marker
@@ -368,6 +384,7 @@ export default function WeddingInfoEditor() {
                     dragend(e) {
                       const { lat, lng } = (e.target as L.Marker).getLatLng();
                       setForm((prev) => ({ ...prev, venue_lat: lat, venue_lng: lng }));
+                      setIsDirty(true);
                     },
                   }}
                 />
@@ -381,9 +398,10 @@ export default function WeddingInfoEditor() {
               </Typography>
               <Button
                 size="small"
-                onClick={() =>
-                  setForm((prev) => ({ ...prev, venue_lat: null, venue_lng: null }))
-                }
+                onClick={() => {
+                  setForm((prev) => ({ ...prev, venue_lat: null, venue_lng: null }));
+                  setIsDirty(true);
+                }}
                 sx={{
                   color: '#9A7833',
                   fontSize: '0.75rem',
@@ -470,4 +488,6 @@ export default function WeddingInfoEditor() {
       </motion.div>
     </LocalizationProvider>
   );
-}
+});
+
+export default WeddingInfoEditor;

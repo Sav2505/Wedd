@@ -18,6 +18,7 @@ import { initWhatsappReconciliationJob } from './jobs/whatsapp-reconciliation.jo
 import { errorHandler, notFound } from './middleware/errorHandler';
 import mailerRoutes from './routes/mailer.routes';
 import { initWhatsappSchedulePreviewJob } from './jobs/whatsapp-schedule-preview-job';
+import { initWhatsappScheduleNotificationJob } from './jobs/whatsapp-schedule-notification.job';
 
 dotenv.config();
 
@@ -123,7 +124,7 @@ app.listen(PORT, () => {
   initWhatsappScheduler();
   initWhatsappReconciliationJob();
   initWhatsappSchedulePreviewJob();
-  // initWhatsappScheduleNotificationJob();
+  initWhatsappScheduleNotificationJob();
 
   // Tests
   // runWhatsappSchedulerOnce().catch(console.error);

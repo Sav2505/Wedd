@@ -39,6 +39,12 @@ export default function TaskManagementPage() {
     return stored ? Number(stored) : 450;
   });
   const [guests, setGuests] = useState<ManagedGuest[]>([]);
+  const confirmedCount = useMemo(
+    () => guests
+      .filter(g => g.rsvp_status === 'COMING')
+      .reduce((sum, g) => sum + getEffectivePartySize(g), 0),
+    [guests],
+  );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
@@ -63,12 +69,41 @@ export default function TaskManagementPage() {
         getGuests('', info?.id).catch(() => [] as Awaited<ReturnType<typeof getGuests>>),
       ]);
 
-      setTasks(fetchedTasks);
       setGuests(fetchedGuests);
 
       if (fetchedGuests.length > 0) {
-        const count = fetchedGuests.reduce((sum, g) => sum + getEffectivePartySize(g), 0);
-        setGuestCount(count);
+        const totalGuests = fetchedGuests.reduce((sum, g) => sum + getEffectivePartySize(g), 0);
+        setGuestCount(totalGuests);
+
+        const confirmed = fetchedGuests
+          .filter(g => g.rsvp_status === 'COMING')
+          .reduce((sum, g) => sum + getEffectivePartySize(g), 0);
+
+        // Auto-sync venue task total_amount with current guest counts (silent, no toast)
+        const venueResults = await Promise.allSettled(
+          fetchedTasks
+            .filter(t => t.category === 'venue' && (t.price_per_plate ?? 0) > 0)
+            .map(async task => {
+              const ppp  = Number(task.price_per_plate);
+              const minC = Number(task.min_commitment ?? 0);
+              const usingConfirmed = confirmed > 0 && confirmed > minC;
+              const rawGuests = Math.round(totalGuests * 0.9);
+              const effective = usingConfirmed ? confirmed : Math.max(rawGuests, minC);
+              const computed  = Math.round(effective * ppp);
+              if (Math.abs(computed - Number(task.total_amount)) <= 0.5) return task;
+              return updateTask(task.id, { total_amount: computed });
+            })
+        );
+
+        const updatedMap = new Map(
+          venueResults
+            .filter((r): r is PromiseFulfilledResult<WeddingTask> => r.status === 'fulfilled')
+            .map(r => [r.value.id, r.value])
+        );
+
+        setTasks(fetchedTasks.map(t => updatedMap.get(t.id) ?? t));
+      } else {
+        setTasks(fetchedTasks);
       }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'שגיאה בטעינת נתונים');
@@ -245,6 +280,7 @@ export default function TaskManagementPage() {
             mode={dialogMode}
             task={selectedTask}
             guestCount={guestCount}
+            confirmedCount={confirmedCount}
             onClose={closeDialog}
             onSave={handleSave}
             onDelete={handleDelete}

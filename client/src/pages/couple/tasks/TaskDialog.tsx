@@ -65,6 +65,7 @@ interface Props {
   mode: 'add' | 'edit' | 'delete';
   task?: WeddingTask | null;
   guestCount?: number;
+  confirmedCount?: number;
   onClose: () => void;
   onSave: (data: TaskFormData) => Promise<void>;
   onDelete?: () => Promise<void>;
@@ -92,13 +93,18 @@ interface VenueCalcProps {
   pricePerPlate: number;
   minCommitment: number;
   guestCount: number;
+  confirmedCount: number;
   computedTotal: number;
 }
 
-function VenueCalculatorCard({ pricePerPlate, minCommitment, guestCount, computedTotal }: VenueCalcProps) {
+function VenueCalculatorCard({ pricePerPlate, minCommitment, guestCount, confirmedCount, computedTotal }: VenueCalcProps) {
   if (pricePerPlate <= 0) return null;
-  const effectiveGuests = Math.max(guestCount, minCommitment > 0 ? minCommitment : 0);
-  const usingMinimum    = minCommitment > 0 && guestCount < minCommitment;
+  const usingConfirmed  = confirmedCount > 0 && confirmedCount > minCommitment;
+  const rawGuests       = Math.round(guestCount * 0.9);
+  const effectiveGuests = usingConfirmed
+    ? confirmedCount
+    : Math.max(rawGuests, minCommitment > 0 ? minCommitment : 0);
+  const usingMinimum    = !usingConfirmed && minCommitment > 0 && rawGuests < minCommitment;
 
   return (
     <motion.div
@@ -110,19 +116,32 @@ function VenueCalculatorCard({ pricePerPlate, minCommitment, guestCount, compute
       <Box
         sx={{
           mt: 0.5, p: 2, borderRadius: 3,
-          background: 'linear-gradient(135deg, rgba(201,168,76,0.08) 0%, rgba(224,201,122,0.05) 100%)',
-          border: '1px solid rgba(201,168,76,0.25)',
+          background: usingConfirmed
+            ? 'linear-gradient(135deg, rgba(76,175,80,0.10) 0%, rgba(76,175,80,0.04) 100%)'
+            : 'linear-gradient(135deg, rgba(201,168,76,0.08) 0%, rgba(224,201,122,0.05) 100%)',
+          border: usingConfirmed
+            ? '1.5px solid rgba(76,175,80,0.45)'
+            : '1px solid rgba(201,168,76,0.25)',
+          transition: 'background 0.3s, border-color 0.3s',
         }}
       >
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.8 }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.8 }}>
               <PeopleAltOutlinedIcon sx={{ fontSize: 15, color: 'text.secondary' }} />
-              <Typography variant="caption" color="text.secondary">אורחים מוזמנים</Typography>
+              <Typography variant="caption" color="text.secondary">כמות מוזמנים <span style={{ opacity: 0.7 }}></span></Typography>
             </Box>
             <Typography variant="caption" fontWeight={600}>{guestCount.toLocaleString('he-IL')}</Typography>
           </Box>
-
+          {confirmedCount > 0 && (
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.8 }}>
+                <CheckCircleOutlineIcon sx={{ fontSize: 15, color: '#4caf50' }} />
+                <Typography variant="caption" sx={{ color: '#2e7d32', fontWeight: 600 }}>אישרו הגעה</Typography>
+              </Box>
+              <Typography variant="caption" fontWeight={700} sx={{ color: '#2e7d32' }}>{confirmedCount.toLocaleString('he-IL')}</Typography>
+            </Box>
+          )}
           {minCommitment > 0 && (
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.8 }}>
@@ -145,18 +164,37 @@ function VenueCalculatorCard({ pricePerPlate, minCommitment, guestCount, compute
 
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.8 }}>
-              <CheckCircleOutlineIcon sx={{ fontSize: 15, color: usingMinimum ? '#ff9800' : '#4caf50' }} />
-              <Typography variant="caption" color="text.secondary">
-                {usingMinimum ? 'חיוב לפי מינ׳ התחייבות' : 'חיוב לפי מספר מוזמנים'}
+              <CheckCircleOutlineIcon sx={{
+                fontSize: 15,
+                color: usingConfirmed ? '#2e7d32' : usingMinimum ? '#ff9800' : '#4caf50',
+              }} />
+              <Typography variant="caption" sx={{
+                color: usingConfirmed ? '#1b5e20' : 'text.secondary',
+                fontWeight: usingConfirmed ? 700 : 400,
+              }}>
+                {usingConfirmed
+                  ? '✓ חיוב לפי אישורי הגעה'
+                  : usingMinimum
+                    ? "חיוב לפי מינ' התחייבות"
+                    : 'חיוב לפי כמות מוזמנים פחות 10% שיערוך'}
               </Typography>
             </Box>
             <Chip
               label={`${effectiveGuests.toLocaleString('he-IL')} אורחים`}
               size="small"
               sx={{
-                height: 20, fontSize: '0.7rem', fontWeight: 700,
-                bgcolor: usingMinimum ? 'rgba(255,152,0,0.12)' : 'rgba(76,175,80,0.12)',
-                color: usingMinimum ? '#e65100' : '#2e7d32',
+                height: 20, fontSize: '0.7rem',
+                fontWeight: usingConfirmed ? 800 : 700,
+                bgcolor: usingConfirmed
+                  ? 'rgba(76,175,80,0.20)'
+                  : usingMinimum
+                    ? 'rgba(255,152,0,0.12)'
+                    : 'rgba(76,175,80,0.12)',
+                color: usingConfirmed
+                  ? '#1b5e20'
+                  : usingMinimum
+                    ? '#e65100'
+                    : '#2e7d32',
               }}
             />
           </Box>
@@ -178,7 +216,7 @@ function VenueCalculatorCard({ pricePerPlate, minCommitment, guestCount, compute
 
 // ─── Component ───────────────────────────────────────────────
 
-export default function TaskDialog({ open, mode, task, guestCount = 0, onClose, onSave, onDelete }: Props) {
+export default function TaskDialog({ open, mode, task, guestCount = 0, confirmedCount = 0, onClose, onSave, onDelete }: Props) {
   const [form, setForm] = useState<TaskFormData>(EMPTY_FORM);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [apiError, setApiError] = useState<string | null>(null);
@@ -191,9 +229,11 @@ export default function TaskDialog({ open, mode, task, guestCount = 0, onClose, 
     if (!isVenue) return 0;
     const ppp  = Number(form.price_per_plate ?? 0);
     const minC = Number(form.min_commitment ?? 0);
-    const effective = Math.max(guestCount, minC);
-    return ppp > 0 ? effective * ppp : 0;
-  }, [isVenue, form.price_per_plate, form.min_commitment, guestCount]);
+    const usingConfirmed = confirmedCount > 0 && confirmedCount > minC;
+    const rawGuests = Math.round(guestCount * 0.9);
+    const effective = usingConfirmed ? confirmedCount : Math.max(rawGuests, minC);
+    return ppp > 0 ? Math.round(effective * ppp) : 0;
+  }, [isVenue, form.price_per_plate, form.min_commitment, guestCount, confirmedCount]);
 
   useEffect(() => {
     if (open) {
@@ -416,10 +456,17 @@ export default function TaskDialog({ open, mode, task, guestCount = 0, onClose, 
                         תמחור אולם — חישוב אוטומטי
                       </Typography>
                       <Chip
-                        label={`${guestCount} אורחים בפועל`}
+                        label={`${guestCount} מוזמנים`}
                         size="small"
                         sx={{ height: 20, fontSize: '0.7rem', bgcolor: 'rgba(201,168,76,0.12)', color: 'primary.dark', fontWeight: 700 }}
                       />
+                      {confirmedCount > 0 && (
+                        <Chip
+                          label={`${confirmedCount} אישרו`}
+                          size="small"
+                          sx={{ height: 20, fontSize: '0.7rem', bgcolor: 'rgba(76,175,80,0.15)', color: '#2e7d32', fontWeight: 700 }}
+                        />
+                      )}
                     </Box>
                     <Grid container spacing={2}>
                       <Grid size={{ xs: 12, sm: 6 }}>
@@ -460,6 +507,7 @@ export default function TaskDialog({ open, mode, task, guestCount = 0, onClose, 
                               pricePerPlate={Number(form.price_per_plate)}
                               minCommitment={Number(form.min_commitment ?? 0)}
                               guestCount={guestCount}
+                              confirmedCount={confirmedCount}
                               computedTotal={venueComputedTotal}
                             />
                           )}

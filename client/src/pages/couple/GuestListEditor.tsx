@@ -42,6 +42,7 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import { exportGuestsToExcel } from '../../utils/exportGuestsToExcel';
 import { buildGuestUrl } from '../../utils/guestUrl';
 import WhatsAppScheduleModal from '../../components/WhatsAppScheduleModal';
+import ExcelImportModal from '../../components/ExcelImportModal';
 import ScheduleSendIcon from '@mui/icons-material/ScheduleSend';
 import { getEffectivePartySize, getEffectivePlusCount, getInvitedPartySize } from '../../utils/effectiveAttendance';
 import { GuestGroup, ManagedGuest, RsvpStatus } from '../../types/domain';
@@ -219,6 +220,7 @@ export default function GuestListEditor() {
   const [saving, setSaving] = useState(false);
   const { info } = useWeddingInfo();
   const [whatsappScheduleOpen, setWhatsappScheduleOpen] = useState(false);
+  const [importModalOpen, setImportModalOpen] = useState(false);
 
   // --- Post-save feedback: success toast + highlight/scroll to the affected guest ---
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -771,31 +773,24 @@ export default function GuestListEditor() {
           >
             ייצוא לאקסל
           </Button>
-          <Tooltip title="בקרוב">
-            <span style={{ flex: 1, minWidth: 0 }}>
-              <Button
-                fullWidth
-                variant="outlined"
-                startIcon={<UploadFileIcon />}
-                disabled
-                sx={{
-                  color: '#2ea043',
-                  borderColor: 'rgba(46,160,67,0.4)',
-                  fontWeight: 600,
-                  fontSize: { xs: '11px', sm: '12px' },
-                  padding: '4px 10px',
-                  minWidth: 0,
-                  whiteSpace: 'nowrap',
-                  '&.Mui-disabled': {
-                    color: 'rgba(46,160,67,0.45)',
-                    borderColor: 'rgba(46,160,67,0.2)',
-                  },
-                }}
-              >
-                ייבוא מאקסל
-              </Button>
-            </span>
-          </Tooltip>
+          <Button
+            variant="outlined"
+            startIcon={<UploadFileIcon />}
+            onClick={() => setImportModalOpen(true)}
+            sx={{
+              color: '#2ea043',
+              borderColor: 'rgba(46,160,67,0.4)',
+              fontWeight: 600,
+              fontSize: { xs: '11px', sm: '12px' },
+              padding: '4px 10px',
+              flex: 1,
+              minWidth: 0,
+              whiteSpace: 'nowrap',
+              '&:hover': { borderColor: '#2ea043', background: 'rgba(46,160,67,0.08)' },
+            }}
+          >
+            ייבוא מאקסל
+          </Button>
         </Stack>
 
         {/* שורה 5: תזמון הודעות לאורחים - שורה שלמה בפני עצמו */}
@@ -1190,6 +1185,13 @@ export default function GuestListEditor() {
         weddingId={info?.id ?? -1}
         weddingDate={info?.wedding_date}
         onClose={() => setWhatsappScheduleOpen(false)}
+      />
+      <ExcelImportModal
+        open={importModalOpen}
+        weddingId={info?.id ?? -1}
+        existingGuests={allGuests}
+        onClose={() => setImportModalOpen(false)}
+        onImportComplete={reload}
       />
     </Box >
   );

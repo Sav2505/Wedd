@@ -1,6 +1,5 @@
 import { sendTemplateMessage } from "./whatsapp.service";
 
-
 export interface AdminAlertInput {
     title: string;
     message: string;

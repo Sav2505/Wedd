@@ -67,6 +67,7 @@ CREATE TABLE IF NOT EXISTS wedding_info (
   message TEXT DEFAULT NULL,
   hero_image_url TEXT DEFAULT NULL,
   is_tables_published BOOLEAN NOT NULL DEFAULT FALSE,
+  email TEXT DEFAULT NULL,
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 

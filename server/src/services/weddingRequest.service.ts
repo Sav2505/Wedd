@@ -300,15 +300,17 @@ export async function openWedding(
             INSERT INTO wedding_info (
                 bride_name,
                 groom_name,
-                wedding_date
+                wedding_date,
+                email
             )
-            VALUES ($1, $2, $3)
+            VALUES ($1, $2, $3, $4)
             RETURNING id
             `,
             [
                 brideFirstName,
                 groomFirstName,
                 request.wedding_date,
+                request.email,
             ],
         );
 

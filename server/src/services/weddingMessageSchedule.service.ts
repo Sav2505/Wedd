@@ -12,6 +12,7 @@ export interface WeddingMessageScheduleRow {
   invitation_locked_at: string | null;
   reminder_locked_at: string | null;
   day_before_locked_at: string | null;
+  post_thanks_locked_at: string | null;
   invitation_image_mime_type: string | null;
   invitation_image_filename: string | null;
   invitation_image_media_id: string | null;
@@ -23,6 +24,7 @@ export interface WeddingMessageScheduleResponse extends WeddingMessageScheduleRo
   invitation_send_at: string;
   reminder_send_at: string;
   day_before_send_at: string;
+  post_thanks_send_at: string;
   has_invitation_image: boolean;
 }
 
@@ -74,6 +76,7 @@ async function ensureScheduleRow(weddingId: number): Promise<WeddingMessageSched
       invitation_locked_at,
       reminder_locked_at,
       day_before_locked_at,
+      post_thanks_locked_at,
       invitation_image_mime_type,
       invitation_image_filename,
       invitation_image_media_id,
@@ -104,6 +107,7 @@ function toResponse(row: WeddingMessageScheduleRow, weddingDate: string): Weddin
     invitation_send_at: computed.invitationSendAt,
     reminder_send_at: computed.reminderSendAt,
     day_before_send_at: computed.dayBeforeSendAt,
+    post_thanks_send_at: computed.postThanksSendAt,
     has_invitation_image: Boolean(row.invitation_image_mime_type),
   };
 }
@@ -156,6 +160,7 @@ export async function updateWeddingMessageSchedule(
         invitation_locked_at,
         reminder_locked_at,
         day_before_locked_at,
+        post_thanks_locked_at,
         invitation_image_mime_type,
         invitation_image_filename,
         invitation_image_media_id,
@@ -223,6 +228,7 @@ export async function updateWeddingMessageSchedule(
         invitation_locked_at,
         reminder_locked_at,
         day_before_locked_at,
+        post_thanks_locked_at,
         invitation_image_mime_type,
         invitation_image_filename,
         invitation_image_media_id,
@@ -269,6 +275,7 @@ export async function saveInvitationImage(
         invitation_locked_at,
         reminder_locked_at,
         day_before_locked_at,
+        post_thanks_locked_at,
         invitation_image_mime_type,
         invitation_image_filename,
         invitation_image_media_id,
@@ -331,6 +338,7 @@ export async function saveInvitationImage(
         invitation_locked_at,
         reminder_locked_at,
         day_before_locked_at,
+        post_thanks_locked_at,
         invitation_image_mime_type,
         invitation_image_filename,
         invitation_image_media_id,
@@ -383,6 +391,7 @@ export async function clearInvitationImage(weddingId: number): Promise<WeddingMe
         invitation_locked_at,
         reminder_locked_at,
         day_before_locked_at,
+        post_thanks_locked_at,
         invitation_image_mime_type,
         invitation_image_filename,
         invitation_image_media_id,
@@ -424,6 +433,7 @@ export async function clearInvitationImage(weddingId: number): Promise<WeddingMe
         invitation_locked_at,
         reminder_locked_at,
         day_before_locked_at,
+        post_thanks_locked_at,
         invitation_image_mime_type,
         invitation_image_filename,
         invitation_image_media_id,

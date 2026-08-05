@@ -167,6 +167,7 @@ export interface ManagedGuest {
   rsvp_updated_at: string | null;
   created_at: string;
   gift_amount: number | null;
+  gift_kind: string | null;
   wedding_id?: number;
 }
 

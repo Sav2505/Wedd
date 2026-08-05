@@ -31,6 +31,7 @@ interface ScheduleRow {
   invitation_locked_at: string | null;
   reminder_locked_at: string | null;
   day_before_locked_at: string | null;
+  post_thanks_locked_at: string | null;
   invitation_image: Buffer | null;
   invitation_image_mime_type: string | null;
   invitation_image_filename: string | null;
@@ -114,6 +115,7 @@ async function getWeddingScheduleRows(): Promise<Array<WeddingInfoRow & Schedule
       s.invitation_locked_at,
       s.reminder_locked_at,
       s.day_before_locked_at,
+      s.post_thanks_locked_at,
       s.invitation_image,
       s.invitation_image_mime_type,
       s.invitation_image_filename,
@@ -131,9 +133,11 @@ async function getEligibleGuests(
   templateName: MessageTemplateName,
   isProd: boolean,
 ): Promise<GuestRow[]> {
-  const reminderFilter =
+  const templateFilter =
     templateName === 'wedding_reminder'
       ? "AND g.rsvp_status <> 'COMING'"
+      : templateName === 'wedding_post_thanks'
+        ? "AND g.rsvp_status = 'COMING'"
       : '';
 
   // בסביבת בדיקות (לא IS_PROD) - שולחים אך ורק לאיש הבדיקה, בתוך אותה חתונה
@@ -155,7 +159,7 @@ async function getEligibleGuests(
       AND l.template_name = $2
      WHERE g.wedding_id = $1
        AND g.role = 'guest'
-       ${reminderFilter}
+       ${templateFilter}
        ${testFilter}
        AND (
          l.id IS NULL
@@ -174,7 +178,9 @@ async function maybeLockTemplate(weddingId: number, templateName: MessageTemplat
       ? 'invitation_locked_at'
       : templateName === 'wedding_reminder'
         ? 'reminder_locked_at'
-        : 'day_before_locked_at';
+        : templateName === 'wedding_day_before'
+          ? 'day_before_locked_at'
+          : 'post_thanks_locked_at';
   await pool.query(
     `UPDATE wedding_message_schedule
      SET ${column} = COALESCE(${column}, NOW()),
@@ -215,11 +221,13 @@ async function processTemplateForWedding(
     wedding_confirmation: wedding.invitation_locked_at,
     wedding_reminder: wedding.reminder_locked_at,
     wedding_day_before: wedding.day_before_locked_at,
+    wedding_post_thanks: wedding.post_thanks_locked_at,
   };
   const dateMap: Record<MessageTemplateName, string> = {
     wedding_confirmation: computed.invitationSendAt,
     wedding_reminder: computed.reminderSendAt,
     wedding_day_before: computed.dayBeforeSendAt,
+    wedding_post_thanks: computed.postThanksSendAt,
   };
 
   if (lockMap[templateName]) {
@@ -321,6 +329,7 @@ export async function runWhatsappSchedulerOnce(): Promise<void> {
       await processTemplateForWedding(wedding, 'wedding_confirmation', nowIsrael, IS_PROD);
       await processTemplateForWedding(wedding, 'wedding_reminder', nowIsrael, IS_PROD);
       await processTemplateForWedding(wedding, 'wedding_day_before', nowIsrael, IS_PROD);
+      await processTemplateForWedding(wedding, 'wedding_post_thanks', nowIsrael, IS_PROD);
     }
   } finally {
     await pool.query('SELECT pg_advisory_unlock($1)', [ADVISORY_LOCK_KEY]);
@@ -415,6 +424,12 @@ Not coming: ${stats.not_coming}
         .toFormat('dd/LL/yyyy HH:mm')}
    Recipients: ${stats.total}
 
+4) wedding_post_thanks
+  ${DateTime.fromISO(computed.postThanksSendAt)
+      .setZone(ISRAEL_TIMEZONE)
+      .toFormat('dd/LL/yyyy HH:mm')}
+  Recipients: ${stats.coming}
+
 -------------------------------------------------------
 
 `;
@@ -458,6 +473,13 @@ Not coming: ${stats.not_coming}
         .setZone(ISRAEL_TIMEZONE)
         .toFormat('dd/LL/yyyy HH:mm')}</td>
             <td>${stats.total}</td>
+          </tr>
+          <tr>
+            <td>wedding_post_thanks</td>
+            <td>${DateTime.fromISO(computed.postThanksSendAt)
+        .setZone(ISRAEL_TIMEZONE)
+        .toFormat('dd/LL/yyyy HH:mm')}</td>
+            <td>${stats.coming}</td>
           </tr>
         </table>
       </div>
@@ -555,6 +577,16 @@ async function logWeddingSchedulePreview(
       EVERY guest
 
 
+4) wedding_post_thanks
+  📅 Send at:
+    ${format(computed.postThanksSendAt)}
+  👥 Recipients:
+    ${stats.coming_guests} guests
+  Rule:
+    Only confirmed guests
+    (COMING)
+
+
 -------------------------------------------------------------
 `);
   }
@@ -572,7 +604,7 @@ interface WeddingTomorrowEmailTemplate {
   notComingGuests: number;
 
   messages: Array<{
-    template: 'wedding_confirmation' | 'wedding_reminder' | 'wedding_day_before';
+    template: 'wedding_confirmation' | 'wedding_reminder' | 'wedding_day_before' | 'wedding_post_thanks';
     sendAt: string;
     recipients: number;
   }>;
@@ -585,6 +617,7 @@ export function buildTomorrowWhatsappEmail(
     wedding_confirmation: '📨 הזמנה לחתונה',
     wedding_reminder: '🔔 תזכורת לאישור הגעה',
     wedding_day_before: '❤️ הודעת יום לפני החתונה',
+    wedding_post_thanks: '💛 הודעת תודה אחרי החתונה',
   };
 
   const rowsHtml = data.messages

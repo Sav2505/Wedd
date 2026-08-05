@@ -117,7 +117,8 @@ export async function listGuests(
     g.number_of_guests,
     g.rsvp_updated_at,
     g.created_at,
-    g.gift_amount
+    g.gift_amount,
+    g.gift_kind
   FROM guests g
   LEFT JOIN guest_groups gg ON gg.id = g.guest_group_id
   ${where}
@@ -197,6 +198,7 @@ export async function updateGuest(id: string, payload: {
   guest_group_id?: string | null;
   plus_count?: number;
   gift_amount?: number | null;
+  gift_kind?: string | null;
 }): Promise<ManagedGuest> {
   const current = await pool.query<{
     first_name: string | null;
@@ -206,8 +208,9 @@ export async function updateGuest(id: string, payload: {
     side: 'חתן' | 'כלה' | 'שניהם' | null;
     guest_group_id: string | null;
     gift_amount: number | null;
+    gift_kind: string | null;
   }>(
-    "SELECT first_name, last_name, full_name, phone, side, guest_group_id, gift_amount FROM guests WHERE id = $1 AND role = 'guest'",
+    "SELECT first_name, last_name, full_name, phone, side, guest_group_id, gift_amount, gift_kind FROM guests WHERE id = $1 AND role = 'guest'",
     [id],
   );
 
@@ -221,6 +224,7 @@ export async function updateGuest(id: string, payload: {
   const groupId = payload.guest_group_id === undefined ? now.guest_group_id : payload.guest_group_id;
   const plusCount = payload.plus_count !== undefined ? Math.max(0, Math.floor(payload.plus_count)) : undefined;
   const giftAmount = payload.gift_amount !== undefined ? payload.gift_amount : now.gift_amount;
+  const giftKind = payload.gift_kind !== undefined ? payload.gift_kind : now.gift_kind;
 
   if (!firstName || !lastName) throw createError('שם פרטי ושם משפחה הם שדות חובה', 400);
   if (!phone) throw createError('מספר טלפון הוא שדה חובה', 400);
@@ -237,7 +241,8 @@ export async function updateGuest(id: string, payload: {
       side = $5,
       guest_group_id = $6,
       plus_count = COALESCE($7, plus_count),
-      gift_amount = $9
+      gift_amount = $9,
+      gift_kind = $10
     WHERE id = $8 AND role = 'guest'
     RETURNING
       id,
@@ -254,8 +259,9 @@ export async function updateGuest(id: string, payload: {
       number_of_guests,
       rsvp_updated_at,
       created_at,
-      gift_amount
-  `, [firstName, lastName, fullName, phone, side ?? null, groupId ?? null, plusCount ?? null, id, giftAmount]);
+      gift_amount,
+      gift_kind
+  `, [firstName, lastName, fullName, phone, side ?? null, groupId ?? null, plusCount ?? null, id, giftAmount, giftKind]);
 
   if (rows.length === 0) throw createError('אורח לא נמצא', 404);
   return rows[0];

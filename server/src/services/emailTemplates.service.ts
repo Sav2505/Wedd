@@ -853,7 +853,7 @@ color:#B8944A;
 // ---------------------------------------------------------------------------
 
 export interface TomorrowWhatsappScheduledMessage {
-  templateName: 'wedding_confirmation' | 'wedding_reminder' | 'wedding_day_before';
+  templateName: 'wedding_confirmation' | 'wedding_reminder' | 'wedding_day_before' | 'wedding_post_thanks';
   sendAt: string;
   recipientCount: number;
   messageHeader: string;
@@ -879,6 +879,7 @@ export function buildTomorrowWhatsappNotificationEmail(input: {
     wedding_confirmation: '📨 הזמנה לחתונה',
     wedding_reminder: '🔔 תזכורת לאישור הגעה',
     wedding_day_before: '❤️ הודעת יום לפני החתונה',
+    wedding_post_thanks: '💛 הודעת תודה אחרי החתונה',
   };
 
   const messagesHtml = input.scheduledMessages

@@ -69,6 +69,7 @@ type GuestForm = {
   guest_group_id: string | null;
   plus_count: number;
   gift_amount: number | null;
+  gift_kind: string | null;
 };
 
 const EMPTY_FORM: GuestForm = {
@@ -79,6 +80,7 @@ const EMPTY_FORM: GuestForm = {
   guest_group_id: null,
   plus_count: 0,
   gift_amount: null,
+  gift_kind: null,
 };
 
 type RsvpFilter = 'ALL' | RsvpStatus;
@@ -414,6 +416,7 @@ export default function GuestListEditor() {
       guest_group_id: guest.guest_group_id,
       plus_count: guest.plus_count ?? 0,
       gift_amount: guest.gift_amount ?? null,
+      gift_kind: guest.gift_kind ?? null,
     });
     setGuestDialogOpen(true);
   }, []);
@@ -530,6 +533,7 @@ export default function GuestListEditor() {
     const phoneDigits = phone.replace(/\D/g, '');
     const plusCount = guestForm.plus_count ?? 0;
     const giftAmount = guestForm.gift_amount ?? null;
+    const giftKind = guestForm.gift_kind ?? null;
 
     setSaving(true);
     try {
@@ -542,6 +546,7 @@ export default function GuestListEditor() {
           guest_group_id: guestForm.guest_group_id,
           plus_count: plusCount,
           gift_amount: giftAmount,
+          gift_kind: giftKind,
         });
       } else {
         await createGuest({

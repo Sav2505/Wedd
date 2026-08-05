@@ -73,6 +73,7 @@ export async function exportGuestsToExcel(
         { key: 'table', width: 14 },
         { key: 'guests', width: 16 },
         { key: 'status', width: 18 },
+        { key: 'gift_kind', width: 18 },
         { key: 'gift_amount', width: 16 },
     ];
 
@@ -85,6 +86,7 @@ export async function exportGuestsToExcel(
         'מספר שולחן',
         'מספר אורחים',
         'סטטוס',
+        'סוג מתנה',
         'מתנה בש"ח'
     ]);
 
@@ -134,6 +136,7 @@ export async function exportGuestsToExcel(
             table: guest.table_number ?? '',
             guests: guest.number_of_guests,
             status: translateStatus(guest.rsvp_status),
+            gift_kind: guest.gift_kind ?? '',
             gift_amount: guest.gift_amount ?? '',
         });
     });

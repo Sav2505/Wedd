@@ -5,6 +5,7 @@ import {
   ISRAEL_TIMEZONE,
   computeDayBeforeSendAt,
   computeInvitationSendAt,
+  computePostThanksSendAt,
   computeReminderSendAt,
   computeWeddingMessageScheduleDates,
 } from './scheduling.util';
@@ -36,6 +37,16 @@ test('day-before: friday wedding remains thursday noon', () => {
   assert.equal(toDate(actual), '2026-08-06 12:00 Thursday');
 });
 
+test('post-thanks: friday wedding moves saturday send to sunday noon', () => {
+  const actual = computePostThanksSendAt('2026-08-07').setZone(ISRAEL_TIMEZONE);
+  assert.equal(toDate(actual), '2026-08-09 12:00 Sunday');
+});
+
+test('post-thanks: regular day sends next day at noon', () => {
+  const actual = computePostThanksSendAt('2026-08-05').setZone(ISRAEL_TIMEZONE);
+  assert.equal(toDate(actual), '2026-08-06 12:00 Thursday');
+});
+
 test('all computed dates are fixed at 12:00 in Israel timezone across DST periods', () => {
   const dates = computeWeddingMessageScheduleDates('2026-03-31', {
     invitationDaysBefore: 0,
@@ -46,12 +57,15 @@ test('all computed dates are fixed at 12:00 in Israel timezone across DST period
   const invitation = DateTime.fromISO(dates.invitationSendAt).setZone(ISRAEL_TIMEZONE);
   const reminder = DateTime.fromISO(dates.reminderSendAt).setZone(ISRAEL_TIMEZONE);
   const dayBefore = DateTime.fromISO(dates.dayBeforeSendAt).setZone(ISRAEL_TIMEZONE);
+  const postThanks = DateTime.fromISO(dates.postThanksSendAt).setZone(ISRAEL_TIMEZONE);
 
   assert.equal(invitation.zoneName, ISRAEL_TIMEZONE);
   assert.equal(reminder.zoneName, ISRAEL_TIMEZONE);
   assert.equal(dayBefore.zoneName, ISRAEL_TIMEZONE);
+  assert.equal(postThanks.zoneName, ISRAEL_TIMEZONE);
 
   assert.equal(invitation.hour, 12);
   assert.equal(reminder.hour, 12);
   assert.equal(dayBefore.hour, 12);
+  assert.equal(postThanks.hour, 12);
 });

@@ -3,6 +3,7 @@ import {
     Box,
     Chip,
     InputAdornment,
+    MenuItem,
     Table,
     TableBody,
     TableCell,
@@ -84,14 +85,79 @@ function GiftAmountCell({
 }
 
 type SortDirection = 'asc' | 'desc';
+type GiftKind = 'מזומן' | "צ'ק" | 'ביט' | 'פייבוקס' | 'העברה בנקאית' | 'אחר';
+
+const GIFT_KIND_OPTIONS: GiftKind[] = ['מזומן', "צ'ק", 'ביט', 'פייבוקס', 'העברה בנקאית', 'אחר'];
 
 interface Props {
     guests: ManagedGuest[];
     onUpdateGiftAmount: (guestId: string, amount: number | null) => Promise<void>;
+    onUpdateGiftKind: (guestId: string, kind: string | null) => Promise<void>;
 }
 
-const PAGINATION_ROWS= [10, 25, 50];
-export default function GuestGiftsTable({ guests, onUpdateGiftAmount }: Props) {
+const PAGINATION_ROWS = [10, 25, 50];
+
+function GiftKindCell({
+    guest,
+    onUpdateGiftKind,
+}: {
+    guest: ManagedGuest;
+    onUpdateGiftKind: (guestId: string, kind: string | null) => Promise<void>;
+}) {
+    const [value, setValue] = useState(guest.gift_kind ?? '');
+    const [saving, setSaving] = useState(false);
+    const knownOptions = useMemo(() => new Set(GIFT_KIND_OPTIONS), []);
+    const hasCustomValue = value !== '' && !knownOptions.has(value as GiftKind);
+
+    useEffect(() => {
+        setValue(guest.gift_kind ?? '');
+    }, [guest.gift_kind]);
+
+    async function handleChange(nextValue: string) {
+        if (nextValue === value) return;
+
+        const previous = value;
+        setValue(nextValue);
+        setSaving(true);
+
+        try {
+            await onUpdateGiftKind(guest.id, nextValue || null);
+        } catch {
+            setValue(previous);
+        } finally {
+            setSaving(false);
+        }
+    }
+
+    return (
+        <TextField
+            size="small"
+            select
+            value={value}
+            disabled={saving}
+            onChange={(e) => {
+                void handleChange(e.target.value);
+            }}
+            sx={{
+                minWidth: 160,
+                '& .MuiOutlinedInput-root': {
+                    borderRadius: 2,
+                    backgroundColor: '#FFFDF8',
+                },
+            }}
+        >
+            <MenuItem value="">—</MenuItem>
+            {hasCustomValue ? <MenuItem value={value}>{value}</MenuItem> : null}
+            {GIFT_KIND_OPTIONS.map((option) => (
+                <MenuItem key={option} value={option}>
+                    {option}
+                </MenuItem>
+            ))}
+        </TextField>
+    );
+}
+
+export default function GuestGiftsTable({ guests, onUpdateGiftAmount, onUpdateGiftKind }: Props) {
     const [search, setSearch] = useState('');
     const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
     const [page, setPage] = useState(0);
@@ -203,6 +269,7 @@ export default function GuestGiftsTable({ guests, onUpdateGiftAmount }: Props) {
                                 <TableCell sx={{ fontWeight: 700, bgcolor: '#FFFCF5' }}>צד</TableCell>
                                 <TableCell sx={{ fontWeight: 700, bgcolor: '#FFFCF5' }} align="center">מס' אורחים</TableCell>
                                 <TableCell sx={{ fontWeight: 700, bgcolor: '#FFFCF5' }} align="center">סכום מתנה</TableCell>
+                                <TableCell sx={{ fontWeight: 700, bgcolor: '#FFFCF5' }} align="center">סוג תשלום</TableCell>
                             </TableRow>
                         </TableHead>
                         <TableBody>
@@ -236,6 +303,9 @@ export default function GuestGiftsTable({ guests, onUpdateGiftAmount }: Props) {
                                     <TableCell align="center">
                                         <GiftAmountCell guest={guest} onUpdateGiftAmount={onUpdateGiftAmount} />
                                     </TableCell>
+                                    <TableCell align="center">
+                                        <GiftKindCell guest={guest} onUpdateGiftKind={onUpdateGiftKind} />
+                                    </TableCell>
                                 </TableRow>
                             ))}
                         </TableBody>
@@ -258,6 +328,7 @@ export default function GuestGiftsTable({ guests, onUpdateGiftAmount }: Props) {
                 sx={{
                     '.MuiTablePagination-toolbar': { px: 1 },
                     color: '#6E5424',
+                    overflowX: 'hidden',
                 }}
             />
         </Box>

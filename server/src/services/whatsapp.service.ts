@@ -8,6 +8,7 @@ export type SupportedWeddingTemplate =
     | 'wedding_confirmation'
     | 'wedding_reminder'
     | 'wedding_day_before'
+    | 'wedding_post_thanks'
     | 'wedding_thank_you';
 
 export interface SendTemplatePayload {
@@ -299,6 +300,18 @@ export function buildTemplateComponents(input: BuildTemplateComponentsInput): un
                         { type: 'text', text: input.weddingTime },         // {{4}} קבלת פנים
                         { type: 'text', text: input.weddingCanpoyTime },   // {{5}} חופה
                         { type: 'text', text: input.weddingDisplayName },  // {{6}}
+                    ],
+                },
+                buttonComponent,
+            ];
+
+        case 'wedding_post_thanks':
+            return [
+                {
+                    type: 'body',
+                    parameters: [
+                        { type: 'text', text: input.guestFirstName },      // {{1}}
+                        { type: 'text', text: input.weddingDisplayName },  // {{2}}
                     ],
                 },
                 buttonComponent,

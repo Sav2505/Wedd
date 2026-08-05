@@ -144,6 +144,11 @@ export default function TaskManagementPage() {
     setGuests(prev => prev.map(g => g.id === guestId ? { ...g, gift_amount: amount } : g));
   }
 
+  async function handleUpdateGiftKind(guestId: string, kind: string | null): Promise<void> {
+    await updateGuest(guestId, { gift_kind: kind });
+    setGuests(prev => prev.map(g => g.id === guestId ? { ...g, gift_kind: kind } : g));
+  }
+
   function openAdd() { setSelectedTask(null); setDialogMode('add'); }
   function openEdit(t: WeddingTask) { setSelectedTask(t); setDialogMode('edit'); }
   function openDelete(t: WeddingTask) { setSelectedTask(t); setDialogMode('delete'); }
@@ -236,6 +241,7 @@ export default function TaskManagementPage() {
             <GuestGiftsTable
               guests={guests}
               onUpdateGiftAmount={handleUpdateGiftAmount}
+              onUpdateGiftKind={handleUpdateGiftKind}
             />
           </motion.div>
 

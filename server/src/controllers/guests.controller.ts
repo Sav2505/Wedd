@@ -65,7 +65,7 @@ export async function getGuests(
 ): Promise<void> {
   try {
     const weddingId = Number(req.query.wedding_id);
-  
+
     if (!weddingId) {
       return next(createError('חסר מזהה חתונה', 400));
     }
@@ -129,6 +129,7 @@ export async function updateGuest(req: Request, res: Response, next: NextFunctio
       guest_group_id?: string | null;
       plus_count?: number;
       gift_amount?: number | null;
+      gift_kind?: string | null;
     };
 
     const guest = await guestsService.updateGuest(req.params.id, payload);

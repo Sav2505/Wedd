@@ -84,6 +84,7 @@ export async function updateGuest(
     guest_group_id?: string | null;
     plus_count?: number;
     gift_amount?: number | null;
+    gift_kind?: string | null;
   },
 ): Promise<ManagedGuest> {
   const { data } = await api.put<ApiResponse<ManagedGuest>>(`/guests/${id}`, payload);

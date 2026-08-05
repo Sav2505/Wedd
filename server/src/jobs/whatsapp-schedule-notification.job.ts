@@ -36,6 +36,7 @@ interface WeddingScheduleRow {
   invitation_locked_at: string | null;
   reminder_locked_at: string | null;
   day_before_locked_at: string | null;
+  post_thanks_locked_at: string | null;
 }
 
 interface GuestStats {
@@ -64,7 +65,8 @@ async function getWeddingScheduleRows(): Promise<WeddingScheduleRow[]> {
       s.day_before_offset_days,
       s.invitation_locked_at,
       s.reminder_locked_at,
-      s.day_before_locked_at
+      s.day_before_locked_at,
+      s.post_thanks_locked_at
      FROM wedding_info wi
      JOIN wedding_message_schedule s ON s.wedding_id = wi.id`,
   );
@@ -138,7 +140,7 @@ function formatWeddingDate(weddingDate: string): string {
 
 function buildMessagePreviews(
   wedding: WeddingScheduleRow,
-  templateNames: ReadonlyArray<'wedding_confirmation' | 'wedding_reminder' | 'wedding_day_before'>,
+  templateNames: ReadonlyArray<'wedding_confirmation' | 'wedding_reminder' | 'wedding_day_before' | 'wedding_post_thanks'>,
   sendAtFormattedMap: Record<string, string>,
   stats: GuestStats,
 ): TomorrowWhatsappScheduledMessage[] {
@@ -180,7 +182,7 @@ function buildMessagePreviews(
         `באהבה,\n${coupleNames} 💕`;
       recipientCount = stats.pending + stats.notComing;
 
-    } else {
+    } else if (templateName === 'wedding_day_before') {
       // wedding_day_before
       messageHeader  = `💍✨ מחר אנחנו מתחתנים ✨💍`;
       messageBody    =
@@ -198,6 +200,19 @@ function buildMessagePreviews(
         `נתראה מחר! ❤️\n\n` +
         `באהבה,\n${coupleNames} 💕`;
       recipientCount = stats.total;
+
+    } else {
+      // wedding_post_thanks
+      messageHeader  = `💛 תודה שהיית חלק מהיום המיוחד שלנו!`;
+      messageBody    =
+        `שלום ${sampleGuest} ❤️\n\n` +
+        `רצינו לומר לך תודה ענקית שהגעת לחגוג איתנו את אחד הימים המרגשים והמשמעותיים בחיינו. 💍🥂\n\n` +
+        `היה לנו כיף גדול לראות אותך בין האורחים, ואנחנו מקווים שנהנית מהערב לפחות כמו שאנחנו נהנינו. ✨\n\n` +
+        `📸 נשמח אם תוכל/י לצרף את התמונות שצילמת לגלריה המשותפת שלנו באפליקציה, כדי שכולנו נוכל ליהנות מהם ולהיזכר ברגעים היפים. ❤️\n\n` +
+        `תודה שהיית חלק מהזיכרונות שלנו.\n` +
+        `הנוכחות שלך הפכה את היום הזה למיוחד עוד יותר. 💕\n\n` +
+        `באהבה ובהערכה,\n${coupleNames} 💛`;
+      recipientCount = stats.confirmed;
     }
 
     return {
@@ -251,25 +266,28 @@ export async function runWhatsappScheduleNotificationOnce(): Promise<void> {
         wedding_confirmation: DateTime.fromISO(computed.invitationSendAt, { zone: ISRAEL_TIMEZONE }).toISODate() ?? '',
         wedding_reminder:     DateTime.fromISO(computed.reminderSendAt,   { zone: ISRAEL_TIMEZONE }).toISODate() ?? '',
         wedding_day_before:   DateTime.fromISO(computed.dayBeforeSendAt,  { zone: ISRAEL_TIMEZONE }).toISODate() ?? '',
+        wedding_post_thanks:  DateTime.fromISO(computed.postThanksSendAt, { zone: ISRAEL_TIMEZONE }).toISODate() ?? '',
       };
 
       const formattedMap: Record<string, string> = {
         wedding_confirmation: DateTime.fromISO(computed.invitationSendAt, { zone: ISRAEL_TIMEZONE }).toFormat('dd/LL/yyyy HH:mm'),
         wedding_reminder:     DateTime.fromISO(computed.reminderSendAt,   { zone: ISRAEL_TIMEZONE }).toFormat('dd/LL/yyyy HH:mm'),
         wedding_day_before:   DateTime.fromISO(computed.dayBeforeSendAt,  { zone: ISRAEL_TIMEZONE }).toFormat('dd/LL/yyyy HH:mm'),
+        wedding_post_thanks:  DateTime.fromISO(computed.postThanksSendAt, { zone: ISRAEL_TIMEZONE }).toFormat('dd/LL/yyyy HH:mm'),
       };
 
       const lockedMap: Record<string, boolean> = {
         wedding_confirmation: Boolean(wedding.invitation_locked_at),
         wedding_reminder:     Boolean(wedding.reminder_locked_at),
         wedding_day_before:   Boolean(wedding.day_before_locked_at),
+        wedding_post_thanks:  Boolean(wedding.post_thanks_locked_at),
       };
 
       // Include templates that:
       // - fire tomorrow (normal case), OR
       // - fire on Sunday when tomorrow is Saturday → notify today (Friday) with "מחרתיים"
       const templatesTomorrow = (
-        ['wedding_confirmation', 'wedding_reminder', 'wedding_day_before'] as const
+        ['wedding_confirmation', 'wedding_reminder', 'wedding_day_before', 'wedding_post_thanks'] as const
       ).filter((t) => {
         if (lockedMap[t]) return false;
         if (isoDateMap[t] === tomorrowISODate) return true;

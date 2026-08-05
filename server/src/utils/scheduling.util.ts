@@ -18,6 +18,7 @@ export interface WeddingScheduleComputedDates {
   invitationSendAt: string;
   reminderSendAt: string;
   dayBeforeSendAt: string;
+  postThanksSendAt: string;
 }
 
 function normalizeToIsraelNoon(dateValue: string | Date): DateTime {
@@ -71,6 +72,11 @@ export function computeDayBeforeSendAt(
   return base;
 }
 
+export function computePostThanksSendAt(weddingDate: string | Date): DateTime {
+  const base = normalizeToIsraelNoon(weddingDate).plus({ days: 1 });
+  return deferSaturdayToSundayNoon(base);
+}
+
 export function computeWeddingMessageScheduleDates(
   weddingDate: string | Date,
   offsets: WeddingScheduleOffsets,
@@ -78,11 +84,13 @@ export function computeWeddingMessageScheduleDates(
   const invitation = computeInvitationSendAt(weddingDate, offsets.invitationDaysBefore);
   const reminder = computeReminderSendAt(weddingDate, offsets.reminderDaysBefore);
   const dayBefore = computeDayBeforeSendAt(weddingDate, offsets.dayBeforeOffsetDays);
+  const postThanks = computePostThanksSendAt(weddingDate);
 
   return {
     invitationSendAt: invitation.toISO() ?? invitation.toString(),
     reminderSendAt: reminder.toISO() ?? reminder.toString(),
     dayBeforeSendAt: dayBefore.toISO() ?? dayBefore.toString(),
+    postThanksSendAt: postThanks.toISO() ?? postThanks.toString(),
   };
 }
 

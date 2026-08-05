@@ -28,9 +28,9 @@ function formatHebrewDate(iso: string): string {
 // ─── Info row ───────────────────────────────────────────────
 
 function InfoRow({
-  icon, label, value, delay = 0,
+  icon, label, value, delay = 0, compact = false,
 }: {
-  icon: React.ReactNode; label: string; value: string; delay?: number;
+  icon: React.ReactNode; label: string; value: string; delay?: number; compact?: boolean;
 }) {
   return (
     <motion.div
@@ -42,14 +42,14 @@ function InfoRow({
         sx={{
           display: 'flex',
           alignItems: 'flex-start',
-          gap: 2,
-          py: 2,
+          gap: compact ? 1.5 : 2,
+          py: compact ? 1.45 : 2,
         }}
       >
         <Box
           sx={{
-            width: 44,
-            height: 44,
+            width: compact ? 40 : 44,
+            height: compact ? 40 : 44,
             borderRadius: '50%',
             background: 'linear-gradient(135deg, rgba(224,201,122,0.25), rgba(201,168,76,0.15))',
             border: '1px solid rgba(201,168,76,0.3)',
@@ -65,13 +65,13 @@ function InfoRow({
         <Box sx={{ flex: 1, minWidth: 0 }}>
           <Typography
             variant="caption"
-            sx={{ color: '#A08070', display: 'block', mb: 0.25, fontWeight: 500 }}
+            sx={{ color: '#A08070', display: 'block', mb: 0.25, fontWeight: 500, fontSize: compact ? '0.62rem' : undefined }}
           >
             {label}
           </Typography>
           <Typography
             variant="body1"
-            sx={{ color: '#2C1810', fontWeight: 500, lineHeight: 1.5 }}
+            sx={{ color: '#2C1810', fontWeight: 500, lineHeight: 1.5, fontSize: compact ? '0.875rem' : undefined }}
           >
             {value}
           </Typography>
@@ -182,18 +182,26 @@ function InfoSkeleton() {
 
 // ─── Main ───────────────────────────────────────────────────
 
-export default function InfoTab() {
+type Props = {
+  demoInfo?: WeddingInfo;
+  hideRegisterCta?: boolean;
+};
+
+export default function InfoTab({ demoInfo, hideRegisterCta = false }: Props) {
   const {
     info,
     loading,
     error,
   } = useWeddingInfo();
 
-  if (loading) {
+  const resolvedInfo = demoInfo ?? info;
+  const compactDemo = Boolean(demoInfo);
+
+  if (!demoInfo && loading) {
     return <InfoSkeleton />;
   }
 
-  if (error) {
+  if (!demoInfo && error) {
     return (
       <Box sx={{ p: 4, textAlign: 'center' }}>
         <Typography color="error">{error}</Typography>
@@ -201,7 +209,7 @@ export default function InfoTab() {
     );
   }
 
-  if (!info) {
+  if (!resolvedInfo) {
     return (
       <Box sx={{ p: 4, textAlign: 'center' }}>
         <Typography color="error">לא נמצאו פרטי חתונה.</Typography>
@@ -220,43 +228,43 @@ export default function InfoTab() {
       <GoldCard delay={0.05} sx={{ mb: 2 }}>
         <Typography
           variant="caption"
-          sx={{ fontSize: "14px", color: '#A08070', display: 'block', mb: 0.5, fontWeight: 500 }}
+          sx={{ fontSize: compactDemo ? '12px' : '14px', color: '#A08070', display: 'block', mb: 0.5, fontWeight: 500 }}
         >
           פרטי האירוע
         </Typography>
-        <InfoRow icon={<CalendarMonthIcon sx={{ fontSize: 20 }} />} label="תאריך" value={formatHebrewDate(info.wedding_date)} delay={0.05} />
+        <InfoRow icon={<CalendarMonthIcon sx={{ fontSize: compactDemo ? 18 : 20 }} />} label="תאריך" value={formatHebrewDate(resolvedInfo.wedding_date)} delay={0.05} compact={compactDemo} />
         <Divider sx={{ borderColor: 'rgba(201,168,76,0.15)' }} />
-        <InfoRow icon={<AccessTimeIcon sx={{ fontSize: 20 }} />} label="קבלת פנים" value={`${info.wedding_time.slice(0, 5)}`} delay={0.12} />
+        <InfoRow icon={<AccessTimeIcon sx={{ fontSize: compactDemo ? 18 : 20 }} />} label="קבלת פנים" value={`${resolvedInfo.wedding_time.slice(0, 5)}`} delay={0.12} compact={compactDemo} />
         <Divider sx={{ borderColor: 'rgba(201,168,76,0.15)' }} />
-        <InfoRow icon={<AccessTimeIcon sx={{ fontSize: 20 }} />} label="חופה" value={`${info.wedding_canpoy_time.slice(0, 5)}`} delay={0.19} />
+        <InfoRow icon={<AccessTimeIcon sx={{ fontSize: compactDemo ? 18 : 20 }} />} label="חופה" value={`${resolvedInfo.wedding_canpoy_time.slice(0, 5)}`} delay={0.19} compact={compactDemo} />
         <Divider sx={{ borderColor: 'rgba(201,168,76,0.15)' }} />
-        <InfoRow icon={<LocationOnIcon sx={{ fontSize: 20 }} />} label="מיקום" value={`${info.venue_name} — ${info.venue_address}`} delay={0.26} />
-        {info.dress_code && (
+        <InfoRow icon={<LocationOnIcon sx={{ fontSize: compactDemo ? 18 : 20 }} />} label="מיקום" value={`${resolvedInfo.venue_name} — ${resolvedInfo.venue_address}`} delay={0.26} compact={compactDemo} />
+        {resolvedInfo.dress_code && (
           <>
             <Divider sx={{ borderColor: 'rgba(201,168,76,0.15)' }} />
-            <InfoRow icon={<CheckroomIcon sx={{ fontSize: 20 }} />} label="קוד לבוש" value={info.dress_code} delay={0.26} />
+            <InfoRow icon={<CheckroomIcon sx={{ fontSize: compactDemo ? 18 : 20 }} />} label="קוד לבוש" value={resolvedInfo.dress_code} delay={0.26} compact={compactDemo} />
           </>
         )}
-        {info.notes && (
+        {resolvedInfo.notes && (
           <>
             <Divider sx={{ borderColor: 'rgba(201,168,76,0.15)' }} />
-            <InfoRow icon={<NoteIcon sx={{ fontSize: 20 }} />} label="הערות" value={info.notes} delay={0.33} />
+            <InfoRow icon={<NoteIcon sx={{ fontSize: compactDemo ? 18 : 20 }} />} label="הערות" value={resolvedInfo.notes} delay={0.33} compact={compactDemo} />
           </>
         )}
       </GoldCard>
 
       {/* Map buttons */}
       <GoldCard delay={0.2} sx={{ mb: 2 }}>
-        <MapButtons info={info} />
+        <MapButtons info={resolvedInfo} />
       </GoldCard>
 
       {/* Countdown timer */}
       <GoldCard delay={0.3}>
-        <CountdownTimer weddingDate={info.wedding_date} />
+        <CountdownTimer weddingDate={resolvedInfo.wedding_date} compact={compactDemo} />
       </GoldCard>
 
       {/* Dress code badge */}
-      {info.dress_code && (
+      {resolvedInfo.dress_code && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -264,23 +272,24 @@ export default function InfoTab() {
         >
           <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center' }}>
             <Chip
-              label={`קוד לבוש: ${info.dress_code}`}
+              label={`קוד לבוש: ${resolvedInfo.dress_code}`}
               sx={{
                 background: 'linear-gradient(135deg, rgba(224,201,122,0.2), rgba(201,168,76,0.12))',
                 border: '1px solid rgba(201,168,76,0.35)',
                 color: '#9A7833',
                 fontWeight: 600,
-                fontSize: '0.82rem',
+                fontSize: compactDemo ? '0.7rem' : '0.82rem',
                 px: 1,
               }}
             />
           </Box>
         </motion.div>
       )}
-      {/* Sign up */}
-      <GoldCard delay={0.4} sx={{ mt: 2, textAlign: 'center' }}>
-        <WeddingRegisterCTA mt={1} />
-      </GoldCard>
+      {!hideRegisterCta && (
+        <GoldCard delay={0.4} sx={{ mt: 2, textAlign: 'center' }}>
+          <WeddingRegisterCTA mt={1} />
+        </GoldCard>
+      )}
     </Box>
   );
 }

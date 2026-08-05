@@ -20,7 +20,11 @@ function calcTimeLeft(targetDate: string): TimeLeft {
   };
 }
 
-function UnitBox({ value, label }: { value: number; label: string }) {
+function UnitBox({ value, label, compact = false }: { value: number; label: string; compact?: boolean }) {
+  const boxSize = compact ? 48 : 56;
+  const digitSize = compact ? '1.35rem' : '1.6rem';
+  const labelSize = compact ? '0.6rem' : '0.68rem';
+
   return (
     <motion.div
       key={value}
@@ -33,7 +37,7 @@ function UnitBox({ value, label }: { value: number; label: string }) {
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          minWidth: 56,
+          minWidth: boxSize,
         }}
       >
         <Box
@@ -41,8 +45,8 @@ function UnitBox({ value, label }: { value: number; label: string }) {
             background: 'linear-gradient(160deg, rgba(224,201,122,0.22), rgba(201,168,76,0.13))',
             border: '1px solid rgba(201,168,76,0.3)',
             borderRadius: '14px',
-            width: 56,
-            height: 56,
+            width: boxSize,
+            height: boxSize,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -51,7 +55,7 @@ function UnitBox({ value, label }: { value: number; label: string }) {
         >
           <Typography
             sx={{
-              fontSize: '1.6rem',
+              fontSize: digitSize,
               fontWeight: 700,
               fontFamily: "'Frank Ruhl Libre', serif",
               color: '#9A7833',
@@ -61,7 +65,7 @@ function UnitBox({ value, label }: { value: number; label: string }) {
             {String(value).padStart(2, '0')}
           </Typography>
         </Box>
-        <Typography variant="caption" sx={{ color: '#A08070', fontWeight: 500, fontSize: '0.68rem' }}>
+        <Typography variant="caption" sx={{ color: '#A08070', fontWeight: 500, fontSize: labelSize }}>
           {label}
         </Typography>
       </Box>
@@ -69,15 +73,15 @@ function UnitBox({ value, label }: { value: number; label: string }) {
   );
 }
 
-function Separator() {
+function Separator({ compact = false }: { compact?: boolean }) {
   return (
     <Typography
       sx={{
-        fontSize: '1.4rem',
+        fontSize: compact ? '1.1rem' : '1.4rem',
         color: 'rgba(201,168,76,0.55)',
         fontWeight: 700,
         lineHeight: 1,
-        mt: '-12px',
+        mt: compact ? '-10px' : '-12px',
         mx: 0,
       }}
     >
@@ -88,9 +92,10 @@ function Separator() {
 
 interface Props {
   weddingDate: string; // ISO "2026-07-15"
+  compact?: boolean;
 }
 
-export default function CountdownTimer({ weddingDate }: Props) {
+export default function CountdownTimer({ weddingDate, compact = false }: Props) {
   const [timeLeft, setTimeLeft] = useState<TimeLeft>(() => calcTimeLeft(weddingDate));
 
   useEffect(() => {
@@ -104,7 +109,7 @@ export default function CountdownTimer({ weddingDate }: Props) {
     <Box sx={{ mt: 1, mb: 1 }}>
       <Typography
         variant="body2"
-        sx={{ color: '#A08070', mb: 1.5, textAlign: 'center', fontWeight: 500 }}
+        sx={{ color: '#A08070', mb: 1.5, textAlign: 'center', fontWeight: 500, fontSize: compact ? '0.82rem' : undefined }}
       >
         {isPast ? '🎉 החתונה כבר הגיעה !' : '⏳ נותרו עד החתונה'}
       </Typography>
@@ -114,17 +119,17 @@ export default function CountdownTimer({ weddingDate }: Props) {
             display: 'flex',
             justifyContent: 'center',
             alignItems: 'center',
-            gap: { xs: 0.75, sm: 1.5 },
-            flexWrap: 'wrap',
+            gap: compact ? { xs: 0.35, sm: 0.75 } : { xs: 0.75, sm: 1.5 },
+            flexWrap: compact ? 'nowrap' : 'wrap',
           }}
         >
-          <UnitBox value={timeLeft.seconds} label="שניות" />
-          <Separator />
-          <UnitBox value={timeLeft.minutes} label="דקות" />
-          <Separator />
-          <UnitBox value={timeLeft.hours} label="שעות" />
-          <Separator />
-          <UnitBox value={timeLeft.days} label="ימים" />
+          <UnitBox value={timeLeft.seconds} label="שניות" compact={compact} />
+          <Separator compact={compact} />
+          <UnitBox value={timeLeft.minutes} label="דקות" compact={compact} />
+          <Separator compact={compact} />
+          <UnitBox value={timeLeft.hours} label="שעות" compact={compact} />
+          <Separator compact={compact} />
+          <UnitBox value={timeLeft.days} label="ימים" compact={compact} />
         </Box>
       )}
     </Box>

@@ -1,8 +1,11 @@
-import { Box, Typography } from '@mui/material';
+import { useState } from 'react';
+import { Box, Button, Typography } from '@mui/material';
 import { motion } from 'framer-motion';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import VisibilityRoundedIcon from '@mui/icons-material/VisibilityRounded';
 import { fadeUp, fadeUpCard, staggerContainer, scrollReveal, palette } from '../shared/animations';
 import GuestAppMockup from '../components/GuestAppMockup';
+import GuestJourneyShowcaseModal from '../components/GuestJourneyShowcaseModal';
 
 const features = [
     'אישור הגעה בלחיצה אחת, ישירות מוואטסאפ',
@@ -14,6 +17,8 @@ const features = [
 ];
 
 export default function GuestExperienceSection() {
+    const [journeyOpen, setJourneyOpen] = useState(false);
+
     return (
         <Box sx={{ px: 2, py: { xs: 7, sm: 10 } }}>
             <Box
@@ -68,8 +73,42 @@ export default function GuestExperienceSection() {
                 <motion.div {...scrollReveal} variants={fadeUpCard}>
                     <GuestAppMockup />
                     <Typography sx={{ mt: 2, ml: 6, fontSize: "14px", color: "rgba(0, 0, 0, 0.88)" }}>רק דוגמא קטנה ממה שהאורח רואה .. :)</Typography>
+                    <div style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
+                        <Button
+                            variant="contained"
+                            endIcon={<VisibilityRoundedIcon />}
+                            onClick={() => setJourneyOpen(true)}
+                            sx={{
+                                mt: 1.3,
+                                background: 'linear-gradient(135deg, #D8B65A, #B7892D)',
+                                color: '#FFFDF8',
+                                fontWeight: 800,
+                                px: 2.6,
+                                py: 0.95,
+                                borderRadius: 999,
+                                fontSize: '0.87rem',
+                                letterSpacing: '0.01em',
+                                boxShadow: '0 12px 28px rgba(154,120,51,0.36)',
+                                border: '1px solid rgba(255,255,255,0.22)',
+                                transition: 'transform 0.22s ease, box-shadow 0.22s ease, filter 0.22s ease',
+                                '&:hover': {
+                                    background: 'linear-gradient(135deg, #E3C571, #C09238)',
+                                    transform: 'translateY(-2px) scale(1.01)',
+                                    boxShadow: '0 16px 34px rgba(154,120,51,0.42)',
+                                    filter: 'saturate(1.05)',
+                                },
+                                '&:active': { transform: 'translateY(0)' },
+                            }}
+                        >
+                            הצצה למה שהאורחים שלכם ייראו...
+                        </Button>
+                    </div>
                 </motion.div>
             </Box>
+
+            {journeyOpen && (
+                <GuestJourneyShowcaseModal open={journeyOpen} onClose={() => setJourneyOpen(false)} />
+            )}
         </Box>
     );
 }

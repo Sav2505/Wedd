@@ -82,7 +82,7 @@ export default function RsvpTimelineSection() {
                         fontWeight: 500,
                         fontSize: { xs: '1rem', sm: '1.1rem' },
                         color: palette.textDark,
-                        mt: { sm: 3 },
+                        mt: 3,
                     }}
                 >
                     * תוכלו לערוך את זמני שליחת ההודעות לפי בחירתכם במערכת

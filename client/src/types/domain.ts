@@ -40,6 +40,7 @@ export interface WeddingInfo {
   hero_image_url: string | null;
   stage_label: string | null;
   is_tables_published: boolean;
+  table_scale_factor: number;
 }
 
 export interface WeddingMessageSchedule {

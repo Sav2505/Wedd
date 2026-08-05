@@ -2,6 +2,15 @@ import { pool } from '../db/pool';
 import { createError } from '../middleware/errorHandler';
 import { WeddingInfo } from '../types';
 
+const MIN_TABLE_SCALE_FACTOR = 0.5;
+const MAX_TABLE_SCALE_FACTOR = 1.3;
+
+function clampTableScaleFactor(value: unknown): number {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return 1;
+  return Math.max(MIN_TABLE_SCALE_FACTOR, Math.min(MAX_TABLE_SCALE_FACTOR, parsed));
+}
+
 export async function getWeddingInfoByGuestId(
   guestId: string,
 ): Promise<WeddingInfo> {
@@ -60,6 +69,7 @@ export type WeddingInfoUpdate = Partial<
     | 'message'
     | 'stage_label'
     | 'is_tables_published'
+    | 'table_scale_factor'
   >
 >;
 
@@ -76,7 +86,7 @@ export async function updateWeddingInfo(
   const allowed = [
     'bride_name', 'groom_name', 'wedding_date', 'wedding_time', 'wedding_canpoy_time',
     'venue_name', 'venue_address', 'venue_lat', 'venue_lng',
-    'dress_code', 'notes', 'message', 'stage_label', 'is_tables_published',
+    'dress_code', 'notes', 'message', 'stage_label', 'is_tables_published', 'table_scale_factor',
   ] as const;
 
   const sets: string[] = [];
@@ -92,6 +102,10 @@ export async function updateWeddingInfo(
         value === ''
       ) {
         value = null;
+      }
+
+      if (key === 'table_scale_factor') {
+        value = clampTableScaleFactor(value);
       }
 
       sets.push(`${key} = $${idx++}`);

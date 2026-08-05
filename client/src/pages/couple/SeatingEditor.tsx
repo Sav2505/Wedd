@@ -40,6 +40,14 @@ import { getEffectivePartySize, getEffectivePlusCount } from '../../utils/effect
 
 const STAGE_LABEL_STORAGE_KEY = 'wedding.floorPlan.stageLabel';
 const ENTRANCE_POSITION_STORAGE_KEY = 'wedding.floorPlan.entrancePosition';
+const MIN_TABLE_SCALE_FACTOR = 0.5;
+const MAX_TABLE_SCALE_FACTOR = 1.3;
+const TABLE_SCALE_STEP = 0.05;
+const DEFAULT_TABLE_SCALE_FACTOR = 1;
+
+function clampTableScaleFactor(value: number) {
+    return clamp(Number(value) || DEFAULT_TABLE_SCALE_FACTOR, MIN_TABLE_SCALE_FACTOR, MAX_TABLE_SCALE_FACTOR);
+}
 
 // ─── Types ───────────────────────────────────────────────────
 
@@ -115,6 +123,8 @@ export default function SeatingEditor() {
     });
     const [isPublishedTables, setIsPublishedTables] = useState(false);
     const [isSavingPublish, setIsSavingPublish] = useState(false);
+    const [tableScaleFactor, setTableScaleFactor] = useState(DEFAULT_TABLE_SCALE_FACTOR);
+    const [isSavingScale, setIsSavingScale] = useState(false);
 
     // ── Editable copy of selected table fields ──
     const [editLabel, setEditLabel] = useState('');
@@ -135,9 +145,12 @@ export default function SeatingEditor() {
     }, [weddingId]);
 
     useEffect(() => {
-        if (!info?.stage_label?.trim()) return;
-        setStageLabel(info.stage_label);
+        if (!info) return;
         setIsPublishedTables(info.is_tables_published);
+        setTableScaleFactor(clampTableScaleFactor(info.table_scale_factor ?? DEFAULT_TABLE_SCALE_FACTOR));
+
+        if (!info.stage_label?.trim()) return;
+        setStageLabel(info.stage_label);
         window.localStorage.setItem(STAGE_LABEL_STORAGE_KEY, info.stage_label);
     }, [info]);
 
@@ -227,6 +240,43 @@ export default function SeatingEditor() {
         setEntrancePosition(value);
         if (typeof window === 'undefined') return;
         window.localStorage.setItem(ENTRANCE_POSITION_STORAGE_KEY, value);
+    }
+
+    async function persistTableScale(nextScale: number, previousScale: number) {
+        setIsSavingScale(true);
+        try {
+            if (!weddingId) return;
+            const updated = await updateWeddingInfo({ table_scale_factor: nextScale }, weddingId);
+            setTableScaleFactor(clampTableScaleFactor(updated.table_scale_factor ?? nextScale));
+        } catch {
+            setTableScaleFactor(previousScale);
+            setError('שגיאה בשמירת קנה המידה של המפה');
+        } finally {
+            setIsSavingScale(false);
+        }
+    }
+
+    function handleAdjustTableScale(direction: -1 | 1) {
+        if (isSavingScale) return;
+        const previousScale = tableScaleFactor;
+        const nextScale = clampTableScaleFactor(
+            Number((tableScaleFactor + direction * TABLE_SCALE_STEP).toFixed(2))
+        );
+
+        if (nextScale === previousScale) return;
+
+        setTableScaleFactor(nextScale);
+        void persistTableScale(nextScale, previousScale);
+    }
+
+    function handleResetTableScale() {
+        if (isSavingScale) return;
+        const previousScale = tableScaleFactor;
+        const nextScale = DEFAULT_TABLE_SCALE_FACTOR;
+        if (nextScale === previousScale) return;
+
+        setTableScaleFactor(nextScale);
+        void persistTableScale(nextScale, previousScale);
     }
 
     // ── Drag end → save position ──────────────────────────────
@@ -614,6 +664,56 @@ export default function SeatingEditor() {
                     <ToggleButton value="bottom">למטה</ToggleButton>
                     <ToggleButton value="left">שמאל</ToggleButton>
                 </ToggleButtonGroup>
+
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.35, border: '1px solid rgba(201,168,76,0.3)', borderRadius: 1.5, px: 0.55, py: 0.3 }}>
+                    <Tooltip title="הקטן שולחנות כדי לפנות יותר מקום באולם">
+                        <span>
+                            <IconButton
+                                onClick={() => handleAdjustTableScale(-1)}
+                                disabled={isSavingScale || tableScaleFactor <= MIN_TABLE_SCALE_FACTOR}
+                                size="small"
+                                sx={{ color: '#9A7833' }}
+                            >
+                                <RemoveCircleOutlineIcon sx={{ fontSize: 19 }} />
+                            </IconButton>
+                        </span>
+                    </Tooltip>
+
+                    <Typography sx={{ minWidth: 44, textAlign: 'center', color: '#2C1810', fontWeight: 700, fontSize: '0.86rem' }}>
+                        {Math.round(tableScaleFactor * 100)}%
+                    </Typography>
+
+                    <Tooltip title="הגדל שולחנות להצגה מרווחת יותר">
+                        <span>
+                            <IconButton
+                                onClick={() => handleAdjustTableScale(1)}
+                                disabled={isSavingScale || tableScaleFactor >= MAX_TABLE_SCALE_FACTOR}
+                                size="small"
+                                sx={{ color: '#9A7833' }}
+                            >
+                                <AddCircleOutlineIcon sx={{ fontSize: 19 }} />
+                            </IconButton>
+                        </span>
+                    </Tooltip>
+
+                    <Tooltip title="איפוס קנה מידה ל-100%">
+                        <span>
+                            <Button
+                                size="small"
+                                onClick={handleResetTableScale}
+                                disabled={isSavingScale || tableScaleFactor === DEFAULT_TABLE_SCALE_FACTOR}
+                                sx={{
+                                    color: '#9A7833',
+                                    minWidth: 42,
+                                    px: 0.8,
+                                    fontWeight: 700,
+                                }}
+                            >
+                                איפוס
+                            </Button>
+                        </span>
+                    </Tooltip>
+                </Box>
             </Box>
 
             <motion.div
@@ -625,6 +725,7 @@ export default function SeatingEditor() {
                     tables={tables}
                     stageLabel={stageLabel}
                     entrancePosition={entrancePosition}
+                    tableScaleFactor={tableScaleFactor}
                     editable
                     selectedId={selectedId}
                     onSelectTable={setSelectedId}

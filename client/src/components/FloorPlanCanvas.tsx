@@ -26,6 +26,8 @@ export interface FloorPlanCanvasProps {
   onDragEnd?: (id: string, posX: number, posY: number) => void;
   /** Table ids containing at least one guest who declined (couple editor only) */
   warningTableIds?: Set<string>;
+  /** World density control: lower values shrink table footprint (0.5 - 1.3). */
+  tableScaleFactor?: number;
 }
 
 // ─── Helpers ─────────────────────────────────────────────────
@@ -44,8 +46,11 @@ export default function FloorPlanCanvas({
   onSelectTable,
   onDragEnd,
   warningTableIds,
+  tableScaleFactor = 1,
 }: FloorPlanCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const tableScale = clamp(tableScaleFactor, 0.5, 1.3);
+  const hoverScale = Math.min(1.5, tableScale * 1.1);
 
   // Set to true during a drag so onClick doesn't also fire onSelectTable
   const didDragRef = useRef(false);
@@ -81,8 +86,10 @@ export default function FloorPlanCanvas({
       const dy = ((me.clientY - startCy) / rect.height) * 100;
       const deltaStartX = table.shape === 'rect' ? table.orientation === 'v' ? 1 : -3 : -2;
       const deltaEndX = table.shape === 'rect' ? table.orientation === 'v' ? -8 : 5 : 3;
-      latestX = clamp(startPosX + dx, -4 - deltaStartX, 85 + deltaEndX);
-      latestY = clamp(startPosY + dy, 14, 87);
+      const scaleBias = (1 - tableScale) * 6;
+      const verticalBias = scaleBias * 0.65;
+      latestX = clamp(startPosX + dx, -4 - deltaStartX - scaleBias, 85 + deltaEndX + scaleBias);
+      latestY = clamp(startPosY + dy, clamp(14 - verticalBias, 8, 20), clamp(87 + verticalBias, 78, 92));
 
       if (Math.abs(dx) > 0.8 || Math.abs(dy) > 0.8) {
         hasMoved = true;
@@ -233,7 +240,7 @@ export default function FloorPlanCanvas({
             style={{ left: `${safeLeft}%`, top: `${safeTop}%` }}
             sx={{
               position: 'absolute',
-              transform: 'translate(-50%, -50%)',
+              transform: `translate(-50%, -50%) scale(${tableScale})`,
               width: isRect ? (isPortrait ? `max(12%, ${TABLE_RECT_WIDTH})` : '5%') : `max(6%, ${TABLE_WIDTH})`,
               height: isRect ? (isPortrait ? '5%' : `max(12%, ${TABLE_RECT_WIDTH})`) : `max(6%, ${TABLE_WIDTH})`,
               minHeight: isRect ? (isPortrait ? TABLE_RECT_HEIGHT : `max(5%, ${TABLE_RECT_WIDTH})`) : TABLE_WIDTH,
@@ -273,7 +280,7 @@ export default function FloorPlanCanvas({
               transition: editable ? 'box-shadow 0.15s' : 'transform 0.15s, box-shadow 0.15s',
               '&:hover': editable
                 ? { boxShadow: isWarning ? '0 0 0 4px rgba(196,60,50,0.28)' : '0 0 0 4px rgba(201,168,76,0.3)', cursor: 'grab' }
-                : { transform: 'translate(-50%, -50%) scale(1.1)', zIndex: 5 },
+                : { transform: `translate(-50%, -50%) scale(${hoverScale})`, zIndex: 5 },
               '&:active': { cursor: editable ? 'grabbing' : 'pointer' },
             }}
           >

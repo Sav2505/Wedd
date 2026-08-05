@@ -17,6 +17,12 @@ import { useWeddingId } from '../hooks/useWeddingId';
 import { useWeddingInfo } from '../hooks/useWeddingInfo';
 
 const ENTRANCE_POSITION_STORAGE_KEY = 'wedding.floorPlan.entrancePosition';
+const MIN_TABLE_SCALE_FACTOR = 0.5;
+const MAX_TABLE_SCALE_FACTOR = 1.3;
+
+function clampTableScaleFactor(value: number) {
+  return Math.max(MIN_TABLE_SCALE_FACTOR, Math.min(MAX_TABLE_SCALE_FACTOR, Number(value) || 1));
+}
 
 export default function SeatingTab() {
   const weddingId = useWeddingId();
@@ -29,6 +35,7 @@ export default function SeatingTab() {
   const [dialogTable, setDialogTable] = useState<WeddingTableWithGuests | null>(null);
   const [stageLabel, setStageLabel] = useState('חופה');
   const [entrancePosition, setEntrancePosition] = useState<'right' | 'bottom' | 'left'>('bottom');
+  const tableScaleFactor = clampTableScaleFactor(info?.table_scale_factor ?? 1);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -151,6 +158,7 @@ export default function SeatingTab() {
                   tables={tables}
                   stageLabel={stageLabel}
                   entrancePosition={entrancePosition}
+                  tableScaleFactor={tableScaleFactor}
                   ownTableNumber={guest?.table_number ?? null}
                   editable={false}
                   onSelectTable={handleSelectTable}

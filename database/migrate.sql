@@ -41,6 +41,9 @@
 \echo '==> Running migration_012_whatsapp_scheduling.sql...'
 \i migration_012_whatsapp_scheduling.sql
 
+\echo '==> Running migration_014_table_scale_factor.sql...'
+\i migration_014_table_scale_factor.sql
+
 \echo '==> Running seed.sql...'
 \i seed.sql
 

@@ -63,12 +63,27 @@ export default function ShowcaseHero() {
                         sx={{
                             fontFamily: "'Frank Ruhl Libre', serif",
                             fontWeight: 700,
+                            fontSize: { xs: '2.4rem', sm: '3.2rem' },
+                            color: palette.textDark,
+                            lineHeight: 0.3,
+                            letterSpacing: '0.04em',
+                        }}
+                    >
+                        <span style={{ color: palette.textMuted, fontWeight: 700 }}>
+                            WedFlow
+                        </span>
+                    </Typography>
+                    <Typography
+                        sx={{
+                            fontFamily: "'Frank Ruhl Libre', serif",
+                            fontWeight: 700,
                             fontSize: { xs: '2.1rem', sm: '3rem' },
                             color: palette.textDark,
                             lineHeight: 1.2,
                             letterSpacing: '0.01em',
                         }}
                     >
+                        <br />
                         כל החתונה.
                         <br />
                         במקום אחד.
@@ -89,8 +104,8 @@ export default function ShowcaseHero() {
                         אפליקציית החתונה שמנהלת את כל האירוע — משלב ההכנות, דרך אישורי הגעה ועד
                         התמונות שאחרי האירוע. בלי אקסלים, בלי עוד מערכות, בלי בלגן.
                         הכל מסונכרן ומרוכז במקום אחד.
-                        <br/>
-                        <span style={{fontWeight: "bold"}}>במחיר הכי משתלם בשוק</span>
+                        <br />
+                        <span style={{ fontWeight: "bold" }}>במחיר הכי משתלם בשוק</span>
                     </Typography>
                 </motion.div>
 

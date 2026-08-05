@@ -34,6 +34,7 @@ export type WeddingInfoUpdate = Partial<
     | 'message'
     | 'stage_label'
     | 'is_tables_published'
+    | 'table_scale_factor'
   >
 >;
 

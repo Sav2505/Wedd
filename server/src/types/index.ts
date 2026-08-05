@@ -77,6 +77,7 @@ export interface WeddingInfo {
   message: string | null;
   hero_image_url: string | null;
   stage_label: string | null;
+  table_scale_factor: number;
   updated_at: string;
   is_tables_published: boolean;
 }

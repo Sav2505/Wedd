@@ -31,6 +31,16 @@ import { computeSchedulePreview, formatScheduleDateTime } from '../utils/schedul
 import LoadingOverlay from './LoadingOverlay';
 import WhatsAppMessagePreview from './WhatsAppMessagePreview';
 
+/** If the ISO date string falls on Saturday (day 6), shift it back to Friday noon. */
+function shiftSaturdayToFriday(isoDate: string): string {
+    const d = new Date(isoDate);
+    if (d.getDay() === 6) {
+        d.setDate(d.getDate() - 1);
+        d.setHours(12, 0, 0, 0);
+    }
+    return d.toISOString();
+}
+
 interface Props {
     open: boolean;
     weddingId: number;
@@ -225,9 +235,9 @@ export default function WhatsAppScheduleModal({ open, weddingId, weddingDate, on
         }
     }
 
-    const displayInvitationDate = previewDates?.invitation_send_at ?? schedule?.invitation_send_at;
-    const displayReminderDate = previewDates?.reminder_send_at ?? schedule?.reminder_send_at;
-    const displayDayBeforeDate = previewDates?.day_before_send_at ?? schedule?.day_before_send_at;
+    const displayInvitationDate = shiftSaturdayToFriday(previewDates?.invitation_send_at ?? schedule?.invitation_send_at ?? '');
+    const displayReminderDate = shiftSaturdayToFriday(previewDates?.reminder_send_at ?? schedule?.reminder_send_at ?? '');
+    const displayDayBeforeDate = shiftSaturdayToFriday(previewDates?.day_before_send_at ?? schedule?.day_before_send_at ?? '');
 
     return (
         <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">

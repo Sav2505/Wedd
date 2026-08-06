@@ -228,7 +228,7 @@ function OrnamentalHeader({
           >
             {info
               ? `${getFirstName(info.bride_name)} & ${getFirstName(info.groom_name)}`
-              : 'החתונה שלנו 💍'}
+              : 'WedFlow 💍'}
           </Typography>
           {info?.wedding_date && (
             <Typography sx={{ fontSize: '0.82rem', color: '#A08070', mt: 0.4, fontWeight: 500, letterSpacing: 0.3 }}>

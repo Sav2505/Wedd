@@ -56,7 +56,7 @@ export default function StickyMobileCTA() {
                                 letterSpacing: '0.02em',
                             }}
                         >
-                            אני רוצה גם מערכת כזאת 💍
+                            אני גם רוצה מערכת כזאת 💍
                         </Button>
                     </Box>
                 </motion.div>

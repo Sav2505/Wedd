@@ -345,12 +345,12 @@ export default function MainLayout() {
           >
             {activeTab === TABS.length - 1
               ? <AttendanceStatusTab
-                  onSaved={(nextStatus) => {
-                    if (nextStatus === 'COMING') {
-                      setActiveTab(0);
-                    }
-                  }}
-                />
+                onSaved={(nextStatus) => {
+                  if (nextStatus === 'COMING') {
+                    setActiveTab(0);
+                  }
+                }}
+              />
               : TABS[activeTab].component}
           </motion.div>
         </AnimatePresence>

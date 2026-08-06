@@ -69,6 +69,7 @@ export type WeddingInfoUpdate = Partial<
     | 'message'
     | 'stage_label'
     | 'is_tables_published'
+    | 'whatsapp_owner_confirmed'
     | 'table_scale_factor'
     | 'bride_bit_url'
     | 'groom_bit_url'
@@ -88,7 +89,7 @@ export async function updateWeddingInfo(
   const allowed = [
     'bride_name', 'groom_name', 'wedding_date', 'wedding_time', 'wedding_canpoy_time',
     'venue_name', 'venue_address', 'venue_lat', 'venue_lng',
-    'dress_code', 'notes', 'message', 'stage_label', 'is_tables_published', 'table_scale_factor',
+    'dress_code', 'notes', 'message', 'stage_label', 'is_tables_published', 'whatsapp_owner_confirmed', 'table_scale_factor',
     'bride_bit_url', 'groom_bit_url',
   ] as const;
 

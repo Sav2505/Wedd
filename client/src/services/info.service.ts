@@ -34,6 +34,7 @@ export type WeddingInfoUpdate = Partial<
     | 'message'
     | 'stage_label'
     | 'is_tables_published'
+    | 'whatsapp_owner_confirmed'
     | 'table_scale_factor'
     | 'bride_bit_url'
     | 'groom_bit_url'

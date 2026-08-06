@@ -24,6 +24,7 @@ const DEMO_WEDDING: WeddingInfo = {
     hero_image_url: null,
     stage_label: 'סטייג׳ מרכזי',
     is_tables_published: true,
+    whatsapp_owner_confirmed: false,
     table_scale_factor: 1,
     bride_bit_url: 'www.example.com',
     groom_bit_url: 'www.example.com',

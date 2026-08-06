@@ -7,6 +7,9 @@ import {
     Alert,
     CircularProgress,
     InputAdornment,
+    Checkbox,
+    FormControlLabel,
+    Link,
 } from '@mui/material';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
@@ -23,6 +26,7 @@ import FallingPetals from '../components/FallingPetals';
 import { createWeddingRequest } from '../services/weddingRequest.service';
 import { datePickerSx } from './couple/WeddingInfoEditor';
 import { notifyAdminNewWeddingRequest } from '../services/weddingRequestsAdmin.service';
+import PublicFooter from '../components/PublicFooter';
 
 dayjs.locale('he');
 
@@ -121,6 +125,8 @@ export default function WeddingRegisterPage() {
     const [weddingDate, setWeddingDate] = useState<Dayjs | null>(null);
     const [contactPhone, setContactPhone] = useState('');
     const [contactEmail, setContactEmail] = useState('');
+    const [agreedTerms, setAgreedTerms] = useState(false);
+    const [agreedPrivacy, setAgreedPrivacy] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState(false);
@@ -139,6 +145,10 @@ export default function WeddingRegisterPage() {
         }
         if (!contactEmail.trim() || contactEmail.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactEmail.trim())) {
             setError('נא להזין כתובת אימייל תקינה');
+            return;
+        }
+        if (!agreedTerms || !agreedPrivacy) {
+            setError('יש לאשר את תנאי השימוש ומדיניות הפרטיות לפני שליחת הבקשה');
             return;
         }
 
@@ -182,6 +192,7 @@ export default function WeddingRegisterPage() {
                         'radial-gradient(ellipse at 60% 85%, rgba(245,237,217,0.4) 0%, transparent 60%),' +
                         'linear-gradient(160deg, #FAF7F2 0%, #F5EDD9 50%, #FAF7F2 100%)',
                     px: 2,
+                    pb: 8,
                     // py: { xs: 2, sm: 4 },
                 }}
             >
@@ -428,6 +439,58 @@ export default function WeddingRegisterPage() {
                                             />
                                         </motion.div>
 
+
+                                        <motion.div variants={itemVariants}>
+                                            <Box sx={{ mb: 2.5 }}>
+                                                <FormControlLabel
+                                                    control={
+                                                        <Checkbox
+                                                            checked={agreedTerms}
+                                                            onChange={(e) => setAgreedTerms(e.target.checked)}
+                                                            disabled={loading}
+                                                            sx={{
+                                                                color: 'rgba(201,168,76,0.65)',
+                                                                '&.Mui-checked': { color: '#9A7833' },
+                                                            }}
+                                                        />
+                                                    }
+                                                    label={
+                                                        <Typography sx={{ fontSize: '0.86rem', color: '#6B5240' }}>
+                                                            קראתי ואני מאשר/ת את{' '}
+                                                            <Link component={RouterLink} to="/terms" sx={{ color: '#9A7833', fontWeight: 600 }}>
+                                                                תנאי השימוש
+                                                            </Link>
+                                                            .
+                                                        </Typography>
+                                                    }
+                                                    sx={{ alignItems: 'center', m: 0 }}
+                                                />
+                                                <FormControlLabel
+                                                    control={
+                                                        <Checkbox
+                                                            checked={agreedPrivacy}
+                                                            onChange={(e) => setAgreedPrivacy(e.target.checked)}
+                                                            disabled={loading}
+                                                            sx={{
+                                                                color: 'rgba(201,168,76,0.65)',
+                                                                '&.Mui-checked': { color: '#9A7833' },
+                                                            }}
+                                                        />
+                                                    }
+                                                    label={
+                                                        <Typography sx={{ fontSize: '0.86rem', color: '#6B5240' }}>
+                                                            קראתי את{' '}
+                                                            <Link component={RouterLink} to="/privacy" sx={{ color: '#9A7833', fontWeight: 600 }}>
+                                                                מדיניות הפרטיות
+                                                            </Link>
+                                                            .
+                                                        </Typography>
+                                                    }
+                                                    sx={{ alignItems: 'center', m: 0 }}
+                                                />
+                                            </Box>
+                                        </motion.div>
+
                                         {/* Error */}
                                         <AnimatePresence>
                                             {error && (
@@ -459,7 +522,7 @@ export default function WeddingRegisterPage() {
                                                 color="primary"
                                                 fullWidth
                                                 size="large"
-                                                disabled={loading}
+                                                disabled={loading || !agreedTerms || !agreedPrivacy}
                                                 className={loading ? undefined : 'shimmer-btn'}
                                                 sx={{
                                                     mt: 1,
@@ -517,6 +580,8 @@ export default function WeddingRegisterPage() {
                         </motion.div>
                     </Box>
                 </motion.div>
+
+                <PublicFooter overlay />
             </Box>
         </LocalizationProvider>
     );

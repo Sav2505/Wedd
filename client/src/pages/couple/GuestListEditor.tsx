@@ -4,12 +4,14 @@ import {
   Alert,
   Box,
   Button,
+  Checkbox,
   Chip,
   CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
+  FormControlLabel,
   IconButton,
   InputAdornment,
   MenuItem,
@@ -57,6 +59,7 @@ import {
   updateGuestGroup,
   // sendWhatsappInvitation,
 } from '../../services/guests.service';
+import { updateWeddingInfo } from '../../services/info.service';
 import { useWeddingInfo } from '../../hooks/useWeddingInfo';
 
 type SideOption = 'חתן' | 'כלה' | 'שניהם' | null;
@@ -220,8 +223,11 @@ export default function GuestListEditor() {
   // const [rsvpListLoadingStatus, setRsvpListLoadingStatus] = useState<RsvpStatus | null>(null);
   const [searchLoading, setSearchLoading] = useState(false);
   const [saving, setSaving] = useState(false);
-  const { info } = useWeddingInfo();
+  const { info, refetch: refetchWeddingInfo } = useWeddingInfo();
   const [whatsappScheduleOpen, setWhatsappScheduleOpen] = useState(false);
+  const [whatsappDeclarationOpen, setWhatsappDeclarationOpen] = useState(false);
+  const [whatsappDeclarationChecked, setWhatsappDeclarationChecked] = useState(false);
+  const [savingWhatsappDeclaration, setSavingWhatsappDeclaration] = useState(false);
   const [importModalOpen, setImportModalOpen] = useState(false);
 
   // --- Post-save feedback: success toast + highlight/scroll to the affected guest ---
@@ -655,6 +661,25 @@ export default function GuestListEditor() {
     });
   };
 
+  const isWhatsappDeclarationConfirmed = Boolean(info?.whatsapp_owner_confirmed);
+
+  async function handleConfirmWhatsappDeclaration() {
+    if (!info?.id || !whatsappDeclarationChecked) return;
+
+    setSavingWhatsappDeclaration(true);
+    try {
+      await updateWeddingInfo({ whatsapp_owner_confirmed: true }, info.id);
+      refetchWeddingInfo();
+      setWhatsappDeclarationOpen(false);
+      setWhatsappDeclarationChecked(false);
+      setWhatsappScheduleOpen(true);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'שמירת אישור WhatsApp נכשלה');
+    } finally {
+      setSavingWhatsappDeclaration(false);
+    }
+  }
+
   if (loading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
@@ -803,7 +828,13 @@ export default function GuestListEditor() {
           fullWidth
           variant="contained"
           startIcon={<ScheduleSendIcon />}
-          onClick={() => setWhatsappScheduleOpen(true)}
+          onClick={() => {
+            if (isWhatsappDeclarationConfirmed) {
+              setWhatsappScheduleOpen(true);
+              return;
+            }
+            setWhatsappDeclarationOpen(true);
+          }}
           sx={{
             mt: 1.25,
             background: 'linear-gradient(135deg, #25D366, #1f9f51)',
@@ -816,6 +847,11 @@ export default function GuestListEditor() {
         >
           תזמון הודעות לאורחים
         </Button>
+        {!isWhatsappDeclarationConfirmed && (
+          <Typography variant="caption" sx={{ display: 'block', mt: 0.75, color: '#8A7565' }}>
+            לפני שימוש ב-WhatsApp יש לאשר שיש לכם הרשאה לשליחת הודעות לאורחים.
+          </Typography>
+        )}
 
         {/* שורה 5: סיכום סטטיסטי - נשארת כמו שהיא */}
         <Stack direction="row" spacing={0} mt={1.2} gap={1} ml={1} mb={0.2} flexWrap="wrap">
@@ -1159,6 +1195,56 @@ export default function GuestListEditor() {
         <DialogActions>
           <Button onClick={() => setRsvpListStatus(null)} sx={{ color: '#A08070' }}>
             סגירה
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={whatsappDeclarationOpen}
+        onClose={savingWhatsappDeclaration ? undefined : () => setWhatsappDeclarationOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle sx={{ fontFamily: "'Frank Ruhl Libre', serif", fontWeight: 700 }}>
+          אישור שימוש ב-WhatsApp
+        </DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" sx={{ color: '#6B5240', mb: 1.25 }}>
+            כדי להפעיל תזמון הודעות, יש לאשר שיש בידכם הרשאה לשלוח הודעות לאורחים.
+          </Typography>
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={whatsappDeclarationChecked}
+                onChange={(e) => setWhatsappDeclarationChecked(e.target.checked)}
+                sx={{
+                  color: 'rgba(37,211,102,0.7)',
+                  '&.Mui-checked': { color: '#1f9f51' },
+                }}
+              />
+            }
+            label="I confirm that I have the necessary permission to send WhatsApp messages to my guests."
+            sx={{ alignItems: 'flex-start', mt: 0.25 }}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={() => setWhatsappDeclarationOpen(false)}
+            disabled={savingWhatsappDeclaration}
+            sx={{ color: '#A08070' }}
+          >
+            ביטול
+          </Button>
+          <Button
+            onClick={handleConfirmWhatsappDeclaration}
+            disabled={savingWhatsappDeclaration || !whatsappDeclarationChecked}
+            sx={{ color: '#1f9f51', fontWeight: 700, minWidth: 96 }}
+          >
+            {savingWhatsappDeclaration ? (
+              <CircularProgress size={18} thickness={5} sx={{ color: '#1f9f51' }} />
+            ) : (
+              'אישור והמשך'
+            )}
           </Button>
         </DialogActions>
       </Dialog>

@@ -9,6 +9,7 @@ import PricingSection from '../sections/PricingSection';
 import FinalCTASection from '../sections/FinalCTASection';
 import StickyMobileCTA from '../components/StickyMobileCTA';
 import { useEffect } from 'react';
+import PublicFooter from '../components/PublicFooter';
 
 // ─── Wedding Showcase / Landing page ───────────────────────
 // Sits between "לחצו כאן לפרטים" on the login screen and the
@@ -64,6 +65,7 @@ export default function WeddingShowcasePage() {
 
             <PricingSection />
             <FinalCTASection />
+            <PublicFooter />
 
             <StickyMobileCTA />
         </Box>

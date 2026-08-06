@@ -19,6 +19,7 @@ import FallingPetals from '../components/FallingPetals';
 import DramaticWelcomeScreen from '../components/DramaticWelcomeScreen';
 import { parseGuestParams } from '../utils/guestUrl';
 import WeddingRegisterCTA from '../components/WeddingRegisterCTA';
+import PublicFooter from '../components/PublicFooter';
 
 // ─── Decorative SVG ring ────────────────────────────────────
 
@@ -191,6 +192,7 @@ export default function LoginPage() {
           'radial-gradient(ellipse at 60% 85%, rgba(245,237,217,0.4) 0%, transparent 60%),' +
           'linear-gradient(160deg, #FAF7F2 0%, #F5EDD9 50%, #FAF7F2 100%)',
         px: 2,
+        pb: 8,
       }}
     >
       {/* Falling petals */}
@@ -469,6 +471,8 @@ export default function LoginPage() {
           </motion.div>
         </Box>
       </motion.div>
+
+      <PublicFooter overlay />
     </Box>
   );
 }

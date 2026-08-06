@@ -40,6 +40,7 @@ export interface WeddingInfo {
   hero_image_url: string | null;
   stage_label: string | null;
   is_tables_published: boolean;
+  whatsapp_owner_confirmed: boolean;
   table_scale_factor: number;
   bride_bit_url: string | null;
   groom_bit_url: string | null;

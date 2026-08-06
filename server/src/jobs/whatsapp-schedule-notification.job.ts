@@ -11,12 +11,12 @@ import {
 } from '../services/emailTemplates.service';
 
 const DEFAULT_CRON =
-    process.env.WHATSAPP_SCHEDULE_NOTIFICATION_CRON ?? '0 12 * * *';
+  process.env.WHATSAPP_SCHEDULE_NOTIFICATION_CRON ?? '0 12 * * *';
 
 const ENABLED =
-    String(
-        process.env.WHATSAPP_SCHEDULE_NOTIFICATION_ENABLED ?? 'true',
-    ).toLowerCase() === 'true';
+  String(
+    process.env.WHATSAPP_SCHEDULE_NOTIFICATION_ENABLED ?? 'true',
+  ).toLowerCase() === 'true';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -74,22 +74,13 @@ async function getWeddingScheduleRows(): Promise<WeddingScheduleRow[]> {
 }
 
 async function getCoupleEmail(
-  brideName: string,
-  groomName: string,
-  weddingDate: string,
+  weddingId: number,
 ): Promise<string | null> {
   const { rows } = await pool.query<{ email: string }>(
-    `SELECT wr.email
-     FROM wedding_requests wr
-     JOIN wedding_info wi
-       ON wr.bride_name = wi.bride_name
-      AND wr.groom_name = wi.groom_name
-      AND wr.wedding_date::date = wi.wedding_date::date
-     WHERE wi.bride_name = $1
-       AND wi.groom_name = $2
-       AND wi.wedding_date::date = $3::date
+    `SELECT email
+     FROM wedding_info WHERE id = $1
      LIMIT 1`,
-    [brideName, groomName, weddingDate],
+    [weddingId],
   );
   return rows[0]?.email ?? null;
 }
@@ -112,9 +103,9 @@ async function getGuestStats(weddingId: number): Promise<GuestStats> {
   );
   const row = rows[0];
   return {
-    total:     Number(row?.total     ?? 0),
+    total: Number(row?.total ?? 0),
     confirmed: Number(row?.confirmed ?? 0),
-    pending:   Number(row?.pending   ?? 0),
+    pending: Number(row?.pending ?? 0),
     notComing: Number(row?.not_coming ?? 0),
   };
 }
@@ -145,20 +136,20 @@ function buildMessagePreviews(
   stats: GuestStats,
 ): TomorrowWhatsappScheduledMessage[] {
   const receptionTime = formatTime(wedding.wedding_time);
-  const canopyTime    = formatTime(wedding.wedding_canpoy_time);
+  const canopyTime = formatTime(wedding.wedding_canpoy_time);
   const formattedDate = formatWeddingDate(wedding.wedding_date);
-  const coupleNames   = `${wedding.bride_name} & ${wedding.groom_name}`;
-  const venueName     = wedding.venue_name ?? '';
-  const sampleGuest   = 'יואב'; // representative guest name for preview
+  const coupleNames = `${wedding.bride_name} & ${wedding.groom_name}`;
+  const venueName = wedding.venue_name ?? '';
+  const sampleGuest = 'יואב'; // representative guest name for preview
 
   return templateNames.map((templateName): TomorrowWhatsappScheduledMessage => {
     let messageHeader = '';
-    let messageBody   = '';
+    let messageBody = '';
     let recipientCount = 0;
 
     if (templateName === 'wedding_confirmation') {
-      messageHeader  = `שלום ${sampleGuest}! 💌`;
-      messageBody    =
+      messageHeader = `שלום ${sampleGuest}! 💌`;
+      messageBody =
         `בשמחה ובהתרגשות גדולה,\n` +
         `אנו מזמינים אותך לקחת חלק ביום המאושר בחיינו! 💍✨\n\n` +
         `📅 מועד האירוע: ${formattedDate}\n` +
@@ -170,8 +161,8 @@ function buildMessagePreviews(
       recipientCount = stats.total;
 
     } else if (templateName === 'wedding_reminder') {
-      messageHeader  = `רק תזכורת קטנה... 💛`;
-      messageBody    =
+      messageHeader = `רק תזכורת קטנה... 💛`;
+      messageBody =
         `שלום ${sampleGuest} 😊\n\n` +
         `טרם קיבלנו את אישור הגעתך לחתונה שלנו, וחשוב לנו לדעת אם נזכה לחגוג איתך את היום המיוחד שלנו. 💍✨\n\n` +
         `📅 מועד האירוע: ${formattedDate}\n` +
@@ -184,8 +175,8 @@ function buildMessagePreviews(
 
     } else if (templateName === 'wedding_day_before') {
       // wedding_day_before
-      messageHeader  = `💍✨ מחר אנחנו מתחתנים ✨💍`;
-      messageBody    =
+      messageHeader = `💍✨ מחר אנחנו מתחתנים ✨💍`;
+      messageBody =
         `שלום ${sampleGuest} ❤️\n\n` +
         `ההתרגשות בשיאה... נשאר רק יום אחד עד שנחגוג יחד את היום המאושר בחיינו! 🥂\n\n` +
         `📍 מיקום: ${venueName}\n` +
@@ -203,8 +194,8 @@ function buildMessagePreviews(
 
     } else {
       // wedding_post_thanks
-      messageHeader  = `💛 תודה שהיית חלק מהיום המיוחד שלנו!`;
-      messageBody    =
+      messageHeader = `💛 תודה שהיית חלק מהיום המיוחד שלנו!`;
+      messageBody =
         `שלום ${sampleGuest} ❤️\n\n` +
         `רצינו לומר לך תודה ענקית שהגעת לחגוג איתנו את אחד הימים המרגשים והמשמעותיים בחיינו. 💍🥂\n\n` +
         `היה לנו כיף גדול לראות אותך בין האורחים, ואנחנו מקווים שנהנית מהערב לפחות כמו שאנחנו נהנינו. ✨\n\n` +
@@ -217,7 +208,7 @@ function buildMessagePreviews(
 
     return {
       templateName,
-      sendAt:         sendAtFormattedMap[templateName],
+      sendAt: sendAtFormattedMap[templateName],
       recipientCount,
       messageHeader,
       messageBody,
@@ -230,20 +221,20 @@ function buildMessagePreviews(
 // ---------------------------------------------------------------------------
 
 export async function runWhatsappScheduleNotificationOnce(): Promise<void> {
-    console.log(
-        `[WhatsApp Schedule Notification] Running (${DateTime.now()
-            .setZone(ISRAEL_TIMEZONE)
-            .toFormat('dd/LL/yyyy HH:mm')})`,
-    );
+  console.log(
+    `[WhatsApp Schedule Notification] Running (${DateTime.now()
+      .setZone(ISRAEL_TIMEZONE)
+      .toFormat('dd/LL/yyyy HH:mm')})`,
+  );
 
   const weddings = await getWeddingScheduleRows();
-  const nowIsrael          = DateTime.now().setZone(ISRAEL_TIMEZONE);
-  const tomorrowIsrael     = nowIsrael.plus({ days: 1 });
-  const tomorrowISODate    = tomorrowIsrael.toISODate();
+  const nowIsrael = DateTime.now().setZone(ISRAEL_TIMEZONE);
+  const tomorrowIsrael = nowIsrael.plus({ days: 1 });
+  const tomorrowISODate = tomorrowIsrael.toISODate();
   // Saturday = weekday 6 in Luxon. If tomorrow is Shabbat, we look ahead to
   // Sunday instead and send the notification today (Friday) with "מחרתיים".
-  const tomorrowIsSaturday       = tomorrowIsrael.weekday === 6;
-  const dayAfterTomorrowISODate  = tomorrowIsSaturday
+  const tomorrowIsSaturday = tomorrowIsrael.weekday === 6;
+  const dayAfterTomorrowISODate = tomorrowIsSaturday
     ? nowIsrael.plus({ days: 2 }).toISODate()
     : null;
   const sendLabel: 'מחר' | 'מחרתיים' = tomorrowIsSaturday ? 'מחרתיים' : 'מחר';
@@ -257,30 +248,30 @@ export async function runWhatsappScheduleNotificationOnce(): Promise<void> {
     try {
       const computed = computeWeddingMessageScheduleDates(wedding.wedding_date, {
         invitationDaysBefore: wedding.invitation_days_before,
-        reminderDaysBefore:   wedding.reminder_days_before,
-        dayBeforeOffsetDays:  wedding.day_before_offset_days,
+        reminderDaysBefore: wedding.reminder_days_before,
+        dayBeforeOffsetDays: wedding.day_before_offset_days,
       });
 
       // Map each template to its ISO send date and formatted display string
       const isoDateMap: Record<string, string> = {
         wedding_confirmation: DateTime.fromISO(computed.invitationSendAt, { zone: ISRAEL_TIMEZONE }).toISODate() ?? '',
-        wedding_reminder:     DateTime.fromISO(computed.reminderSendAt,   { zone: ISRAEL_TIMEZONE }).toISODate() ?? '',
-        wedding_day_before:   DateTime.fromISO(computed.dayBeforeSendAt,  { zone: ISRAEL_TIMEZONE }).toISODate() ?? '',
-        wedding_post_thanks:  DateTime.fromISO(computed.postThanksSendAt, { zone: ISRAEL_TIMEZONE }).toISODate() ?? '',
+        wedding_reminder: DateTime.fromISO(computed.reminderSendAt, { zone: ISRAEL_TIMEZONE }).toISODate() ?? '',
+        wedding_day_before: DateTime.fromISO(computed.dayBeforeSendAt, { zone: ISRAEL_TIMEZONE }).toISODate() ?? '',
+        wedding_post_thanks: DateTime.fromISO(computed.postThanksSendAt, { zone: ISRAEL_TIMEZONE }).toISODate() ?? '',
       };
 
       const formattedMap: Record<string, string> = {
         wedding_confirmation: DateTime.fromISO(computed.invitationSendAt, { zone: ISRAEL_TIMEZONE }).toFormat('dd/LL/yyyy HH:mm'),
-        wedding_reminder:     DateTime.fromISO(computed.reminderSendAt,   { zone: ISRAEL_TIMEZONE }).toFormat('dd/LL/yyyy HH:mm'),
-        wedding_day_before:   DateTime.fromISO(computed.dayBeforeSendAt,  { zone: ISRAEL_TIMEZONE }).toFormat('dd/LL/yyyy HH:mm'),
-        wedding_post_thanks:  DateTime.fromISO(computed.postThanksSendAt, { zone: ISRAEL_TIMEZONE }).toFormat('dd/LL/yyyy HH:mm'),
+        wedding_reminder: DateTime.fromISO(computed.reminderSendAt, { zone: ISRAEL_TIMEZONE }).toFormat('dd/LL/yyyy HH:mm'),
+        wedding_day_before: DateTime.fromISO(computed.dayBeforeSendAt, { zone: ISRAEL_TIMEZONE }).toFormat('dd/LL/yyyy HH:mm'),
+        wedding_post_thanks: DateTime.fromISO(computed.postThanksSendAt, { zone: ISRAEL_TIMEZONE }).toFormat('dd/LL/yyyy HH:mm'),
       };
 
       const lockedMap: Record<string, boolean> = {
         wedding_confirmation: Boolean(wedding.invitation_locked_at),
-        wedding_reminder:     Boolean(wedding.reminder_locked_at),
-        wedding_day_before:   Boolean(wedding.day_before_locked_at),
-        wedding_post_thanks:  Boolean(wedding.post_thanks_locked_at),
+        wedding_reminder: Boolean(wedding.reminder_locked_at),
+        wedding_day_before: Boolean(wedding.day_before_locked_at),
+        wedding_post_thanks: Boolean(wedding.post_thanks_locked_at),
       };
 
       // Include templates that:
@@ -306,7 +297,7 @@ export async function runWhatsappScheduleNotificationOnce(): Promise<void> {
 
       const [stats, coupleEmail] = await Promise.all([
         getGuestStats(wedding.id),
-        getCoupleEmail(wedding.bride_name, wedding.groom_name, wedding.wedding_date),
+        getCoupleEmail(wedding.id),
       ]);
 
       if (!coupleEmail) {
@@ -324,11 +315,11 @@ export async function runWhatsappScheduleNotificationOnce(): Promise<void> {
       );
 
       const { html, text, subject } = buildTomorrowWhatsappNotificationEmail({
-        brideName:       wedding.bride_name,
-        groomName:       wedding.groom_name,
-        totalGuests:     stats.total,
+        brideName: wedding.bride_name,
+        groomName: wedding.groom_name,
+        totalGuests: stats.total,
         confirmedGuests: stats.confirmed,
-        pendingGuests:   stats.pending,
+        pendingGuests: stats.pending,
         notComingGuests: stats.notComing,
         scheduledMessages,
         sendLabel,
@@ -351,29 +342,29 @@ export async function runWhatsappScheduleNotificationOnce(): Promise<void> {
 }
 
 export function initWhatsappScheduleNotificationJob(): void {
-    if (!ENABLED) {
-        console.log(
-            '[WhatsApp Schedule Notification] disabled by env flag.',
-        );
-        return;
-    }
-
-    cron.schedule(
-        DEFAULT_CRON,
-        () => {
-            runWhatsappScheduleNotificationOnce().catch((err) => {
-                console.error(
-                    '[WhatsApp Schedule Notification] run failed:',
-                    err?.message ?? err,
-                );
-            });
-        },
-        {
-            timezone: ISRAEL_TIMEZONE,
-        },
-    );
-
+  if (!ENABLED) {
     console.log(
-        `[WhatsApp Schedule Notification] initialized with cron "${DEFAULT_CRON}" (${ISRAEL_TIMEZONE}).`,
+      '[WhatsApp Schedule Notification] disabled by env flag.',
     );
+    return;
+  }
+
+  cron.schedule(
+    DEFAULT_CRON,
+    () => {
+      runWhatsappScheduleNotificationOnce().catch((err) => {
+        console.error(
+          '[WhatsApp Schedule Notification] run failed:',
+          err?.message ?? err,
+        );
+      });
+    },
+    {
+      timezone: ISRAEL_TIMEZONE,
+    },
+  );
+
+  console.log(
+    `[WhatsApp Schedule Notification] initialized with cron "${DEFAULT_CRON}" (${ISRAEL_TIMEZONE}).`,
+  );
 }

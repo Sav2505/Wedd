@@ -185,7 +185,7 @@ export default function GuestAppMockup() {
                 boxShadow: '0 4px 20px rgba(44,24,16,0.08), 0 26px 60px rgba(44,24,16,0.16)',
             }}
         >
-            <span style={{ fontSize: "14.5px", marginRight: "12px", color: "rgba(0, 0, 0, 0.5)" }}>סקיצה קטנה</span>
+            <span style={{ fontSize: "14px", marginRight: "12px", color: "rgba(0, 0, 0, 0.5)" }}>סקיצה קטנה</span>
             <Box
                 sx={{
                     position: 'relative',

@@ -48,7 +48,7 @@ export default function GuestExperienceSection() {
                             כך האורחים שלכם<br />יראו את החתונה
                         </Typography>
                         <Typography sx={{ color: palette.textMuted, fontSize: '0.95rem', mb: 2.5, lineHeight: 1.6 }}>
-                            מה שאתם רואים משמאל — זה בדיוק מה שכל אורח יקבל.
+                            מה שאתם רואים כאן - סקיצה קטנה ממה שהאורח יראה.
                         </Typography>
                     </motion.div>
 
@@ -81,7 +81,7 @@ export default function GuestExperienceSection() {
 
                     <motion.div variants={fadeUp}>
                         <Typography sx={{ mt: 2, color: palette.textMuted, fontSize: '0.88rem' }}>
-                            חוויה אחת. כל מה שהאורח צריך.
+                            כל מה שהאורח צריך לדעת
                         </Typography>
                     </motion.div>
                 </motion.div>
@@ -89,9 +89,6 @@ export default function GuestExperienceSection() {
                 <motion.div {...scrollReveal} variants={fadeUpCard}>
                     <GuestAppMockup />
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', gap: 8 }}>
-                        <Typography sx={{ mt: 1.5, fontSize: '0.78rem', color: palette.textMuted, letterSpacing: '0.02em' }}>
-                            כך נראית חוויית האורח ✨
-                        </Typography>
                         <Button
                             variant="contained"
                             endIcon={<VisibilityRoundedIcon />}

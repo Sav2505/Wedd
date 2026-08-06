@@ -58,7 +58,7 @@ export default function WeddingShowcasePage() {
                         textShadow: '0 2px 14px rgba(201,168,76,0.18)',
                     }}
                 >
-                    מוכנים לראות איך גם החתונה שלכם יכולה להיראות?
+                    מדבר אליכם ?
                 </Typography>
             </Box>
 

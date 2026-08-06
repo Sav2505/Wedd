@@ -1223,8 +1223,8 @@ export default function GuestListEditor() {
                 }}
               />
             }
-            label="I confirm that I have the necessary permission to send WhatsApp messages to my guests."
-            sx={{ alignItems: 'flex-start', mt: 0.25 }}
+            label="אני מאשר/ת לאפשר למערכת לשלוח הודעות WhatsApp למוזמנים שלי."
+            sx={{ alignItems: 'flex-start', mt: 0.25, color: "rgba(0, 0, 0, 0.88)" }}
           />
         </DialogContent>
         <DialogActions>
@@ -1276,6 +1276,15 @@ export default function GuestListEditor() {
         weddingId={info?.id ?? -1}
         weddingDate={info?.wedding_date}
         onClose={() => setWhatsappScheduleOpen(false)}
+        isDeclarationConfirmed={isWhatsappDeclarationConfirmed}
+        onDeclarationChange={async (confirmed) => {
+          try {
+            await updateWeddingInfo({ whatsapp_owner_confirmed: confirmed }, info?.id ?? -1);
+            refetchWeddingInfo();
+          } catch (e) {
+            setError(e instanceof Error ? e.message : 'שמירת הגדרות WhatsApp נכשלה');
+          }
+        }}
       />
       <ExcelImportModal
         open={importModalOpen}

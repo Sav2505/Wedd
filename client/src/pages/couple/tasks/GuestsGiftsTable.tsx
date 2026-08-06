@@ -168,9 +168,28 @@ export default function GuestGiftsTable({ guests, onUpdateGiftAmount, onUpdateGi
     }, [search, sortDirection]);
 
     const totalGifts = useMemo(
-        () => guests.reduce((sum, g) => sum + (g.gift_amount ?? 0), 0),
+        () =>
+            guests.reduce(
+                (sum, g) => sum + Number(g.gift_amount ?? 0),
+                0
+            ),
         [guests]
     );
+
+    const giftsSummary = useMemo(() => {
+        const summary = guests.reduce<Record<string, number>>((acc, guest) => {
+            if (!guest.gift_amount) return acc;
+
+            const kind = guest.gift_kind;
+            if (!kind) return acc;
+
+            acc[kind] = (acc[kind] || 0) + Number(guest.gift_amount);
+
+            return acc;
+        }, {});
+
+        return Object.entries(summary).filter(([, amount]) => amount > 0);
+    }, [guests]);
 
     const filteredSortedGuests = useMemo(() => {
         const q = search.trim().toLowerCase();
@@ -204,9 +223,36 @@ export default function GuestGiftsTable({ guests, onUpdateGiftAmount, onUpdateGi
                 <Typography variant="h6" sx={{ fontFamily: "'Frank Ruhl Libre', serif", fontWeight: 700 }}>
                     מתנות מהאורחים
                 </Typography>
-                <Typography variant="subtitle2" sx={{ color: '#9A7833', fontWeight: 800 }}>
-                    סה"כ: {fmt(totalGifts)}
-                </Typography>
+                <Box
+                    sx={{
+                        display: 'flex',
+                        flexWrap: 'wrap',
+                        gap: 1,
+                        justifyContent: 'flex-end',
+                        alignItems: 'center',
+                    }}
+                >
+                    {giftsSummary.map(([kind, amount]) => (
+                        <Chip
+                            key={kind}
+                            label={`${kind}: ${fmt(amount)}`}
+                            sx={{
+                                fontWeight: 700,
+                                bgcolor: 'rgba(201,168,76,0.12)',
+                                color: '#6E5424',
+                            }}
+                        />
+                    ))}
+
+                    <Chip
+                        label={`סה"כ כולל: ${fmt(totalGifts)}`}
+                        sx={{
+                            fontWeight: 800,
+                            bgcolor: '#9A7833',
+                            color: '#fff',
+                        }}
+                    />
+                </Box>
             </Box>
 
             <TextField

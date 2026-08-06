@@ -282,6 +282,18 @@ export default function MainLayout() {
   }, []);
 
   useEffect(() => {
+    // Priority 1: Check for explicit tab index from URL parameter
+    const tabIndexParam = sessionStorage.getItem('wedding.tabIndex');
+    if (tabIndexParam !== null) {
+      const tabIndex = Number(tabIndexParam);
+      if (Number.isFinite(tabIndex) && tabIndex >= 0 && tabIndex < TABS.length) {
+        setActiveTab(tabIndex);
+      }
+      sessionStorage.removeItem('wedding.tabIndex');
+      return;
+    }
+
+    // Priority 2: Force RSVP tab if guest status is PENDING
     if (!guest || guest.role !== 'guest' || guest.rsvp_status !== 'PENDING') return;
 
     const forceRsvpGuestId = sessionStorage.getItem('wedding.forceRsvpGuestId');

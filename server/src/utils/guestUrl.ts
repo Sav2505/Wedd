@@ -1,5 +1,5 @@
 // src/utils/guestUrl.util.ts
-export function buildGuestUrl(fullName: string, lastFourDigits: string, weddingId: number): string {
+export function buildGuestUrl(fullName: string, lastFourDigits: string, weddingId: number, tabIndex?: number): string {
     const base = (process.env.SITE_URL ?? '').replace(/\/$/, '');
 
     if (!base) {
@@ -11,6 +11,10 @@ export function buildGuestUrl(fullName: string, lastFourDigits: string, weddingI
         p: lastFourDigits,
         w: String(weddingId),
     });
+
+    if (tabIndex !== undefined) {
+        params.append('t', String(tabIndex));
+    }
 
     return `${base}/?${params.toString()}`;
 }

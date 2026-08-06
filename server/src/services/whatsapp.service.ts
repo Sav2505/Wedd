@@ -11,6 +11,22 @@ export type SupportedWeddingTemplate =
     | 'wedding_post_thanks'
     | 'wedding_thank_you';
 
+/**
+ * Tab index mapping for guest UI:
+ * 0 = פרטי האירוע (InfoTab)
+ * 1 = הושבה (SeatingTab)
+ * 2 = גלריה (PhotosTab)
+ * 3 = מאיתנו אליכם (MessageTab)
+ * 4 = סטטוס הגעה (AttendanceStatusTab)
+ */
+export const TEMPLATE_TO_TAB_INDEX: Record<SupportedWeddingTemplate, number> = {
+    'wedding_confirmation': 4,      // סטטוס הגעה
+    'wedding_reminder': 4,           // סטטוס הגעה
+    'wedding_day_before': 0,         // פרטי האירוע
+    'wedding_post_thanks': 2,        // גלריה
+    'wedding_thank_you': 0,          // פרטי האירוע (default)
+};
+
 export interface SendTemplatePayload {
     to: string;
     templateName: string;
@@ -376,7 +392,8 @@ export async function sendGuestInvitation(guestId: number, weddingId: number): P
     // }
 
     const lastFourDigits = guest.phone.replace(/\D/g, '').slice(-4);
-    const guestUrl = buildGuestUrl(guest.full_name, lastFourDigits, weddingId);
+    const tabIndex = TEMPLATE_TO_TAB_INDEX['wedding_confirmation'];
+    const guestUrl = buildGuestUrl(guest.full_name, lastFourDigits, weddingId, tabIndex);
 
     const components = buildTemplateComponents({
         templateName: 'wedding_confirmation',

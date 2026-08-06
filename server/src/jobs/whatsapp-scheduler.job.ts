@@ -4,6 +4,8 @@ import { pool } from '../db/pool';
 import {
   buildTemplateComponents,
   sendTemplateMessageWithRetry,
+  TEMPLATE_TO_TAB_INDEX,
+  type SupportedWeddingTemplate,
 } from '../services/whatsapp.service';
 import {
   markLogFailed,
@@ -22,6 +24,7 @@ interface WeddingInfoRow {
   wedding_canpoy_time: string;
   venue_name: string;
   venue_address: string;
+  whatsapp_owner_confirmed: boolean;
 }
 interface ScheduleRow {
   wedding_id: number;
@@ -74,7 +77,7 @@ async function sleep(ms: number): Promise<void> {
   await new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-function buildGuestUrl(weddingId: number, fullName: string, phone: string): string {
+function buildGuestUrl(weddingId: number, fullName: string, phone: string, tabIndex?: number): string {
   const base = (process.env.GUEST_PORTAL_BASE_URL ?? process.env.CLIENT_BASE_URL ?? 'http://localhost:5173').replace(/\/$/, '');
   const digits = phone.replace(/\D/g, '');
   const params = new URLSearchParams({
@@ -82,6 +85,9 @@ function buildGuestUrl(weddingId: number, fullName: string, phone: string): stri
     p: digits.slice(-4),
     w: String(weddingId),
   });
+  if (tabIndex !== undefined) {
+    params.append('t', String(tabIndex));
+  }
   return `${base}/?${params.toString()}`;
 }
 
@@ -108,6 +114,7 @@ async function getWeddingScheduleRows(): Promise<Array<WeddingInfoRow & Schedule
       wi.wedding_canpoy_time,
       wi.venue_name,
       wi.venue_address,
+      wi.whatsapp_owner_confirmed,
       s.wedding_id,
       s.invitation_days_before,
       s.reminder_days_before,
@@ -136,7 +143,7 @@ async function getEligibleGuests(
   const templateFilter =
     templateName === 'wedding_reminder'
       ? "AND g.rsvp_status <> 'COMING'"
-      : templateName === 'wedding_post_thanks'
+      : templateName === 'wedding_day_before' || templateName === 'wedding_post_thanks'
         ? "AND g.rsvp_status = 'COMING'"
       : '';
 
@@ -256,7 +263,8 @@ async function processTemplateForWedding(
       try {
         const guestFirstName = (guest.first_name?.trim() || guest.full_name.split(/\s+/)[0] || '').trim();
         const weddingDisplayName = `${wedding.bride_name} & ${wedding.groom_name}`;
-        const guestUrl = buildGuestUrl(wedding.id, guest.full_name, guest.phone);
+        const tabIndex = TEMPLATE_TO_TAB_INDEX[templateName as SupportedWeddingTemplate];
+        const guestUrl = buildGuestUrl(wedding.id, guest.full_name, guest.phone, tabIndex);
 
         const components = buildTemplateComponents({
           templateName,
@@ -326,6 +334,10 @@ export async function runWhatsappSchedulerOnce(): Promise<void> {
     const nowIsrael = getNowIsrael();
 
     for (const wedding of weddings) {
+      if (!wedding.whatsapp_owner_confirmed) {
+        console.log(`[WhatsApp Scheduler] ⏭️  Skipping wedding_id=${wedding.id} (${wedding.bride_name} & ${wedding.groom_name}) — whatsapp_owner_confirmed=false`);
+        continue;
+      }
       await processTemplateForWedding(wedding, 'wedding_confirmation', nowIsrael, IS_PROD);
       await processTemplateForWedding(wedding, 'wedding_reminder', nowIsrael, IS_PROD);
       await processTemplateForWedding(wedding, 'wedding_day_before', nowIsrael, IS_PROD);

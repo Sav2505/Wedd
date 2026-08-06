@@ -3,6 +3,8 @@ import { pool } from '../../db/pool';
 import {
     buildTemplateComponents,
     sendTemplateMessageWithRetry,
+    TEMPLATE_TO_TAB_INDEX,
+    type SupportedWeddingTemplate,
 } from '../../services/whatsapp.service';
 import { getInvitationImage } from '../../services/weddingMessageSchedule.service';
 import { ISRAEL_TIMEZONE } from '../../utils/scheduling.util';
@@ -60,7 +62,7 @@ function formatTimeShort(time: string | null | undefined): string {
     return time.slice(0, 5);
 }
 
-function buildGuestUrl(weddingId: number, fullName: string, phone: string): string {
+function buildGuestUrl(weddingId: number, fullName: string, phone: string, tabIndex?: number): string {
     const base = (process.env.GUEST_PORTAL_BASE_URL ?? process.env.CLIENT_BASE_URL ?? 'http://localhost:5173').replace(/\/$/, '');
     const digits = phone.replace(/\D/g, '');
     const params = new URLSearchParams({
@@ -68,6 +70,9 @@ function buildGuestUrl(weddingId: number, fullName: string, phone: string): stri
         p: digits.slice(-4),
         w: String(weddingId),
     });
+    if (tabIndex !== undefined) {
+        params.append('t', String(tabIndex));
+    }
     return `${base}/?${params.toString()}`;
 }
 
@@ -131,7 +136,8 @@ export async function runOneOffTestSendToDan(): Promise<void> {
 
             const guestFirstName = (guest.guest_first_name?.trim() || guest.guest_full_name.split(/\s+/)[0] || '').trim();
             const weddingDisplayName = `${guest.bride_name} & ${guest.groom_name}`;
-            const guestUrl = buildGuestUrl(guest.wedding_id, guest.guest_full_name, guest.guest_phone);
+            const tabIndex = TEMPLATE_TO_TAB_INDEX['wedding_reminder'];
+            const guestUrl = buildGuestUrl(guest.wedding_id, guest.guest_full_name, guest.guest_phone, tabIndex);
 
             console.log(`[Test Send] 🧪 guestUrl=${guestUrl}`);
 

@@ -127,6 +127,9 @@ export default function LoginPage() {
     login({ fullName: autoCreds.fullName, lastFourDigits: autoCreds.lastFourDigits, weddingId: autoCreds.weddingId })
       .then(({ guest }) => {
         dispatch(setGuest(guest));
+        if (autoCreds.tabIndex !== undefined) {
+          sessionStorage.setItem('wedding.tabIndex', String(autoCreds.tabIndex));
+        }
         if (guest.role === 'guest' && guest.rsvp_status === 'PENDING') {
           sessionStorage.setItem('wedding.forceRsvpGuestId', guest.id);
         }

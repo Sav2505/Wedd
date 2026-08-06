@@ -15,6 +15,8 @@ import {
 import UploadFileIcon from '@mui/icons-material/UploadFile';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import SaveIcon from '@mui/icons-material/Save';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import BlockIcon from '@mui/icons-material/Block';
 import { Collapse } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import {
@@ -34,12 +36,15 @@ interface Props {
     weddingId: number;
     weddingDate?: string;
     onClose: () => void;
+    isDeclarationConfirmed?: boolean;
+    onDeclarationChange?: (confirmed: boolean) => void;
 }
 
-export default function WhatsAppScheduleModal({ open, weddingId, weddingDate, onClose }: Props) {
+export default function WhatsAppScheduleModal({ open, weddingId, weddingDate, onClose, isDeclarationConfirmed, onDeclarationChange }: Props) {
     const [schedule, setSchedule] = useState<WeddingMessageSchedule | null>(null);
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
+    const [declarationSaving, setDeclarationSaving] = useState(false);
     const [loadingMessage, setLoadingMessage] = useState<string | null>(null);
     const [result, setResult] =
         useState<'success' | 'error' | null>(null);
@@ -231,7 +236,22 @@ export default function WhatsAppScheduleModal({ open, weddingId, weddingDate, on
             </DialogTitle>
             <DialogContent>
                 <Stack spacing={2} sx={{ mt: 0.5 }}>
-                    <Typography sx={{ ml: 3, fontWeight: 400, color: '#302209', fontSize: "14px" }}>תקבלו למייל כמובן עדכון 24 שעות טרם שליחת ההודעות</Typography>
+                    {isDeclarationConfirmed === false && (
+                        <Alert
+                            severity="error"
+                            icon={<BlockIcon fontSize="small" />}
+                            sx={{
+                                borderRadius: 2,
+                                fontWeight: 700,
+                                border: '1.5px solid rgba(185,71,61,0.5)',
+                                '& .MuiAlert-message': { fontWeight: 600 },
+                            }}
+                        >
+                            שליחת הודעות WhatsApp מושבתת — ביטלת את ההרשאה למערכת.
+                            כל עוד ההרשאה מבוטלת, לא תישלח אף הודעה לאורחים. כדי לאפשר שליחה מחדש, אשר את ההרשאה בסעיף למטה.
+                        </Alert>
+                    )}
+                    <Typography sx={{ ml: 3, fontWeight: 400, color: '#302209', fontSize: "14px" }}>תקבלו למייל שלכם עדכון 24 שעות טרם שליחת ההודעות</Typography>
 
                     {loading || !schedule ? (
                         <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
@@ -357,7 +377,7 @@ export default function WhatsAppScheduleModal({ open, weddingId, weddingDate, on
                             </Stack>
 
                             <Stack spacing={1.5}>
-                                <Typography sx={{ fontWeight: 700, color: '#6E5424' }}>תזכורת בסמוך לאירוע - <span style={{ fontWeight: "normal" }}>לכולם</span></Typography>
+                                <Typography sx={{ fontWeight: 700, color: '#6E5424' }}>תזכורת בסמוך לאירוע - <span style={{ fontWeight: "normal" }}>למאשרי הגעה בלבד</span></Typography>
                                 <TextField
                                     type="number"
                                     label="כמה ימים מראש"
@@ -425,6 +445,7 @@ export default function WhatsAppScheduleModal({ open, weddingId, weddingDate, on
 
                             <Typography sx={{ fontWeight: 700, mb: 1 }}>ביום שאחרי (נוודא שלא נופל על שבת) תישלח גם הודעת תודה לכל מי שבא :)</Typography>
 
+                            {/* Declaration status section */}
                             <Box sx={{ p: 1.5, borderRadius: 2, border: '1px dashed rgba(201,168,76,0.55)', background: 'rgba(201,168,76,0.06)' }}>
                                 <Typography sx={{ fontWeight: 700, mb: 1 }}>תמונת הזמנה</Typography>
                                 {imagePreviewUrl ? (
@@ -474,6 +495,76 @@ export default function WhatsAppScheduleModal({ open, weddingId, weddingDate, on
                                         e.currentTarget.value = '';
                                     }}
                                 />
+                            </Box>
+                            <Box
+                                sx={{
+                                    mt: 0.5,
+                                    p: 1.5,
+                                    borderRadius: 2,
+                                    border: isDeclarationConfirmed
+                                        ? '1px solid rgba(31,159,81,0.35)'
+                                        : '1px solid rgba(185,71,61,0.35)',
+                                    background: isDeclarationConfirmed
+                                        ? 'rgba(31,159,81,0.06)'
+                                        : 'rgba(185,71,61,0.06)',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'space-between',
+                                    gap: 1,
+                                    flexWrap: 'wrap',
+                                }}
+                            >
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                    {isDeclarationConfirmed ? (
+                                        <CheckCircleIcon sx={{ color: '#1f9f51', fontSize: 18, flexShrink: 0 }} />
+                                    ) : (
+                                        <BlockIcon sx={{ color: '#B9473D', fontSize: 18, flexShrink: 0 }} />
+                                    )}
+                                    <Typography variant="body2" sx={{
+                                        color: isDeclarationConfirmed ? '#1f9f51' : '#B9473D',
+                                        fontWeight: 600,
+                                    }}>
+                                        {isDeclarationConfirmed
+                                            ? 'הרשאה לשליחת הודעות WhatsApp מאושרת'
+                                            : 'הרשאה לשליחת הודעות WhatsApp בוטלה'}
+                                    </Typography>
+                                </Box>
+                                {onDeclarationChange && (
+                                    <Button
+                                        size="small"
+                                        variant="text"
+                                        disabled={declarationSaving}
+                                        onClick={async () => {
+                                            setDeclarationSaving(true);
+                                            try {
+                                                await onDeclarationChange(!isDeclarationConfirmed);
+                                            } finally {
+                                                setDeclarationSaving(false);
+                                            }
+                                        }}
+                                        sx={{
+                                            color: isDeclarationConfirmed ? '#B9473D' : '#1f9f51',
+                                            fontSize: '0.75rem',
+                                            fontWeight: 600,
+                                            minWidth: 80,
+                                            px: 1,
+                                            '&:hover': {
+                                                background: isDeclarationConfirmed
+                                                    ? 'rgba(185,71,61,0.08)'
+                                                    : 'rgba(31,159,81,0.08)',
+                                            },
+                                        }}
+                                    >
+                                        {declarationSaving ? (
+                                            <CircularProgress
+                                                size={14}
+                                                sx={{ color: isDeclarationConfirmed ? '#B9473D' : '#1f9f51' }}
+                                            />
+                                        ) : (
+                                            isDeclarationConfirmed ? 'ביטול הרשאה' : 'אשר מחדש'
+                                        )}
+                                    </Button>
+                                )}
                             </Box>
                         </>
                     )}

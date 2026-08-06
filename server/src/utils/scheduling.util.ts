@@ -33,12 +33,14 @@ function normalizeToIsraelNoon(dateValue: string | Date): DateTime {
   return dt.set({ hour: 12, minute: 0, second: 0, millisecond: 0 });
 }
 
-function deferSaturdayToSundayNoon(candidate: DateTime): DateTime {
+function avoidSaturday(candidate: DateTime): DateTime {
+  // Luxon weekday: 1=Mon ... 6=Sat ... 7=Sun
+  // If computed send date falls on Shabbat (Saturday), move it to Friday noon instead.
   if (candidate.weekday !== 6) {
     return candidate;
   }
 
-  return candidate.plus({ days: 1 }).set({ hour: 12, minute: 0, second: 0, millisecond: 0 });
+  return candidate.minus({ days: 1 }).set({ hour: 12, minute: 0, second: 0, millisecond: 0 });
 }
 
 export function computeInvitationSendAt(
@@ -46,7 +48,7 @@ export function computeInvitationSendAt(
   invitationDaysBefore: number,
 ): DateTime {
   const base = normalizeToIsraelNoon(weddingDate).minus({ days: invitationDaysBefore });
-  return deferSaturdayToSundayNoon(base);
+  return avoidSaturday(base);
 }
 
 export function computeReminderSendAt(
@@ -54,27 +56,20 @@ export function computeReminderSendAt(
   reminderDaysBefore: number,
 ): DateTime {
   const base = normalizeToIsraelNoon(weddingDate).minus({ days: reminderDaysBefore });
-  return deferSaturdayToSundayNoon(base);
+  return avoidSaturday(base);
 }
 
 export function computeDayBeforeSendAt(
   weddingDate: string | Date,
   dayBeforeOffsetDays: number,
 ): DateTime {
-  const wedding = normalizeToIsraelNoon(weddingDate);
-  const base = wedding.minus({ days: dayBeforeOffsetDays });
-
-  // If wedding day is Sunday and the computed send day is Saturday, move to Friday noon.
-  if (wedding.weekday === 7 && base.weekday === 6) {
-    return base.minus({ days: 1 }).set({ hour: 12, minute: 0, second: 0, millisecond: 0 });
-  }
-
-  return base;
+  const base = normalizeToIsraelNoon(weddingDate).minus({ days: dayBeforeOffsetDays });
+  return avoidSaturday(base);
 }
 
 export function computePostThanksSendAt(weddingDate: string | Date): DateTime {
   const base = normalizeToIsraelNoon(weddingDate).plus({ days: 1 });
-  return deferSaturdayToSundayNoon(base);
+  return avoidSaturday(base);
 }
 
 export function computeWeddingMessageScheduleDates(

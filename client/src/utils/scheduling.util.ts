@@ -23,13 +23,14 @@ function atNoonIsrael(dateIso: string): dayjs.Dayjs {
     return dayjs.tz(`${dateIso}T12:00:00`, ISRAEL_TIMEZONE);
 }
 
-function deferSaturdayToSundayNoon(date: dayjs.Dayjs): dayjs.Dayjs {
+function avoidSaturday(date: dayjs.Dayjs): dayjs.Dayjs {
     // dayjs day(): 0 Sunday ... 6 Saturday
+    // If computed send date falls on Shabbat (Saturday), move it to Friday noon instead.
     if (date.day() !== 6) {
         return date;
     }
 
-    return date.add(1, 'day').hour(12).minute(0).second(0).millisecond(0);
+    return date.subtract(1, 'day').hour(12).minute(0).second(0).millisecond(0);
 }
 
 export function computeSchedulePreview(
@@ -38,20 +39,16 @@ export function computeSchedulePreview(
 ): WeddingScheduleComputed {
     const wedding = atNoonIsrael(weddingDateIso);
 
-    const invitation = deferSaturdayToSundayNoon(
+    const invitation = avoidSaturday(
         wedding.subtract(input.invitation_days_before, 'day'),
     );
 
-    const reminder = deferSaturdayToSundayNoon(
+    const reminder = avoidSaturday(
         wedding.subtract(input.reminder_days_before, 'day'),
     );
 
     let dayBefore = wedding.subtract(input.day_before_offset_days, 'day');
-
-    // Sunday wedding => if computed day is Saturday, move to Friday noon.
-    if (wedding.day() === 0 && dayBefore.day() === 6) {
-        dayBefore = dayBefore.subtract(1, 'day').hour(12).minute(0).second(0).millisecond(0);
-    }
+    dayBefore = avoidSaturday(dayBefore);
 
     return {
         invitation_send_at: invitation.toISOString(),

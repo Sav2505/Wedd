@@ -473,7 +473,7 @@ const WeddingInfoEditor = forwardRef<WeddingInfoEditorHandle>(function WeddingIn
               type="url"
               value={form.bride_bit_url ?? ''}
               onChange={set('bride_bit_url')}
-              placeholder="https://bit...."
+              placeholder="https://www.bit...."
               sx={fieldSx}
               InputProps={{
                 startAdornment: (
@@ -492,7 +492,7 @@ const WeddingInfoEditor = forwardRef<WeddingInfoEditorHandle>(function WeddingIn
               type="url"
               value={form.groom_bit_url ?? ''}
               onChange={set('groom_bit_url')}
-              placeholder="https://bit...."
+              placeholder="https://www.bit...."
               sx={fieldSx}
               InputProps={{
                 startAdornment: (

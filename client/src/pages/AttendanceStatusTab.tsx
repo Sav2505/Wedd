@@ -25,7 +25,7 @@ import GoldCard from '../components/GoldCard';
 import { getMyRsvp, updateMyRsvp } from '../services/guests.service';
 import { RsvpStatus } from '../types/domain';
 
-const RSVP_MAX_GUESTS = Number(import.meta.env.VITE_RSVP_MAX_GUESTS ?? 10);
+const RSVP_MAX_GUESTS = Number(import.meta.env.VITE_RSVP_MAX_GUESTS ?? 12);
 
 type Props = {
   onSaved?: (status: RsvpStatus) => void;
@@ -385,7 +385,7 @@ export default function AttendanceStatusTab({ onSaved, initialRsvp }: Props) {
         {status === 'COMING' && (
           <GoldCard delay={0.08} sx={{ mb: 2.2 }}>
             <Typography sx={{ color: '#2C1810', fontWeight: 700, mb: 1.1 }}>
-             כמה אנשים יגיעו איתך? (כולל אתכם)
+              כמה אנשים יגיעו איתך? (כולל אתכם)
             </Typography>
 
             <Box
@@ -424,9 +424,6 @@ export default function AttendanceStatusTab({ onSaved, initialRsvp }: Props) {
                 <AddCircleOutlineIcon sx={{ color: count >= RSVP_MAX_GUESTS ? '#C8B89A' : '#C9A84C' }} />
               </IconButton>
             </Box>
-            <Typography variant="caption" sx={{ mt: 0.9, display: 'block', color: '#8A7565' }}>
-              מינימום 1, מקסימום {RSVP_MAX_GUESTS}
-            </Typography>
           </GoldCard>
         )}
 

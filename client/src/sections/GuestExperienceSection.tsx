@@ -1,19 +1,18 @@
 import { useState } from 'react';
 import { Box, Button, Typography } from '@mui/material';
 import { motion } from 'framer-motion';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import VisibilityRoundedIcon from '@mui/icons-material/VisibilityRounded';
 import { fadeUp, fadeUpCard, staggerContainer, scrollReveal, palette } from '../shared/animations';
 import GuestAppMockup from '../components/GuestAppMockup';
 import GuestJourneyShowcaseModal from '../components/GuestJourneyShowcaseModal';
 
 const features = [
-    'אישור הגעה בלחיצה',
-    'ניווט מהיר ב-Waze',
-    'הודעה אישית מהזוג',
-    'גלריית תמונות משותפת',
-    'צפייה במיקום הישיבה',
-    'חוויה דיגיטלית מרשימה',
+    { icon: '📩', text: 'הזמנה דיגיטלית ב-WhatsApp' },
+    { icon: '✅', text: 'אישור הגעה בשתי שניות' },
+    { icon: '📍', text: 'ניווט ישיר למקום' },
+    { icon: '🪑', text: 'מיקום הישיבה האישי' },
+    { icon: '📸', text: 'גלריה משותפת לכל האורחים' },
+    { icon: '💌', text: 'הקדשה אישית מהזוג' },
 ];
 
 export default function GuestExperienceSection() {
@@ -33,58 +32,78 @@ export default function GuestExperienceSection() {
             >
                 <motion.div {...scrollReveal} variants={staggerContainer}>
                     <motion.div variants={fadeUp}>
-                        <Typography sx={{ color: palette.gold, fontWeight: 700, letterSpacing: '0.04em', mb: 1 }}>
-                            📲 גם האורחים נהנים
+                        <Typography sx={{ color: palette.gold, fontWeight: 700, letterSpacing: '0.05em', mb: 1, fontSize: '0.85rem', textTransform: 'uppercase' }}>
+                            תצוגה מקדימה אמיתית
                         </Typography>
                         <Typography
                             sx={{
                                 fontFamily: "'Frank Ruhl Libre', serif",
                                 fontWeight: 700,
-                                fontSize: { xs: '1.6rem', sm: '2rem' },
+                                fontSize: { xs: '1.75rem', sm: '2.2rem' },
                                 color: palette.textDark,
-                                mb: 2,
+                                lineHeight: 1.25,
+                                mb: 0.8,
                             }}
                         >
-                            חוויה שהאורחים יאהבו
+                            כך האורחים שלכם<br />יראו את החתונה
+                        </Typography>
+                        <Typography sx={{ color: palette.textMuted, fontSize: '0.95rem', mb: 2.5, lineHeight: 1.6 }}>
+                            מה שאתם רואים משמאל — זה בדיוק מה שכל אורח יקבל.
                         </Typography>
                     </motion.div>
 
                     <Box component="ul" sx={{ listStyle: 'none', p: 0, m: 0 }}>
                         {features.map((f) => (
                             <motion.li
-                                key={f}
+                                key={f.text}
                                 variants={fadeUp}
-                                style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 14 }}
+                                style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}
                             >
-                                <CheckCircleIcon sx={{ color: palette.gold, fontSize: 20, mt: '2px' }} />
-                                <Typography sx={{ color: palette.textDark, fontSize: '0.98rem' }}>{f}</Typography>
+                                <Box
+                                    sx={{
+                                        width: 34,
+                                        height: 34,
+                                        borderRadius: '50%',
+                                        background: 'rgba(201,168,76,0.12)',
+                                        border: '1px solid rgba(201,168,76,0.28)',
+                                        display: 'grid',
+                                        placeItems: 'center',
+                                        fontSize: '1rem',
+                                        flexShrink: 0,
+                                    }}
+                                >
+                                    {f.icon}
+                                </Box>
+                                <Typography sx={{ color: palette.textDark, fontSize: '0.95rem', fontWeight: 600 }}>{f.text}</Typography>
                             </motion.li>
                         ))}
                     </Box>
 
                     <motion.div variants={fadeUp}>
-                        <Typography sx={{ mt: 1, color: palette.textMuted, fontSize: '0.92rem', lineHeight: 1.8 }}>
-                            כל אורח מקבל בדיוק את מה שהוא צריך, בזמן הנכון.
+                        <Typography sx={{ mt: 2, color: palette.textMuted, fontSize: '0.88rem' }}>
+                            חוויה אחת. כל מה שהאורח צריך.
                         </Typography>
                     </motion.div>
                 </motion.div>
 
                 <motion.div {...scrollReveal} variants={fadeUpCard}>
                     <GuestAppMockup />
-                    <div style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', gap: 8 }}>
+                        <Typography sx={{ mt: 1.5, fontSize: '0.78rem', color: palette.textMuted, letterSpacing: '0.02em' }}>
+                            כך נראית חוויית האורח ✨
+                        </Typography>
                         <Button
                             variant="contained"
                             endIcon={<VisibilityRoundedIcon />}
                             onClick={() => setJourneyOpen(true)}
                             sx={{
-                                mt: 2,
                                 background: 'linear-gradient(135deg, #D8B65A, #B7892D)',
                                 color: '#FFFDF8',
                                 fontWeight: 800,
-                                px: 2.6,
-                                py: 0.95,
+                                px: 2.8,
+                                py: 1.05,
                                 borderRadius: 999,
-                                fontSize: '0.87rem',
+                                fontSize: '0.9rem',
                                 letterSpacing: '0.01em',
                                 boxShadow: '0 12px 28px rgba(154,120,51,0.36)',
                                 border: '1px solid rgba(255,255,255,0.22)',
@@ -98,7 +117,7 @@ export default function GuestExperienceSection() {
                                 '&:active': { transform: 'translateY(0)' },
                             }}
                         >
-                            הצצה לחוויית האורח
+                            צפו בחוויית האורח
                         </Button>
                     </div>
                 </motion.div>

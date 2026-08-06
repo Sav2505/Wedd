@@ -8,6 +8,7 @@ import {
     IconButton,
     LinearProgress,
     Stack,
+    Tooltip,
     Typography,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
@@ -22,7 +23,10 @@ import PlayCircleFilledRoundedIcon from '@mui/icons-material/PlayCircleFilledRou
 import CelebrationIcon from '@mui/icons-material/Celebration';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import RestartAltRoundedIcon from '@mui/icons-material/RestartAltRounded';
-import TaskAltRoundedIcon from '@mui/icons-material/TaskAltRounded';
+import DoneAllIcon from '@mui/icons-material/DoneAll';
+import HeartBrokenIcon from '@mui/icons-material/HeartBroken';
+import HourglassTopIcon from '@mui/icons-material/HourglassTop';
+import PeopleAltIcon from '@mui/icons-material/PeopleAlt';
 import RemoveCircleOutlineIcon from '@mui/icons-material/RemoveCircleOutline';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import EastIcon from '@mui/icons-material/East';
@@ -126,6 +130,75 @@ const GUEST_TABS: Array<{ key: GuestTabKey; label: string; icon: React.ReactNode
     { key: 'message', label: 'מאיתנו', icon: <FavoriteIcon sx={{ fontSize: 17 }} /> },
     { key: 'rsvp', label: 'אישור הגעה', icon: <HowToRegIcon sx={{ fontSize: 17 }} /> },
 ];
+
+function ShowcaseStatusCard({
+    selected,
+    title,
+    subtitle,
+    icon,
+    onClick,
+    palette: p,
+}: {
+    selected: boolean;
+    title: string;
+    subtitle: string;
+    icon: React.ReactNode;
+    onClick: () => void;
+    palette: { bg: string; border: string; text: string; glow: string };
+}) {
+    return (
+        <motion.button
+            type="button"
+            onClick={onClick}
+            whileTap={{ scale: 0.98 }}
+            whileHover={{ y: -2 }}
+            style={{
+                border: 'none',
+                padding: 0,
+                background: 'transparent',
+                cursor: 'pointer',
+                width: '100%',
+                textAlign: 'right',
+            }}
+        >
+            <Box
+                sx={{
+                    borderRadius: 3,
+                    border: selected ? `2px solid ${p.border}` : '1px solid rgba(201,168,76,0.25)',
+                    background: selected ? p.bg : 'rgba(255,255,255,0.74)',
+                    boxShadow: selected ? p.glow : '0 4px 14px rgba(44,24,16,0.08)',
+                    p: 1.5,
+                    transition: 'all 0.22s ease',
+                }}
+            >
+                <Stack direction="row" spacing={1} alignItems="center">
+                    <Box
+                        sx={{
+                            width: 34,
+                            height: 34,
+                            borderRadius: '50%',
+                            display: 'grid',
+                            placeItems: 'center',
+                            color: selected ? p.text : '#9A7833',
+                            background: selected ? 'rgba(255,255,255,0.35)' : 'rgba(201,168,76,0.14)',
+                            flexShrink: 0,
+                        }}
+                    >
+                        {icon}
+                    </Box>
+                    <Box sx={{ flex: 1 }}>
+                        <Typography sx={{ fontWeight: 800, color: selected ? p.text : '#2C1810', lineHeight: 1.2, fontSize: '0.88rem' }}>
+                            {title}
+                        </Typography>
+                        <Typography variant="caption" sx={{ color: selected ? 'rgba(255,255,255,0.95)' : '#8A7565', fontSize: '0.72rem' }}>
+                            {subtitle}
+                        </Typography>
+                    </Box>
+                </Stack>
+            </Box>
+        </motion.button>
+    );
+}
 
 function BotanicalSVG() {
     const g = '#C9A84C';
@@ -353,7 +426,7 @@ function GuestExperiencePhone({ activeTab, onTabClick, children }: GuestExperien
 
 export default function GuestJourneyShowcaseModal({ open, onClose }: Props) {
     const [step, setStep] = useState<Step>('intro');
-    const [status, setStatus] = useState<RsvpStatus>('COMING');
+    const [status, setStatus] = useState<RsvpStatus>('PENDING');
     const [count, setCount] = useState(1);
     const [guest, setGuest] = useState<Guest>(DEMO_GUEST);
     const [saving, setSaving] = useState(false);
@@ -362,6 +435,27 @@ export default function GuestJourneyShowcaseModal({ open, onClose }: Props) {
 
     const stepIndex = useMemo(() => STEP_ORDER.indexOf(step) + 1, [step]);
     const progress = useMemo(() => (stepIndex / STEP_ORDER.length) * 100, [stepIndex]);
+
+    const cardPalettes = useMemo(() => ({
+        COMING: {
+            bg: 'linear-gradient(145deg, #41A86A, #2E8B57)',
+            border: '#2E8B57',
+            text: '#FFFFFF',
+            glow: '0 10px 26px rgba(46,139,87,0.35)',
+        },
+        NOT_COMING: {
+            bg: 'linear-gradient(145deg, #D46A63, #B9473D)',
+            border: '#B9473D',
+            text: '#FFFFFF',
+            glow: '0 10px 26px rgba(185,71,61,0.30)',
+        },
+        PENDING: {
+            bg: 'linear-gradient(145deg, #C9A84C, #AA8532)',
+            border: '#AA8532',
+            text: '#FFFFFF',
+            glow: '0 10px 26px rgba(169,133,51,0.30)',
+        },
+    }), []);
 
     useEffect(() => {
         return () => {
@@ -385,20 +479,22 @@ export default function GuestJourneyShowcaseModal({ open, onClose }: Props) {
     }
 
     function goBack() {
-        const idx = STEP_ORDER.indexOf(step);
-        const prev = STEP_ORDER[idx - 1];
+        let idx = STEP_ORDER.indexOf(step);
+        console.log(idx);
+        if (idx === 4) {
+            idx = idx - 1; // skip 'success' step
+        }
+        let prev = STEP_ORDER[idx - 1];
         if (prev) setStep(prev);
     }
 
     function handleApproveRsvp() {
-        if (status !== 'COMING') return;
-
         setSaving(true);
         const t = window.setTimeout(() => {
             setGuest((prev) => ({
                 ...prev,
-                rsvp_status: 'COMING',
-                number_of_guests: count,
+                rsvp_status: status,
+                number_of_guests: status === 'COMING' ? count : 0,
                 rsvp_updated_at: new Date().toISOString(),
             }));
             setSaving(false);
@@ -505,7 +601,7 @@ export default function GuestJourneyShowcaseModal({ open, onClose }: Props) {
                 },
             }}
         >
-            <DialogContent sx={{ p: { xs: 1, md: 1.4 }, height: '100%', position: 'relative' }}>
+            <DialogContent sx={{ p: { xs: 1, md: 1.4 }, height: '100%', position: 'relative', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
                 <IconButton
                     onClick={onClose}
                     aria-label="סגירת מצגת"
@@ -522,7 +618,7 @@ export default function GuestJourneyShowcaseModal({ open, onClose }: Props) {
                     <CloseIcon />
                 </IconButton>
 
-                <Stack spacing={1.1} sx={{ mb: 1.6, px: { xs: 0.3, md: 2.1 }, pt: { xs: 5.1, md: 1.1 } }}>
+                <Stack spacing={1.1} sx={{ mb: 1.6, px: { xs: 0.3, md: 2.1 }, pt: { xs: 5.1, md: 1.1 }, flexShrink: 0 }}>
                     <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} justifyContent="space-between" alignItems={{ xs: 'flex-start', sm: 'center' }}>
                         <Box>
                             <Typography sx={{ fontFamily: "'Frank Ruhl Libre', serif", fontWeight: 700, fontSize: { xs: '1.4rem', md: '1.75rem' }, color: '#2C1810' }}>
@@ -530,7 +626,45 @@ export default function GuestJourneyShowcaseModal({ open, onClose }: Props) {
                             </Typography>
                             <Typography sx={{ color: '#8A6A2B', fontSize: { xs: '0.9rem', md: '0.98rem' } }}>{copy.subtitle}</Typography>
                         </Box>
-                        <Chip label={`שלב ${stepIndex} מתוך ${STEP_ORDER.length}`} sx={{ bgcolor: 'rgba(201,168,76,0.17)', color: '#7A5E2B', fontWeight: 700 }} />
+                        <Stack direction="row" spacing={0.5} alignItems="center">
+                            <Tooltip title="חזרה" placement="bottom">
+                                <span>
+                                    <IconButton
+                                        onClick={goBack}
+                                        disabled={step === 'intro' || step === 'success'}
+                                        size="small"
+                                        sx={{
+                                            visibility: step === 'intro' ? 'hidden' : 'visible',
+                                            background: 'rgba(255,255,255,0.72)',
+                                            border: '1px solid rgba(201,168,76,0.38)',
+                                            '&:hover': { background: 'rgba(255,255,255,0.95)', borderColor: 'rgba(201,168,76,0.6)' },
+                                            '&.Mui-disabled': { opacity: 0.38, background: 'rgba(255,255,255,0.5)' },
+                                        }}
+                                    >
+                                        <ArrowForwardIcon sx={{ fontSize: 18, color: '#7A5E2B' }} />
+                                    </IconButton>
+                                </span>
+                            </Tooltip>
+                            <Chip label={`שלב ${stepIndex} מתוך ${STEP_ORDER.length}`} sx={{ bgcolor: 'rgba(201,168,76,0.17)', color: '#7A5E2B', fontWeight: 700 }} />
+                            <Tooltip title="המשך" placement="bottom">
+                                <span>
+                                    <IconButton
+                                        onClick={goNext}
+                                        disabled={step === 'details' || step === 'success' || step === 'whatsapp' || step === 'rsvp'}
+                                        size="small"
+                                        sx={{
+                                            visibility: step === 'details' ? 'hidden' : 'visible',
+                                            background: 'rgba(255,255,255,0.72)',
+                                            border: '1px solid rgba(201,168,76,0.38)',
+                                            '&:hover': { background: 'rgba(255,255,255,0.95)', borderColor: 'rgba(201,168,76,0.6)' },
+                                            '&.Mui-disabled': { opacity: 0.38, background: 'rgba(255,255,255,0.5)' },
+                                        }}
+                                    >
+                                        <ArrowBackIcon sx={{ fontSize: 18, color: '#7A5E2B' }} />
+                                    </IconButton>
+                                </span>
+                            </Tooltip>
+                        </Stack>
                     </Stack>
                     <LinearProgress
                         variant="determinate"
@@ -546,7 +680,7 @@ export default function GuestJourneyShowcaseModal({ open, onClose }: Props) {
                     />
                 </Stack>
 
-                <Box sx={{ px: { xs: 0, md: 1.2 }, height: 'calc(100% - 136px)', overflow: 'auto' }}>
+                <Box sx={{ px: { xs: 0, md: 1.2 }, flex: 1, minHeight: 0, overflow: 'auto' }}>
                     <AnimatePresence mode="wait">
                         <motion.div
                             key={step}
@@ -628,106 +762,104 @@ export default function GuestJourneyShowcaseModal({ open, onClose }: Props) {
                                     </GoldCard>
 
                                     <GuestExperiencePhone activeTab="rsvp" onTabClick={handleGuestTabClick}>
-                                        <Box sx={{ pb: 0.2 }}>
-                                            <Typography
-                                                variant="caption"
-                                                sx={{
-                                                    display: 'inline-flex',
-                                                    alignItems: 'center',
-                                                    gap: 0.6,
-                                                    color: '#9A7833',
-                                                    fontWeight: 700,
-                                                    mb: 0.7,
-                                                }}
-                                            >
-                                                <HowToRegIcon sx={{ fontSize: 15 }} />
-                                                סטטוס הגעה
-                                            </Typography>
-
-                                            <Stack spacing={1.1}>
-                                                <Box
-                                                    onClick={() => setStatus('COMING')}
+                                        <Box sx={{ p: { xs: 1, sm: 1.5 } }}>
+                                            <GoldCard sx={{ mb: 1.5 }}>
+                                                <Typography
+                                                    variant="h6"
                                                     sx={{
-                                                        borderRadius: 2.2,
-                                                        p: 1.3,
-                                                        border: status === 'COMING' ? '2px solid #2E8B57' : '1px solid rgba(201,168,76,0.28)',
-                                                        background: status === 'COMING'
-                                                            ? 'linear-gradient(145deg, #41A86A, #2E8B57)'
-                                                            : 'rgba(255,255,255,0.82)',
-                                                        color: status === 'COMING' ? '#fff' : '#2C1810',
-                                                        cursor: 'pointer',
+                                                        textAlign: 'center',
+                                                        fontFamily: "'Frank Ruhl Libre', serif",
+                                                        fontWeight: 700,
+                                                        color: '#2C1810',
+                                                        mb: 0.6,
+                                                        fontSize: '1.05rem',
                                                     }}
                                                 >
-                                                    <Typography sx={{ fontWeight: 800 }}>אגיע ❤️</Typography>
-                                                    <Typography variant="caption" sx={{ color: status === 'COMING' ? 'rgba(255,255,255,0.92)' : '#8A7565' }}>
-                                                        מעולה, בואו נעדכן כמה אנשים מגיעים
-                                                    </Typography>
-                                                </Box>
+                                                    האם תגיעו לחתונה שלנו?
+                                                </Typography>
+                                                <Typography sx={{ textAlign: 'center', color: '#9A7833', mb: 1.6, fontSize: '0.82rem' }}>
+                                                    נשמח לדעת כדי שנוכל להיערך בצורה מושלמת
+                                                </Typography>
 
-                                                <Box
-                                                    onClick={() => setStatus('NOT_COMING')}
-                                                    sx={{
-                                                        borderRadius: 2.2,
-                                                        p: 1.3,
-                                                        border: status === 'NOT_COMING' ? '2px solid #B9473D' : '1px solid rgba(201,168,76,0.28)',
-                                                        background: status === 'NOT_COMING'
-                                                            ? 'linear-gradient(145deg, #D46A63, #B9473D)'
-                                                            : 'rgba(255,255,255,0.82)',
-                                                        color: status === 'NOT_COMING' ? '#fff' : '#2C1810',
-                                                        cursor: 'pointer',
-                                                    }}
-                                                >
-                                                    <Typography sx={{ fontWeight: 800 }}>לא אגיע 😔</Typography>
-                                                    <Typography variant="caption" sx={{ color: status === 'NOT_COMING' ? 'rgba(255,255,255,0.92)' : '#8A7565' }}>
-                                                        להדגמה המלאה בחרו "אגיע" כדי להמשיך לחוויית הפרטים.
-                                                    </Typography>
-                                                </Box>
-                                            </Stack>
+                                                <Stack spacing={1}>
+                                                    <ShowcaseStatusCard
+                                                        selected={status === 'COMING'}
+                                                        title="אגיע ❤️"
+                                                        subtitle="איזה כיף, מחכים לכם"
+                                                        icon={<DoneAllIcon sx={{ fontSize: 18 }} />}
+                                                        onClick={() => setStatus('COMING')}
+                                                        palette={cardPalettes.COMING}
+                                                    />
+                                                    <ShowcaseStatusCard
+                                                        selected={status === 'NOT_COMING'}
+                                                        title="לא אגיע 😔"
+                                                        subtitle="נתגעגע ונשמח לחגוג איתכם בהמשך"
+                                                        icon={<HeartBrokenIcon sx={{ fontSize: 18 }} />}
+                                                        onClick={() => setStatus('NOT_COMING')}
+                                                        palette={cardPalettes.NOT_COMING}
+                                                    />
+                                                    <ShowcaseStatusCard
+                                                        selected={status === 'PENDING'}
+                                                        title="עדיין לא יודע/ת להגיד.. ⏳"
+                                                        subtitle="אפשר לשמור גם החלטה זמנית"
+                                                        icon={<HourglassTopIcon sx={{ fontSize: 18 }} />}
+                                                        onClick={() => setStatus('PENDING')}
+                                                        palette={cardPalettes.PENDING}
+                                                    />
+                                                </Stack>
+                                            </GoldCard>
 
                                             {status === 'COMING' && (
-                                                <Box
-                                                    sx={{
-                                                        mt: 1.1,
-                                                        p: 1.05,
-                                                        borderRadius: 2,
-                                                        border: '1px solid rgba(201,168,76,0.28)',
-                                                        background: 'rgba(250,247,242,0.9)',
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        gap: 0.7,
-                                                    }}
-                                                >
-                                                    <Typography sx={{ flex: 1, color: '#6B5240', fontWeight: 700, fontSize: '0.9rem' }}>
-                                                        כמות מגיעים כולל האורח: {count}
+                                                <GoldCard sx={{ mb: 1.5 }}>
+                                                    <Typography sx={{ color: '#2C1810', fontWeight: 700, mb: 1, fontSize: '0.88rem' }}>
+                                                        כמה אנשים יגיעו איתך? (כולל אתכם)
                                                     </Typography>
-                                                    <IconButton size="small" onClick={() => setCount((v) => Math.max(1, v - 1))}>
-                                                        <RemoveCircleOutlineIcon sx={{ color: '#C9A84C' }} />
-                                                    </IconButton>
-                                                    <Typography sx={{ minWidth: 18, textAlign: 'center', fontWeight: 800 }}>{count}</Typography>
-                                                    <IconButton size="small" onClick={() => setCount((v) => Math.min(8, v + 1))}>
-                                                        <AddCircleOutlineIcon sx={{ color: '#C9A84C' }} />
-                                                    </IconButton>
-                                                </Box>
+                                                    <Box
+                                                        sx={{
+                                                            borderRadius: 2.5,
+                                                            border: '1px solid rgba(201,168,76,0.28)',
+                                                            background: 'linear-gradient(145deg, rgba(250,247,242,0.9), rgba(245,237,217,0.9))',
+                                                            p: 1,
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            gap: 0.8,
+                                                        }}
+                                                    >
+                                                        <PeopleAltIcon sx={{ color: '#9A7833', fontSize: 18 }} />
+                                                        <Typography sx={{ flex: 1, color: '#6B5240', fontWeight: 600, fontSize: '0.82rem' }}>
+                                                            {count === 1 ? 'אגיע לבד' : `אגיע עם ${count === 2 ? 'עוד אורח/ת אחד/ת' : `${count - 1} אורחים נוספים`}`}
+                                                        </Typography>
+                                                        <IconButton size="small" disabled={count <= 1} onClick={() => setCount((v) => Math.max(1, v - 1))}>
+                                                            <RemoveCircleOutlineIcon sx={{ color: count <= 1 ? '#C8B89A' : '#C9A84C', fontSize: 20 }} />
+                                                        </IconButton>
+                                                        <Typography sx={{ minWidth: 20, textAlign: 'center', fontWeight: 800, color: '#2C1810', fontSize: '0.88rem' }}>{count}</Typography>
+                                                        <IconButton size="small" disabled={count >= 8} onClick={() => setCount((v) => Math.min(8, v + 1))}>
+                                                            <AddCircleOutlineIcon sx={{ color: count >= 8 ? '#C8B89A' : '#C9A84C', fontSize: 20 }} />
+                                                        </IconButton>
+                                                    </Box>
+                                                </GoldCard>
                                             )}
 
-                                            <Button
-                                                variant="contained"
-                                                onClick={handleApproveRsvp}
-                                                disabled={saving || status !== 'COMING'}
-                                                startIcon={saving ? null : <TaskAltRoundedIcon />}
-                                                endIcon={saving ? null : <CheckCircleIcon />}
-                                                sx={{
-                                                    mt: 1.2,
-                                                    minWidth: 180,
-                                                    ...ctaButtonSx,
-                                                    '&.Mui-disabled': {
-                                                        color: 'rgba(255,255,255,0.66)',
-                                                        background: 'linear-gradient(135deg, rgba(201,168,76,0.65), rgba(154,120,51,0.65))',
-                                                    },
-                                                }}
-                                            >
-                                                {saving ? 'שומר אישור הגעה...' : 'אישור הגעה'}
-                                            </Button>
+                                            <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                                                <Button
+                                                    variant="contained"
+                                                    onClick={handleApproveRsvp}
+                                                    disabled={saving}
+                                                    endIcon={saving ? null : <FavoriteIcon />}
+                                                    sx={{
+                                                        px: 3,
+                                                        py: 1,
+                                                        borderRadius: 999,
+                                                        fontWeight: 800,
+                                                        background: 'linear-gradient(135deg, #dcc16a, #caa02e)',
+                                                        color: '#ffffff',
+                                                        boxShadow: '0 8px 22px rgba(201,168,76,0.35)',
+                                                        '&:hover': { background: 'linear-gradient(135deg, #E8D490, #D5AD57)' },
+                                                    }}
+                                                >
+                                                    {saving ? 'שומרים...' : 'שמירת אישור הגעה'}
+                                                </Button>
+                                            </Box>
                                         </Box>
                                     </GuestExperiencePhone>
                                 </Stack>
@@ -807,31 +939,6 @@ export default function GuestJourneyShowcaseModal({ open, onClose }: Props) {
                         </motion.div>
                     </AnimatePresence>
                 </Box>
-
-                <Stack direction="row" spacing={1.2} justifyContent="space-between" sx={{ px: { xs: 0.2, md: 2.1 }, mt: 0.9 }}>
-                    <Button
-                        onClick={goBack}
-                        startIcon={<ArrowForwardIcon />}
-                        disabled={step === 'intro' || step === 'success'}
-                        sx={{
-                            visibility: step === 'intro' ? 'hidden' : 'visible',
-                            ...ghostButtonSx,
-                        }}
-                    >
-                        חזרה
-                    </Button>
-                    <Button
-                        onClick={goNext}
-                        endIcon={<ArrowBackIcon />}
-                        disabled={step === 'details' || step === 'success' || step === 'whatsapp' || step === 'rsvp'}
-                        sx={{
-                            visibility: step === 'details' ? 'hidden' : 'visible',
-                            ...ghostButtonSx,
-                        }}
-                    >
-                        המשך
-                    </Button>
-                </Stack>
 
                 <Dialog
                     open={Boolean(featureHint)}

@@ -436,7 +436,7 @@ const WeddingInfoEditor = forwardRef<WeddingInfoEditorHandle>(function WeddingIn
           >
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
               <Typography sx={{ color: '#9A7833', fontWeight: 700, fontSize: '0.95rem' }}>
-                קישורי תשלום ב-BIT
+                קישורי מתנה ב-BIT
               </Typography>
               <Button
                 size="small"

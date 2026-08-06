@@ -4,19 +4,31 @@ import PhotoLibraryOutlinedIcon from '@mui/icons-material/PhotoLibraryOutlined';
 import TableBarIcon from '@mui/icons-material/TableBar';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import HowToRegIcon from '@mui/icons-material/HowToReg';
-import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
-import AccessTimeIcon from '@mui/icons-material/AccessTime';
-import LocationOnIcon from '@mui/icons-material/LocationOn';
-import DirectionsCarIcon from '@mui/icons-material/DirectionsCar';
-import MapIcon from '@mui/icons-material/Map';
+import InfoTab from '../pages/InfoTab';
+import { WeddingInfo } from '../types/domain';
 
-// ─── Guest App Mockup ───────────────────────────────────────
-// A faithful, styled recreation of the real guest screen
-// (MainLayout header + InfoTab content), scaled down to sit
-// inside the showcase page. Not a screenshot — rebuilt with the
-// exact same tokens (colors, radii, gradients, botanical
-// ornament) as the live app, so it reads as "this is really
-// what it looks like".
+const DEMO_WEDDING: WeddingInfo = {
+    id: 9001,
+    bride_name: 'שחר',
+    groom_name: 'דן',
+    wedding_date: '2026-12-07',
+    wedding_time: '19:30',
+    wedding_canpoy_time: '20:30',
+    venue_name: 'הגן הכחול',
+    venue_address: 'רחוב הירקון 20, תל אביב',
+    venue_lat: 32.0853,
+    venue_lng: 34.7818,
+    dress_code: 'אלגנט',
+    notes: 'חניה במקום | מומלץ להגיע 15 דקות לפני קבלת הפנים',
+    message: null,
+    hero_image_url: null,
+    stage_label: 'סטייג׳ מרכזי',
+    is_tables_published: true,
+    table_scale_factor: 1,
+    bride_bit_url: 'www.example.com',
+    groom_bit_url: 'www.example.com',
+    updated_at: '2026-11-01T12:00:00Z',
+};
 
 const TABS = [
     { label: 'פרטי האירוע', icon: <InfoOutlinedIcon sx={{ fontSize: 17 }} />, active: true },
@@ -133,48 +145,12 @@ function BotanicalSVG() {
     );
 }
 
-function InfoRow({
-    icon, label, value,
-}: {
-    icon: React.ReactNode; label: string; value: string;
-}) {
-    return (
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.4, py: 1.1 }}>
-            <Box
-                sx={{
-                    width: 34,
-                    height: 34,
-                    borderRadius: '50%',
-                    background: 'linear-gradient(135deg, rgba(224,201,122,0.25), rgba(201,168,76,0.15))',
-                    border: '1px solid rgba(201,168,76,0.3)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flexShrink: 0,
-                    color: '#C9A84C',
-                }}
-            >
-                {icon}
-            </Box>
-            <Box sx={{ minWidth: 0 }}>
-                <Typography sx={{ color: '#A08070', fontSize: '0.66rem', fontWeight: 500, lineHeight: 1.3 }}>
-                    {label}
-                </Typography>
-                <Typography sx={{ color: '#2C1810', fontWeight: 600, fontSize: '0.82rem', lineHeight: 1.4 }}>
-                    {value}
-                </Typography>
-            </Box>
-        </Box>
-    );
-}
-
 export default function GuestAppMockup() {
     return (
         <Box
             sx={{
                 mx: 'auto',
                 maxWidth: 360,
-                height: "fit-content",
                 borderRadius: '26px',
                 overflow: 'hidden',
                 background:
@@ -270,88 +246,21 @@ export default function GuestAppMockup() {
                 </Box>
             </Box>
 
-            {/* ── Info tab content, matching InfoTab.tsx ── */}
-            <Box sx={{ px: 2.2, py: 2 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.8 }}>
-                    <Box sx={{ flex: 1, height: '1px', background: 'rgba(201,168,76,0.22)' }} />
-                    <Typography sx={{ color: '#C9A84C', fontSize: '0.8rem' }}>✦</Typography>
-                    <Box sx={{ flex: 1, height: '1px', background: 'rgba(201,168,76,0.22)' }} />
-                </Box>
-
-                <Box
-                    sx={{
-                        borderRadius: '16px',
-                        background: 'rgba(255,255,255,0.7)',
-                        border: '1px solid rgba(201,168,76,0.16)',
-                        px: 1.6,
-                        pb: 1,
-                    }}
-                >
-                    <Typography
-                        variant="caption"
-                        sx={{ fontSize: "11px", color: '#A08070', display: 'block', mb: 0.2, fontWeight: 500, mt: 1, ml: 0.25 }}
-                    >
-                        פרטי האירוע
-                    </Typography>
-                    <InfoRow icon={<CalendarMonthIcon sx={{ fontSize: 16 }} />} label="תאריך" value="יום חמישי, 12 בנובמבר 2026" />
-                    <Box sx={{ height: '1px', background: 'rgba(201,168,76,0.12)' }} />
-                    <InfoRow icon={<AccessTimeIcon sx={{ fontSize: 16 }} />} label="שעה" value="19:30" />
-                    <Box sx={{ height: '1px', background: 'rgba(201,168,76,0.12)' }} />
-                    <InfoRow icon={<LocationOnIcon sx={{ fontSize: 16 }} />} label="מיקום" value="הגן הלבן - תל אביב, הירקון 20" />
-                </Box>
-
-                {/* Map buttons, matching MapButtons */}
-                <Box
-                    sx={{
-                        borderRadius: '16px',
-                        background: 'rgba(255,255,255,0.7)',
-                        border: '1px solid rgba(201,168,76,0.16)',
-                        px: 1.6,
-                        pb: 1,
-                        mt: 1
-                    }}
-                >
-                    <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
-                        <Box
-                            sx={{
-                                flex: 1,
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                gap: 0.6,
-                                py: 1,
-                                borderRadius: 50,
-                                background: 'linear-gradient(135deg, #E0C97A, #C9A84C)',
-                                color: '#fff',
-                                fontWeight: 600,
-                                fontSize: '0.72rem',
-                                boxShadow: '0 4px 14px rgba(201,168,76,0.35)',
-                            }}
-                        >
-                            <DirectionsCarIcon sx={{ fontSize: 14 }} />
-                            ניווט ב-Waze
-                        </Box>
-                        <Box
-                            sx={{
-                                flex: 1,
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                gap: 0.6,
-                                py: 1,
-                                borderRadius: 50,
-                                border: '1.5px solid rgba(201,168,76,0.5)',
-                                color: '#9A7833',
-                                fontWeight: 600,
-                                fontSize: '0.72rem',
-                                background: 'rgba(255,255,255,0.6)',
-                            }}
-                        >
-                            <MapIcon sx={{ fontSize: 14 }} />
-                            Google Maps
-                        </Box>
-                    </Box>
-                </Box>
+            {/* ── Real InfoTab content with internal scroll ── */}
+            <Box
+                sx={{
+                    maxHeight: 420,
+                    overflowY: 'auto',
+                    px: { xs: 1, sm: 1.4 },
+                    py: { xs: 1, sm: 1.3 },
+                    '&::-webkit-scrollbar': { width: 4 },
+                    '&::-webkit-scrollbar-thumb': {
+                        background: 'rgba(201,168,76,0.35)',
+                        borderRadius: 4,
+                    },
+                }}
+            >
+                <InfoTab demoInfo={DEMO_WEDDING} hideRegisterCta />
             </Box>
         </Box>
     );

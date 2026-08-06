@@ -101,11 +101,15 @@ export default function ShowcaseHero() {
                             mx: 'auto',
                         }}
                     >
-                        אפליקציית החתונה שמנהלת את כל האירוע — משלב ההכנות, דרך אישורי הגעה ועד
-                        התמונות שאחרי האירוע. בלי אקסלים, בלי עוד מערכות, בלי בלגן.
-                        הכל מסונכרן ומרוכז במקום אחד.
+                        כל מה שצריך לחתונה —
                         <br />
-                        <span style={{ fontWeight: "bold" }}>במחיר הכי משתלם בשוק</span>
+                        אישורי הגעה, סידורי הושבה, ניהול תקציב
+                        <br />
+                        מעקב משימות, גלריה משותפת ועוד.
+                        <br />
+                        <span style={{ fontWeight: 'bold' }}>
+                            הכל במקום אחד. ובמחיר המשתלם בשוק.
+                        </span>
                     </Typography>
                 </motion.div>
 
@@ -124,7 +128,7 @@ export default function ShowcaseHero() {
                             letterSpacing: '0.02em',
                         }}
                     >
-                        אני רוצה גם מערכת כזאת 💍
+                        מתחילים עכשיו 💍
                     </Button>
                 </motion.div>
             </motion.div>
@@ -133,7 +137,7 @@ export default function ShowcaseHero() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 1.1, duration: 0.8 }}
-                style={{ position: 'absolute', bottom: 28 }}
+                style={{ position: 'absolute', bottom: 16 }}
             >
                 <Box
                     onClick={scrollToNext}

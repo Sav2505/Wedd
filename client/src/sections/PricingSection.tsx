@@ -4,14 +4,14 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import { fadeUp, fadeUpCard, staggerContainer, scrollReveal, palette } from '../shared/animations';
 
 const included = [
-    'מערכת מלאה לחתן ולכלה',
-    'אפליקציה מלאה לאורחים',
+    'אפליקציה לזוג',
+    'אפליקציה לאורחים',
     'אישורי הגעה אוטומטיים',
     'סידורי הושבה',
     'גלריה משותפת',
-    'ניהול הוצאות והכנסות',
+    'ניהול תקציב',
     'ניהול משימות',
-    'תמיכה לאורך כל הדרך',
+    'תמיכה מלאה',
 ];
 
 export default function PricingSection() {
@@ -30,7 +30,7 @@ export default function PricingSection() {
                     }}
                 >
                     <Typography sx={{ color: palette.gold, fontWeight: 700, letterSpacing: '0.04em', mb: 1 }}>
-                        💎 מחיר אחד. וזהו.
+                        💎 הכל כלול. במחיר אחד.
                     </Typography>
 
                     <motion.div
@@ -53,11 +53,11 @@ export default function PricingSection() {
                     </motion.div>
 
                     <Typography sx={{ mt: 1, color: palette.textMuted, fontWeight: 600 }}>
-                        לכל החתונה, מההתחלה ועד הסוף · כולל מע״מ
+                        לכל החתונה • כולל מע״מ
                     </Typography>
 
                     <Typography sx={{ mt: 1.5, color: palette.textDark, fontWeight: 700, fontSize: '0.95rem' }}>
-                        בלי מנוי · בלי הפתעות · מחיר אחד לכל החתונה
+                        בלי מנוי • בלי הפתעות
                     </Typography>
 
                     <Box sx={{ my: 3, height: '1px', background: 'rgba(201,168,76,0.25)' }} />
@@ -85,7 +85,9 @@ export default function PricingSection() {
                     </motion.div>
 
                     <Typography sx={{ mt: 5, color: palette.gold, fontWeight: 600, fontSize: '0.85rem' }}>
-                        זהו, לא צריך אף אקסל ולא צריך שום אפליקציה נוספת.
+                        לא צריך אקסלים.
+                        <br />
+                        לא צריך עוד אפליקציות.
                     </Typography>
 
                     <Typography
@@ -97,7 +99,9 @@ export default function PricingSection() {
                             color: palette.textDark,
                         }}
                     >
-                        במקום להתעסק בניהול החתונה — תתעסקו בליהנות ממנה ❤️
+                        תנו לWedFlow לנהל,
+                        <br />
+                        אתם פשוט תהנו ❤️
                     </Typography>
                 </Box>
             </motion.div>

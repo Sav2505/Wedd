@@ -1,7 +1,23 @@
 import { pool } from '../db/pool';
+import type { PoolClient } from 'pg';
 import { createError } from '../middleware/errorHandler';
 import { computeWeddingMessageScheduleDates } from '../utils/scheduling.util';
 import { uploadMediaToWhatsApp } from './whatsapp.service';
+
+let isPostThanksLockColumnReady = false;
+
+async function ensurePostThanksLockColumn(client?: PoolClient): Promise<void> {
+  if (isPostThanksLockColumnReady) {
+    return;
+  }
+
+  const executor = client ?? pool;
+  await executor.query(`
+    ALTER TABLE wedding_message_schedule
+    ADD COLUMN IF NOT EXISTS post_thanks_locked_at TIMESTAMPTZ DEFAULT NULL
+  `);
+  isPostThanksLockColumnReady = true;
+}
 
 export interface WeddingMessageScheduleRow {
   id: number;
@@ -59,6 +75,7 @@ async function getWeddingDate(weddingId: number): Promise<string> {
 }
 
 async function ensureScheduleRow(weddingId: number): Promise<WeddingMessageScheduleRow> {
+  await ensurePostThanksLockColumn();
   await getWeddingDate(weddingId);
 
   await pool.query(
@@ -135,6 +152,7 @@ export async function updateWeddingMessageSchedule(
 
   try {
     await client.query('BEGIN');
+    await ensurePostThanksLockColumn(client);
 
     await client.query(
       'INSERT INTO wedding_message_schedule (wedding_id) VALUES ($1) ON CONFLICT (wedding_id) DO NOTHING',
@@ -259,6 +277,7 @@ export async function saveInvitationImage(
 
   try {
     await client.query('BEGIN');
+    await ensurePostThanksLockColumn(client);
 
     await client.query(
       'INSERT INTO wedding_message_schedule (wedding_id) VALUES ($1) ON CONFLICT (wedding_id) DO NOTHING',
@@ -366,6 +385,7 @@ export async function clearInvitationImage(weddingId: number): Promise<WeddingMe
 
   try {
     await client.query('BEGIN');
+    await ensurePostThanksLockColumn(client);
 
     const weddingDateResult = await client.query<WeddingDateRow>(
       'SELECT wedding_date FROM wedding_info WHERE id = $1 LIMIT 1',

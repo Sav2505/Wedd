@@ -3,10 +3,22 @@ import { motion } from 'framer-motion';
 import { fadeUp, fadeUpCard, staggerContainer, scrollReveal, palette } from '../shared/animations';
 
 const steps = [
-    { when: '30 יום לפני', text: 'אישור הגעה נשלח אוטומטית לכל האורחים בוואטסאפ' },
-    { when: '14 ימים לפני', text: 'למי שטרם השיב, נשלח תזכורת' },
-    { when: 'יום לפני', text: 'שליחת הפרטים המלאים של האירוע לכלל המוזמנים שאישרו הגעה' },
-    { when: 'בזמן אמת', text: 'הנתונים, ההושבה והתקציב מתעדכנים לבד' },
+    {
+        when: '30 יום לפני',
+        text: 'אישורי הגעה נשלחים אוטומטית.',
+    },
+    {
+        when: '14 ימים לפני',
+        text: 'תזכורת תישלח למי שטרם השיב.',
+    },
+    {
+        when: 'יום לפני',
+        text: 'פרטי האירוע, ניווט והושבה יישלחו אוטומטית.',
+    },
+    {
+        when: 'יום אחרי',
+        text: 'הודעת תודה עם קישור לגלריה תישלח לכלל האורחים.',
+    },
 ];
 
 export default function RsvpTimelineSection() {
@@ -21,7 +33,7 @@ export default function RsvpTimelineSection() {
             <motion.div {...scrollReveal} variants={staggerContainer} style={{ maxWidth: 640, margin: '0 auto' }}>
                 <motion.div variants={fadeUp}>
                     <Typography sx={{ color: palette.gold, fontWeight: 700, textAlign: 'center', letterSpacing: '0.04em', mb: 1 }}>
-                        🤖 אישורי הגעה שעובדים בשבילכם
+                        🤖 אישורי הגעה אוטומטיים
                     </Typography>
                     <Typography
                         align="center"
@@ -33,7 +45,8 @@ export default function RsvpTimelineSection() {
                             mb: { xs: 5, sm: 6 },
                         }}
                     >
-                        התהליך רץ לבד, ברקע
+                       המערכת עובדת,
+                       אתם נהנים
                     </Typography>
                 </motion.div>
 
@@ -85,7 +98,7 @@ export default function RsvpTimelineSection() {
                         mt: 3,
                     }}
                 >
-                    * תוכלו לערוך את זמני שליחת ההודעות לפי בחירתכם במערכת
+                    * זמני השליחה ניתנים להתאמה אישית
                 </Typography>
             </motion.div>
         </Box>

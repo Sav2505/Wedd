@@ -8,12 +8,12 @@ import GuestAppMockup from '../components/GuestAppMockup';
 import GuestJourneyShowcaseModal from '../components/GuestJourneyShowcaseModal';
 
 const features = [
-    'אישור הגעה בלחיצה אחת, ישירות מוואטסאפ',
-    'ניווט מהיר לאירוע דרך Waze',
-    'הודעה אישית מהחתן והכלה',
-    'גלריה משותפת לכל האורחים',
-    'צפייה במיקום שלהם בשולחן (לבחירתכם)',
-    'האורחים נכנסים לאווירה עוד לפני האירוע בעזרת המערכת היפה שלכם'
+    'אישור הגעה בלחיצה',
+    'ניווט מהיר ב-Waze',
+    'הודעה אישית מהזוג',
+    'גלריית תמונות משותפת',
+    'צפייה במיקום הישיבה',
+    'חוויה דיגיטלית מרשימה',
 ];
 
 export default function GuestExperienceSection() {
@@ -45,7 +45,7 @@ export default function GuestExperienceSection() {
                                 mb: 2,
                             }}
                         >
-                            חוויה נוחה וברורה לאורחים, בלי בלבול
+                            חוויה שהאורחים יאהבו
                         </Typography>
                     </motion.div>
 
@@ -64,15 +64,13 @@ export default function GuestExperienceSection() {
 
                     <motion.div variants={fadeUp}>
                         <Typography sx={{ mt: 1, color: palette.textMuted, fontSize: '0.92rem', lineHeight: 1.8 }}>
-                            בלי הודעות מיותרות, בלי לשלוח וואטסאפים אישיים לכל אורח —
-                            כל אחד מקבל בדיוק את מה שהוא צריך, בזמן הנכון.
+                            כל אורח מקבל בדיוק את מה שהוא צריך, בזמן הנכון.
                         </Typography>
                     </motion.div>
                 </motion.div>
 
                 <motion.div {...scrollReveal} variants={fadeUpCard}>
                     <GuestAppMockup />
-                    <Typography sx={{ mt: 2, ml: 6, fontSize: "14px", color: "rgba(0, 0, 0, 0.88)" }}>רק דוגמא קטנה ממה שהאורח רואה .. :)</Typography>
                     <div style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
                         <Button
                             variant="contained"
@@ -100,7 +98,7 @@ export default function GuestExperienceSection() {
                                 '&:active': { transform: 'translateY(0)' },
                             }}
                         >
-                            הצצה למה שהאורחים שלכם ייראו...
+                            הצצה לחוויית האורח
                         </Button>
                     </div>
                 </motion.div>

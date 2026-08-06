@@ -31,10 +31,10 @@ export default function GallerySection() {
                             mb: 1.5,
                         }}
                     >
-                        כל הרגעים היפים, במקום אחד
+                        הזיכרונות נשארים איתכם
                     </Typography>
                     <Typography align="center" sx={{ color: palette.textMuted, fontSize: '0.95rem', mb: { xs: 5, sm: 6 } }}>
-                        כל אורח יכול להעלות ולשתף תמונות מהאירוע — כולם רואים הכל, בלי לחפש בקבוצות
+                        האורחים מעלים תמונות ישירות לגלריה המשותפת.
                     </Typography>
                 </motion.div>
 

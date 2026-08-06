@@ -13,6 +13,7 @@ const features = [
     { icon: '🪑', text: 'מיקום הישיבה האישי' },
     { icon: '📸', text: 'גלריה משותפת לכל האורחים' },
     { icon: '💌', text: 'הקדשה אישית מהזוג' },
+    { icon: '🎁', text: 'קישור מתנה לזוג' },
 ];
 
 export default function GuestExperienceSection() {
@@ -81,7 +82,7 @@ export default function GuestExperienceSection() {
 
                     <motion.div variants={fadeUp}>
                         <Typography sx={{ mt: 2, color: palette.textMuted, fontSize: '0.88rem' }}>
-                            כל מה שהאורח צריך לדעת
+                            כל מה שהאורח צריך נמצא כאן
                         </Typography>
                     </motion.div>
                 </motion.div>
@@ -99,6 +100,7 @@ export default function GuestExperienceSection() {
                                 fontWeight: 800,
                                 px: 2.8,
                                 py: 1.05,
+                                mt: 2.5,
                                 borderRadius: 999,
                                 fontSize: '0.9rem',
                                 letterSpacing: '0.01em',

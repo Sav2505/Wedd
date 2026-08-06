@@ -58,7 +58,7 @@ export default function WeddingShowcasePage() {
                         textShadow: '0 2px 14px rgba(201,168,76,0.18)',
                     }}
                 >
-                    מדבר אליכם ?
+                   נו.. אהבתם ? :)
                 </Typography>
             </Box>
 

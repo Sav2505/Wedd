@@ -6,7 +6,8 @@ export interface WeddingInfoEditorHandle {
 }
 import {
   Box, Typography, TextField, Button, CircularProgress,
-  Alert, InputAdornment, Divider,
+  Alert, InputAdornment, Divider, Dialog, DialogTitle,
+  DialogContent, DialogActions,
 } from '@mui/material';
 import SaveOutlinedIcon from '@mui/icons-material/SaveOutlined';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
@@ -15,6 +16,8 @@ import LocationOnOutlinedIcon from '@mui/icons-material/LocationOnOutlined';
 import CheckroomOutlinedIcon from '@mui/icons-material/CheckroomOutlined';
 import NotesOutlinedIcon from '@mui/icons-material/NotesOutlined';
 import PeopleOutlineIcon from '@mui/icons-material/PeopleOutline';
+import QrCode2OutlinedIcon from '@mui/icons-material/QrCode2Outlined';
+import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import { motion } from 'framer-motion';
 import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
 import * as L from 'leaflet';
@@ -133,6 +136,7 @@ const WeddingInfoEditor = forwardRef<WeddingInfoEditorHandle>(function WeddingIn
     useState<'success' | 'error' | null>(null);
   const [resultMessage, setResultMessage] = useState('');
   const [isDirty, setIsDirty] = useState(false);
+  const [isBitHelpOpen, setIsBitHelpOpen] = useState(false);
 
   // local form state
   const [form, setForm] = useState<WeddingInfoUpdate>({});
@@ -151,6 +155,8 @@ const WeddingInfoEditor = forwardRef<WeddingInfoEditorHandle>(function WeddingIn
       venue_lng: info.venue_lng != null ? Number(info.venue_lng) : null,
       dress_code: info.dress_code ?? '',
       notes: info.notes ?? '',
+      bride_bit_url: info.bride_bit_url ?? '',
+      groom_bit_url: info.groom_bit_url ?? '',
     });
     setIsDirty(false);
   }, [info]);
@@ -417,6 +423,90 @@ const WeddingInfoEditor = forwardRef<WeddingInfoEditorHandle>(function WeddingIn
             <Box sx={{ mb: 2 }} />
           )}
 
+          {/* ── תשלום BIT ── */}
+          <SectionTitle>תשלום (לא חובה)</SectionTitle>
+          <Box
+            sx={{
+              mb: 2,
+              p: 1.5,
+              borderRadius: 1,
+              border: '1px solid rgba(201,168,76,0.25)',
+              background: 'linear-gradient(180deg, rgba(255,255,255,0.88) 0%, rgba(250,247,242,0.92) 100%)',
+            }}
+          >
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+              <Typography sx={{ color: '#9A7833', fontWeight: 700, fontSize: '0.95rem' }}>
+                קישורי תשלום ב-BIT
+              </Typography>
+              <Button
+                size="small"
+                variant="outlined"
+                onClick={() => setIsBitHelpOpen(true)}
+                startIcon={<HelpOutlineIcon sx={{ fontSize: 18 }} />}
+                sx={{
+                  borderColor: 'rgba(201,168,76,0.45)',
+                  color: '#9A7833',
+                  pt: 0.8,
+                  pb: 0.8,
+                  pr: 2.5,
+                  pl: 2.5,
+                  textTransform: 'none',
+                  fontWeight: 600,
+                  fontSize: "15px",
+                  '&:hover': {
+                    borderColor: '#C9A84C',
+                    backgroundColor: 'rgba(201,168,76,0.08)',
+                  },
+                }}
+              >
+                איך להוציא קישור ?
+              </Button>
+            </Box>
+
+            <Typography variant="caption" sx={{ color: '#A08070', display: 'block', mb: 1.5 }}>
+              ניתן להדביק כאן קישורי BIT אישיים של החתן והכלה. הקישורים יוצגו לאורחים.
+            </Typography>
+
+            <TextField
+              label="קישור BIT לכלה"
+              fullWidth
+              type="url"
+              value={form.bride_bit_url ?? ''}
+              onChange={set('bride_bit_url')}
+              placeholder="https://bit...."
+              sx={fieldSx}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <QrCode2OutlinedIcon sx={{ color: '#C9A84C', fontSize: 20 }} />
+                  </InputAdornment>
+                ),
+                inputProps: {
+                  dir: 'ltr',
+                },
+              }}
+            />
+            <TextField
+              label="קישור BIT לחתן"
+              fullWidth
+              type="url"
+              value={form.groom_bit_url ?? ''}
+              onChange={set('groom_bit_url')}
+              placeholder="https://bit...."
+              sx={fieldSx}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <QrCode2OutlinedIcon sx={{ color: '#C9A84C', fontSize: 20 }} />
+                  </InputAdornment>
+                ),
+                inputProps: {
+                  dir: 'ltr',
+                },
+              }}
+            />
+          </Box>
+
           {/* ── קוד לבוש ── */}
           <SectionTitle>פרטים נוספים (לא חובה)</SectionTitle>
           <TextField
@@ -484,6 +574,55 @@ const WeddingInfoEditor = forwardRef<WeddingInfoEditorHandle>(function WeddingIn
               setResultMessage('');
             }}
           />
+
+          <Dialog
+            open={isBitHelpOpen}
+            onClose={() => setIsBitHelpOpen(false)}
+            fullWidth
+            maxWidth="sm"
+          >
+            <DialogTitle sx={{ color: '#9A7833', fontWeight: 700 }}>
+              איך מוציאים קישור תשלום של BIT?
+            </DialogTitle>
+            <DialogContent dividers>
+              <Typography sx={{ color: '#6F5547', mb: 1.5 }}>
+                כדי לקבל קישור אישי מתוך קוד ה-QR הקבוע של BIT, בצעו את השלבים הבאים:
+              </Typography>
+              <Box
+                component="ol"
+                sx={{
+                  m: 0,
+                  p: '0 1.2rem 0 0',
+                  color: '#6F5547',
+                  '& li': { mb: 1.25, lineHeight: 1.7 },
+                }}
+              >
+                <li>היכנסו לאפליקציית BIT ולחצו על כפתור "עוד" (שלוש נקודות) בטאב הראשי.</li>
+                <li>בחרו באפשרות "קוד ה-QR הקבוע שלי לקבלת כסף".</li>
+                <li>בצעו שיתוף קוד ושמרו את התמונה לגלריה.</li>
+                <li>פתחו את הגלריה, היכנסו לתמונת ה-QR, לחצו לחיצה ארוכה על הקוד ובחרו "העתקת קישור".</li>
+                <li>הדביקו את הקישור בשדה המתאים לכלה או לחתן.</li>
+              </Box>
+              <Typography variant="caption" sx={{ color: '#A08070', display: 'block', mt: 1.5 }}>
+                טיפ: מומלץ לבדוק שהקישור נפתח לפני שמירה.
+              </Typography>
+            </DialogContent>
+            <DialogActions sx={{ px: 2, py: 1.25 }}>
+              <Button
+                onClick={() => setIsBitHelpOpen(false)}
+                variant="contained"
+                sx={{
+                  background: 'linear-gradient(135deg, #C9A84C, #9A7833)',
+                  color: '#FAF7F2',
+                  textTransform: 'none',
+                  fontWeight: 700,
+                  '&:hover': { background: 'linear-gradient(135deg, #E0C97A, #C9A84C)' },
+                }}
+              >
+                הבנתי
+              </Button>
+            </DialogActions>
+          </Dialog>
         </Box>
       </motion.div>
     </LocalizationProvider>

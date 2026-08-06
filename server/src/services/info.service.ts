@@ -70,6 +70,8 @@ export type WeddingInfoUpdate = Partial<
     | 'stage_label'
     | 'is_tables_published'
     | 'table_scale_factor'
+    | 'bride_bit_url'
+    | 'groom_bit_url'
   >
 >;
 
@@ -87,6 +89,7 @@ export async function updateWeddingInfo(
     'bride_name', 'groom_name', 'wedding_date', 'wedding_time', 'wedding_canpoy_time',
     'venue_name', 'venue_address', 'venue_lat', 'venue_lng',
     'dress_code', 'notes', 'message', 'stage_label', 'is_tables_published', 'table_scale_factor',
+    'bride_bit_url', 'groom_bit_url',
   ] as const;
 
   const sets: string[] = [];
@@ -100,6 +103,14 @@ export async function updateWeddingInfo(
       if (
         (key === 'wedding_time' || key === 'wedding_canpoy_time') &&
         value === ''
+      ) {
+        value = null;
+      }
+
+      if (
+        (key === 'bride_bit_url' || key === 'groom_bit_url') &&
+        typeof value === 'string' &&
+        value.trim() === ''
       ) {
         value = null;
       }

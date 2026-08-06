@@ -1,5 +1,5 @@
 import {
-  Box, Typography, Skeleton, Divider,
+  Box, Typography, Skeleton, Divider, Dialog, DialogTitle, DialogContent, DialogActions, Button,
 } from '@mui/material';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
@@ -8,12 +8,15 @@ import CheckroomIcon from '@mui/icons-material/Checkroom';
 import NoteIcon from '@mui/icons-material/Note';
 import DirectionsCarIcon from '@mui/icons-material/DirectionsCar';
 import MapIcon from '@mui/icons-material/Map';
+import QrCode2OutlinedIcon from '@mui/icons-material/QrCode2Outlined';
 import { motion } from 'framer-motion';
 import { WeddingInfo } from '../types/domain';
 import GoldCard from '../components/GoldCard';
 import CountdownTimer from '../components/CountdownTimer';
 import WeddingRegisterCTA from '../components/WeddingRegisterCTA';
 import { useWeddingInfo } from '../hooks/useWeddingInfo';
+import { palette } from '../shared/animations';
+import { useState } from 'react';
 
 // ─── helpers ────────────────────────────────────────────────
 
@@ -23,6 +26,25 @@ function formatHebrewDate(iso: string): string {
   const weekday = d.toLocaleDateString('he-IL', { weekday: 'long' });
   const date = d.toLocaleDateString('he-IL', { day: 'numeric', month: 'long', year: 'numeric' });
   return `${weekday}, ${date}`;
+}
+
+function toSafeExternalUrl(raw: string | null | undefined): string | null {
+  const trimmed = raw?.trim();
+  if (!trimmed) return null;
+
+  try {
+    const direct = new URL(trimmed);
+    if (direct.protocol === 'http:' || direct.protocol === 'https:') return direct.toString();
+    return null;
+  } catch {
+    try {
+      const withProtocol = new URL(`https://${trimmed}`);
+      if (withProtocol.protocol === 'https:') return withProtocol.toString();
+      return null;
+    } catch {
+      return null;
+    }
+  }
 }
 
 // ─── Info row ───────────────────────────────────────────────
@@ -162,6 +184,122 @@ function MapButtons({ info }: { info: WeddingInfo }) {
   );
 }
 
+function GiftButtons({
+  brideUrl,
+  groomUrl,
+  isDemo,
+  onDemoClick,
+}: {
+  brideUrl: string | null;
+  groomUrl: string | null;
+  isDemo: boolean;
+  onDemoClick: () => void;
+}) {
+  if (!brideUrl && !groomUrl) return null;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, delay: 0.48, ease: 'easeOut' }}
+    >
+      <Box
+        sx={{
+          borderRadius: 2,
+          p: 2,
+          background: 'linear-gradient(180deg, rgba(255,255,255,0.86) 0%, rgba(250,247,242,0.95) 100%)',
+          border: '1px solid rgba(201,168,76,0.25)',
+        }}
+      >
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.75 }}>
+          <Box
+            component="img"
+            src="/bit-logo.png"
+            alt="BIT"
+            sx={{ width: 20, height: 20, objectFit: 'contain', borderRadius: '4px' }}
+          />
+          <Typography sx={{ color: palette.textMuted, fontWeight: 700, fontSize: '0.95rem' }}>
+            מתנה לחתן/כלה
+          </Typography>
+        </Box>
+        <Typography variant="caption" sx={{ color: '#A08070', display: 'block', mb: 1.5 }}>
+          ניתן לשלוח מתנה ב-Bit באמצעות לחיצה על הקישור
+        </Typography>
+
+        <Box sx={{ display: 'flex', gap: 1.1, flexDirection: 'column' }}>
+          {brideUrl && (
+            <Box
+              component={isDemo ? 'button' : 'a'}
+              href={isDemo ? undefined : brideUrl}
+              target={isDemo ? undefined : '_blank'}
+              rel={isDemo ? undefined : 'noopener noreferrer'}
+              onClick={isDemo ? onDemoClick : undefined}
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 1,
+                py: 1.15,
+                px: 1.5,
+                borderRadius: 50,
+                border: '1.5px solid rgba(201,168,76,0.55)',
+                color: '#9A7833',
+                fontFamily: "'Heebo', sans-serif",
+                fontWeight: 700,
+                fontSize: '0.88rem',
+                textDecoration: 'none',
+                background: 'rgba(255,255,255,0.75)',
+                transition: 'all 0.22s ease',
+                cursor: 'pointer',
+                width: '100%',
+                outline: 'none',
+                '&:hover': { transform: 'translateY(-2px)', background: 'rgba(201,168,76,0.08)' },
+              }}
+            >
+              <QrCode2OutlinedIcon sx={{ fontSize: 18 }} />
+              מתנה לכלה ב-Bit
+            </Box>
+          )}
+
+          {groomUrl && (
+            <Box
+              component={isDemo ? 'button' : 'a'}
+              href={isDemo ? undefined : groomUrl}
+              target={isDemo ? undefined : '_blank'}
+              rel={isDemo ? undefined : 'noopener noreferrer'}
+              onClick={isDemo ? onDemoClick : undefined}
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 1,
+                py: 1.15,
+                px: 1.5,
+                borderRadius: 50,
+                border: '1.5px solid rgba(201,168,76,0.55)',
+                color: '#9A7833',
+                fontFamily: "'Heebo', sans-serif",
+                fontWeight: 700,
+                fontSize: '0.88rem',
+                textDecoration: 'none',
+                background: 'rgba(255,255,255,0.75)',
+                transition: 'all 0.22s ease',
+                cursor: 'pointer',
+                width: '100%',
+                outline: 'none',
+                '&:hover': { transform: 'translateY(-2px)', background: 'rgba(201,168,76,0.08)' },
+              }}
+            >
+              <QrCode2OutlinedIcon sx={{ fontSize: 18 }} />
+              מתנה לחתן ב-Bit
+            </Box>
+          )}
+        </Box>
+      </Box>
+    </motion.div>
+  );
+}
+
 // ─── Skeleton ────────────────────────────────────────────────
 
 function InfoSkeleton() {
@@ -196,6 +334,9 @@ export default function InfoTab({ demoInfo, hideRegisterCta = false }: Props) {
 
   const resolvedInfo = demoInfo ?? info;
   const compactDemo = Boolean(demoInfo);
+  const brideBitUrl = toSafeExternalUrl(resolvedInfo?.bride_bit_url);
+  const groomBitUrl = toSafeExternalUrl(resolvedInfo?.groom_bit_url);
+  const [isBitDemoModalOpen, setIsBitDemoModalOpen] = useState(false);
 
   if (!demoInfo && loading) {
     return <InfoSkeleton />;
@@ -258,6 +399,17 @@ export default function InfoTab({ demoInfo, hideRegisterCta = false }: Props) {
         <MapButtons info={resolvedInfo} />
       </GoldCard>
 
+      {(brideBitUrl || groomBitUrl) && (
+        <GoldCard delay={0.25} sx={{ mb: 2 }}>
+          <GiftButtons
+            brideUrl={brideBitUrl}
+            groomUrl={groomBitUrl}
+            isDemo={compactDemo}
+            onDemoClick={() => setIsBitDemoModalOpen(true)}
+          />
+        </GoldCard>
+      )}
+
       {/* Countdown timer */}
       <GoldCard delay={0.3}>
         <CountdownTimer weddingDate={resolvedInfo.wedding_date} compact={compactDemo} />
@@ -268,6 +420,29 @@ export default function InfoTab({ demoInfo, hideRegisterCta = false }: Props) {
           <WeddingRegisterCTA mt={1} />
         </GoldCard>
       )}
+
+      <Dialog open={isBitDemoModalOpen} onClose={() => setIsBitDemoModalOpen(false)} maxWidth="xs" fullWidth>
+        <DialogTitle sx={{ color: '#9A7833', fontWeight: 700 }}>הדגמה</DialogTitle>
+        <DialogContent>
+          <Typography sx={{ color: '#6F5547', lineHeight: 1.7 }}>
+            הלחיצה על הקישור תוביל למתן מתנה ישיר בביט.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={() => setIsBitDemoModalOpen(false)}
+            variant="contained"
+            sx={{
+              background: 'linear-gradient(135deg, #C9A84C, #9A7833)',
+              color: '#FAF7F2',
+              textTransform: 'none',
+              '&:hover': { background: 'linear-gradient(135deg, #E0C97A, #C9A84C)' },
+            }}
+          >
+            הבנתי
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

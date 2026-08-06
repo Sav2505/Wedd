@@ -5,7 +5,7 @@ export async function getWeddingInfo(weddingId: number): Promise<WeddingInfo> {
   if (!weddingId) {
     throw new Error('Wedding ID is required to fetch wedding info');
   }
-  
+
   const { data } = await api.get<ApiResponse<WeddingInfo>>(
     `/info?weddingId=${weddingId}`,
   );
@@ -35,6 +35,8 @@ export type WeddingInfoUpdate = Partial<
     | 'stage_label'
     | 'is_tables_published'
     | 'table_scale_factor'
+    | 'bride_bit_url'
+    | 'groom_bit_url'
   >
 >;
 

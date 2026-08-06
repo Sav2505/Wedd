@@ -11,7 +11,7 @@ const included = [
     'גלריה משותפת',
     'ניהול תקציב',
     'ניהול משימות',
-    'תמיכה מלאה',
+    'מתנה לזוג',
 ];
 
 export default function PricingSection() {

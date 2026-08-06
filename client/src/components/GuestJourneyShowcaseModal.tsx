@@ -101,6 +101,9 @@ const DEMO_WEDDING: WeddingInfo = {
     stage_label: 'סטייג׳ מרכזי',
     is_tables_published: true,
     table_scale_factor: 1,
+    bride_bit_url: 'www.example.com',
+    groom_bit_url: 'www.example.com',
+    updated_at: '2026-11-01T12:00:00Z',
 };
 
 const DEMO_GUEST: Guest = {

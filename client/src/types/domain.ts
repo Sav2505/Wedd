@@ -41,6 +41,9 @@ export interface WeddingInfo {
   stage_label: string | null;
   is_tables_published: boolean;
   table_scale_factor: number;
+  bride_bit_url: string | null;
+  groom_bit_url: string | null;
+  updated_at: string;
 }
 
 export interface WeddingMessageSchedule {

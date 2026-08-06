@@ -30,6 +30,7 @@ interface WeddingScheduleRow {
   wedding_time: string | null;
   wedding_canpoy_time: string | null;
   venue_name: string | null;
+  whatsapp_owner_confirmed: boolean;
   invitation_days_before: number;
   reminder_days_before: number;
   day_before_offset_days: number;
@@ -60,6 +61,7 @@ async function getWeddingScheduleRows(): Promise<WeddingScheduleRow[]> {
       wi.wedding_time,
       wi.wedding_canpoy_time,
       wi.venue_name,
+      wi.whatsapp_owner_confirmed,
       s.invitation_days_before,
       s.reminder_days_before,
       s.day_before_offset_days,
@@ -246,6 +248,13 @@ export async function runWhatsappScheduleNotificationOnce(): Promise<void> {
 
   for (const wedding of weddings) {
     try {
+      if (!wedding.whatsapp_owner_confirmed) {
+        console.log(
+          `[WhatsApp Schedule Notification] ⏭️  Skipping wedding #${wedding.id} (${wedding.bride_name} & ${wedding.groom_name}) — whatsapp_owner_confirmed=false`,
+        );
+        continue;
+      }
+
       const computed = computeWeddingMessageScheduleDates(wedding.wedding_date, {
         invitationDaysBefore: wedding.invitation_days_before,
         reminderDaysBefore: wedding.reminder_days_before,

@@ -405,11 +405,16 @@ export async function buildWeddingSchedulePreview(): Promise<SchedulePreviewRepo
     );
 
     const stats = rows[0];
+    const confirmed = wedding.whatsapp_owner_confirmed;
+    const permissionText = confirmed
+      ? '✅ WhatsApp Permission: CONFIRMED'
+      : '❌ WhatsApp Permission: REVOKED — no messages will be sent';
 
     text +=
       `💍 Wedding ID: ${wedding.id}
 👰🤵 ${wedding.bride_name} & ${wedding.groom_name}
 📅 Wedding: ${wedding.wedding_date}
+${permissionText}
 
 Guests
 ------
@@ -434,7 +439,7 @@ Not coming: ${stats.not_coming}
    ${DateTime.fromISO(computed.dayBeforeSendAt)
         .setZone(ISRAEL_TIMEZONE)
         .toFormat('dd/LL/yyyy HH:mm')}
-   Recipients: ${stats.total}
+   Recipients: ${stats.coming}
 
 4) wedding_post_thanks
   ${DateTime.fromISO(computed.postThanksSendAt)
@@ -447,8 +452,21 @@ Not coming: ${stats.not_coming}
 `;
 
     html += `
-      <div style="margin-bottom:30px;border:1px solid #ddd;padding:15px;border-radius:8px;">
+      <div style="margin-bottom:30px;border:1px solid ${confirmed ? '#c3e6cb' : '#f5c6cb'};padding:15px;border-radius:8px;background:${confirmed ? '#f8fff9' : '#fff8f8'}">
         <h3>Wedding #${wedding.id} - ${wedding.bride_name} & ${wedding.groom_name}</h3>
+
+        <p style="
+          display:inline-block;
+          padding:4px 12px;
+          border-radius:20px;
+          font-weight:bold;
+          font-size:13px;
+          background:${confirmed ? '#d4edda' : '#f8d7da'};
+          color:${confirmed ? '#155724' : '#721c24'};
+          border:1px solid ${confirmed ? '#c3e6cb' : '#f5c6cb'};
+        ">
+          ${confirmed ? '✅ WhatsApp Permission: CONFIRMED' : '❌ WhatsApp Permission: REVOKED — no messages will be sent'}
+        </p>
 
         <p><b>Date:</b> ${wedding.wedding_date}</p>
 
@@ -459,7 +477,7 @@ Not coming: ${stats.not_coming}
           <li>Not Coming: <b>${stats.not_coming}</b></li>
         </ul>
 
-        <table border="1" cellspacing="0" cellpadding="6" style="border-collapse:collapse;">
+        <table border="1" cellspacing="0" cellpadding="6" style="border-collapse:collapse;opacity:${confirmed ? '1' : '0.5'}">
           <tr>
             <th>Template</th>
             <th>Send At</th>
@@ -484,7 +502,7 @@ Not coming: ${stats.not_coming}
             <td>${DateTime.fromISO(computed.dayBeforeSendAt)
         .setZone(ISRAEL_TIMEZONE)
         .toFormat('dd/LL/yyyy HH:mm')}</td>
-            <td>${stats.total}</td>
+            <td>${stats.coming}</td>
           </tr>
           <tr>
             <td>wedding_post_thanks</td>
@@ -494,6 +512,7 @@ Not coming: ${stats.not_coming}
             <td>${stats.coming}</td>
           </tr>
         </table>
+        ${!confirmed ? `<p style="color:#721c24;font-style:italic;margin-top:8px;">⚠️ All sends are blocked until the couple re-confirms WhatsApp permission.</p>` : ''}
       </div>
     `;
   }

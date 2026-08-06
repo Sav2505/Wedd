@@ -1,5 +1,5 @@
 import {
-  Box, Typography, Skeleton, Chip, Divider,
+  Box, Typography, Skeleton, Divider,
 } from '@mui/material';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
@@ -263,28 +263,6 @@ export default function InfoTab({ demoInfo, hideRegisterCta = false }: Props) {
         <CountdownTimer weddingDate={resolvedInfo.wedding_date} compact={compactDemo} />
       </GoldCard>
 
-      {/* Dress code badge */}
-      {resolvedInfo.dress_code && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.5 }}
-        >
-          <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center' }}>
-            <Chip
-              label={`קוד לבוש: ${resolvedInfo.dress_code}`}
-              sx={{
-                background: 'linear-gradient(135deg, rgba(224,201,122,0.2), rgba(201,168,76,0.12))',
-                border: '1px solid rgba(201,168,76,0.35)',
-                color: '#9A7833',
-                fontWeight: 600,
-                fontSize: compactDemo ? '0.7rem' : '0.82rem',
-                px: 1,
-              }}
-            />
-          </Box>
-        </motion.div>
-      )}
       {!hideRegisterCta && (
         <GoldCard delay={0.4} sx={{ mt: 2, textAlign: 'center' }}>
           <WeddingRegisterCTA mt={1} />

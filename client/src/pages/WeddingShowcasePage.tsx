@@ -1,11 +1,10 @@
-import { Box } from '@mui/material';
+import { Box, Typography } from '@mui/material';
 import FallingPetals from '../components/FallingPetals';
 import ShowcaseHero from '../sections/ShowcaseHero';
 import WhyLoveIt from '../sections/WhyLoveIt';
 // import CoupleDashboardSection from '../sections/CoupleDashboardSection';
 import RsvpTimelineSection from '../sections/RsvpTimelineSection';
 import GuestExperienceSection from '../sections/GuestExperienceSection';
-import GallerySection from '../sections/GallerySection';
 import PricingSection from '../sections/PricingSection';
 import FinalCTASection from '../sections/FinalCTASection';
 import StickyMobileCTA from '../components/StickyMobileCTA';
@@ -45,9 +44,24 @@ export default function WeddingShowcasePage() {
             <ShowcaseHero />
             <WhyLoveIt />
             {/* <CoupleDashboardSection /> */}
-            <RsvpTimelineSection />
             <GuestExperienceSection />
-            <GallerySection />
+            <RsvpTimelineSection />
+
+            <Box sx={{ px: 2, pt: { xs: 4, sm: 5 }, pb: { xs: 2, sm: 3 } }}>
+                <Typography
+                    align="center"
+                    sx={{
+                        fontFamily: "'Frank Ruhl Libre', serif",
+                        fontWeight: 700,
+                        fontSize: { xs: '1.35rem', sm: '1.7rem' },
+                        color: '#2C1810',
+                        textShadow: '0 2px 14px rgba(201,168,76,0.18)',
+                    }}
+                >
+                    מוכנים לראות איך גם החתונה שלכם יכולה להיראות?
+                </Typography>
+            </Box>
+
             <PricingSection />
             <FinalCTASection />
 

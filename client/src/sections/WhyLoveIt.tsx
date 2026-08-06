@@ -23,11 +23,6 @@ const items = [
         title: 'חוסך שעות של עבודה',
         text: 'המערכת עושה את העבודה בשבילכם, כדי שתתרכזו בחתונה.',
     },
-    {
-        emoji: '💰',
-        title: 'שליטה מלאה בתקציב',
-        text: 'עוקבים אחרי הוצאות, מתנות והכנסות - בזמן אמת.',
-    },
 ];
 export default function WhyLoveIt() {
     return (
@@ -40,7 +35,7 @@ export default function WhyLoveIt() {
                             fontFamily: "'Frank Ruhl Libre', serif",
                             fontWeight: 700,
                             fontSize: { xs: '1.7rem', sm: '2.1rem' },
-                            color: palette.textDark,
+                            color: palette.goldDark,
                             mb: { xs: 5, sm: 7 },
                         }}
                     >

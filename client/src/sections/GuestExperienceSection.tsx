@@ -77,7 +77,7 @@ export default function GuestExperienceSection() {
                             endIcon={<VisibilityRoundedIcon />}
                             onClick={() => setJourneyOpen(true)}
                             sx={{
-                                mt: 1.3,
+                                mt: 2,
                                 background: 'linear-gradient(135deg, #D8B65A, #B7892D)',
                                 color: '#FFFDF8',
                                 fontWeight: 800,

@@ -7,6 +7,7 @@ import {
   Fade,
   IconButton,
   Stack,
+  TextField,
   Typography,
 } from '@mui/material';
 import DoneAllIcon from '@mui/icons-material/DoneAll';
@@ -18,12 +19,17 @@ import PeopleAltIcon from '@mui/icons-material/PeopleAlt';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import CelebrationIcon from '@mui/icons-material/Celebration';
 import SentimentSatisfiedAltIcon from '@mui/icons-material/SentimentSatisfiedAlt';
+import LocalFloristIcon from '@mui/icons-material/LocalFlorist';
+import NatureIcon from '@mui/icons-material/Nature';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import { motion } from 'framer-motion';
-import { useAppDispatch, useAppSelector } from '../store';
 import { setGuest } from '../store/authSlice';
+import { useAppDispatch, useAppSelector } from '../store';
 import GoldCard from '../components/GoldCard';
 import { getMyRsvp, updateMyRsvp } from '../services/guests.service';
 import { RsvpStatus } from '../types/domain';
+
+type DishType = 'vegetarian' | 'vegan' | null;
 
 const RSVP_MAX_GUESTS = Number(import.meta.env.VITE_RSVP_MAX_GUESTS ?? 12);
 
@@ -113,6 +119,8 @@ export default function AttendanceStatusTab({ onSaved, initialRsvp }: Props) {
 
   const [status, setStatus] = useState<RsvpStatus>(initialRsvp?.status ?? 'PENDING');
   const [count, setCount] = useState(initialRsvp?.count ?? 1);
+  const [dishType, setDishType] = useState<DishType>(null);
+  const [dishNotes, setDishNotes] = useState('');
   const [fetching, setFetching] = useState(!initialRsvp);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -139,6 +147,8 @@ export default function AttendanceStatusTab({ onSaved, initialRsvp }: Props) {
       .then((data) => {
         setStatus(data.rsvp_status);
         setCount(Math.max(1, Math.min(RSVP_MAX_GUESTS, data.number_of_guests || 1)));
+        setDishType((data.requested_dish_type as DishType) ?? null);
+        setDishNotes(data.dish_notes ?? '');
       })
       .catch((e) => setError(e instanceof Error ? e.message : 'שגיאה בטעינת סטטוס נוכחות'))
       .finally(() => setFetching(false));
@@ -175,6 +185,8 @@ export default function AttendanceStatusTab({ onSaved, initialRsvp }: Props) {
       const updated = await updateMyRsvp({
         rsvp_status: status,
         number_of_guests: count,
+        requested_dish_type: status === 'COMING' ? (dishType ?? 'regular') : null,
+        dish_notes: status === 'COMING' ? (dishNotes.trim() || null) : null,
       });
 
       dispatch(setGuest({
@@ -424,6 +436,83 @@ export default function AttendanceStatusTab({ onSaved, initialRsvp }: Props) {
                 <AddCircleOutlineIcon sx={{ color: count >= RSVP_MAX_GUESTS ? '#C8B89A' : '#C9A84C' }} />
               </IconButton>
             </Box>
+          </GoldCard>
+        )}
+
+        {status === 'COMING' && (
+          <GoldCard delay={0.14} sx={{ mb: 2.2 }}>
+            <Typography sx={{ color: '#2C1810', fontWeight: 700, mb: 1.1 }}>
+              העדפת מנה
+            </Typography>
+
+            <Stack spacing={1}>
+              {([
+                { value: 'vegetarian', label: 'מנה צמחונית 🥗', icon: <LocalFloristIcon sx={{ fontSize: 19 }} /> },
+                { value: 'vegan', label: 'מנה טבעונית 🌿', icon: <NatureIcon sx={{ fontSize: 19 }} /> },
+              ] as { value: DishType; label: string; subtitle: string; icon: React.ReactNode }[]).map(({ value, label, subtitle, icon }) => (
+                <motion.button
+                  key={value as string}
+                  type="button"
+                  onClick={() => setDishType(dishType === value ? null : value)}
+                  whileTap={{ scale: 0.98 }}
+                  style={{ border: 'none', padding: 0, background: 'transparent', cursor: 'pointer', width: '100%', textAlign: 'right' }}
+                >
+                  <Box
+                    sx={{
+                      borderRadius: 2.5,
+                      border: dishType === value ? '2px solid #2E8B57' : '1px solid rgba(201,168,76,0.25)',
+                      background: dishType === value
+                        ? 'linear-gradient(145deg, #41A86A, #2E8B57)'
+                        : 'rgba(255,255,255,0.74)',
+                      boxShadow: dishType === value ? '0 8px 22px rgba(46,139,87,0.28)' : '0 2px 10px rgba(44,24,16,0.07)',
+                      p: 1.4,
+                      transition: 'all 0.2s ease',
+                    }}
+                  >
+                    <Stack direction="row" spacing={1.1} alignItems="center">
+                      <Box sx={{
+                        width: 34, height: 34, borderRadius: '50%', display: 'grid', placeItems: 'center',
+                        color: dishType === value ? '#fff' : '#9A7833',
+                        background: dishType === value ? 'rgba(255,255,255,0.25)' : 'rgba(201,168,76,0.14)',
+                      }}>
+                        {icon}
+                      </Box>
+                      <Box sx={{ flex: 1 }}>
+                        <Typography sx={{ fontWeight: 700, color: dishType === value ? '#fff' : '#2C1810', lineHeight: 1.2 }}>
+                          {label}
+                        </Typography>
+                        <Typography variant="caption" sx={{ color: dishType === value ? 'rgba(255,255,255,0.9)' : '#8A7565' }}>
+                          {subtitle}
+                        </Typography>
+                      </Box>
+                      {dishType === value && (
+                        <CheckCircleIcon sx={{ color: 'rgba(255,255,255,0.85)', fontSize: 18 }} />
+                      )}
+                    </Stack>
+                  </Box>
+                </motion.button>
+              ))}
+            </Stack>
+
+            <TextField
+              fullWidth
+              multiline
+              minRows={2}
+              maxRows={4}
+              placeholder="הערות נוספות לגבי המנה (אלרגיות, בקשות מיוחדות...)"
+              value={dishNotes}
+              onChange={(e) => setDishNotes(e.target.value)}
+              sx={{
+                mt: 1.6,
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: 2.5,
+                  fontSize: '0.9rem',
+                  '& fieldset': { borderColor: 'rgba(201,168,76,0.35)' },
+                  '&:hover fieldset': { borderColor: '#C9A84C' },
+                  '&.Mui-focused fieldset': { borderColor: '#C9A84C' },
+                },
+              }}
+            />
           </GoldCard>
         )}
 

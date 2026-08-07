@@ -13,6 +13,15 @@ function translateStatus(status: ManagedGuest['rsvp_status']) {
     }
 }
 
+function translateDishType(dishType: string | null | undefined): string {
+    switch (dishType) {
+        case 'vegetarian': return 'צמחונית';
+        case 'vegan':       return 'טבעונית';
+        case 'regular':     return 'רגילה';
+        default:            return 'לא צוין';
+    }
+}
+
 export async function exportGuestsToExcel(
     guests: ManagedGuest[],
     coupleName: string,
@@ -41,7 +50,7 @@ export async function exportGuestsToExcel(
     // Title
     // ==========================
 
-    sheet.mergeCells('A1:H1');
+    sheet.mergeCells('A1:L1');
 
     const reportTitle = sheet.getCell('A1');
 
@@ -75,6 +84,8 @@ export async function exportGuestsToExcel(
         { key: 'status', width: 18 },
         { key: 'gift_kind', width: 18 },
         { key: 'gift_amount', width: 16 },
+        { key: 'dish_type', width: 16 },
+        { key: 'dish_notes', width: 28 },
     ];
 
     const header = sheet.addRow([
@@ -87,7 +98,9 @@ export async function exportGuestsToExcel(
         'מספר אורחים',
         'סטטוס',
         'סוג מתנה',
-        'מתנה בש"ח'
+        'מתנה בש"ח',
+        'סוג מנה',
+        'הערות מנה',
     ]);
 
     header.height = 26;
@@ -138,6 +151,8 @@ export async function exportGuestsToExcel(
             status: translateStatus(guest.rsvp_status),
             gift_kind: guest.gift_kind ?? '',
             gift_amount: guest.gift_amount ?? '',
+            dish_type: guest.rsvp_status === 'COMING' ? translateDishType(guest.requested_dish_type) : '',
+            dish_notes: guest.rsvp_status === 'COMING' ? (guest.dish_notes ?? '') : '',
         });
     });
 
@@ -170,7 +185,7 @@ export async function exportGuestsToExcel(
 
     const summaryTitleRow = sheet.addRow([]);
 
-    sheet.mergeCells(`A${summaryTitleRow.number}:H${summaryTitleRow.number}`);
+    sheet.mergeCells(`A${summaryTitleRow.number}:L${summaryTitleRow.number}`);
 
     const summaryTitleCell = sheet.getCell(`A${summaryTitleRow.number}`);
 
@@ -267,7 +282,7 @@ export async function exportGuestsToExcel(
 
     sheet.autoFilter = {
         from: `A${header.number}`,
-        to: `H${header.number}`,
+        to: `L${header.number}`,
     };
 
     const buffer = await workbook.xlsx.writeBuffer();

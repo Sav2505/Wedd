@@ -173,6 +173,8 @@ export interface ManagedGuest {
   created_at: string;
   gift_amount: number | null;
   gift_kind: string | null;
+  requested_dish_type: string | null;
+  dish_notes: string | null;
   wedding_id?: number;
 }
 

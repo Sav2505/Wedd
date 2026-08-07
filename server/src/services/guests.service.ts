@@ -7,6 +7,8 @@ export interface GuestRsvpDetails {
   rsvp_status: RsvpStatus;
   number_of_guests: number;
   rsvp_updated_at: string | null;
+  requested_dish_type: string | null;
+  dish_notes: string | null;
 }
 
 function compactName(firstName: string, lastName: string): string {
@@ -118,7 +120,9 @@ export async function listGuests(
     g.rsvp_updated_at,
     g.created_at,
     g.gift_amount,
-    g.gift_kind
+    g.gift_kind,
+    g.requested_dish_type,
+    g.dish_notes
   FROM guests g
   LEFT JOIN guest_groups gg ON gg.id = g.guest_group_id
   ${where}
@@ -299,7 +303,9 @@ export async function getGuestRsvpById(guestId: string): Promise<GuestRsvpDetail
         id,
         rsvp_status,
         number_of_guests,
-        rsvp_updated_at
+        rsvp_updated_at,
+        requested_dish_type,
+        dish_notes
       FROM guests
       WHERE id = $1
         AND role = 'guest'
@@ -317,6 +323,8 @@ export async function updateGuestRsvpById(
   payload: {
     rsvp_status: RsvpStatus;
     number_of_guests: number;
+    requested_dish_type?: string | null;
+    dish_notes?: string | null;
   },
 ): Promise<GuestRsvpDetails> {
   const normalizedCount = payload.rsvp_status === 'COMING' ? payload.number_of_guests : 1;
@@ -327,12 +335,14 @@ export async function updateGuestRsvpById(
       SET
         rsvp_status = $1,
         number_of_guests = $2,
+        requested_dish_type = $4,
+        dish_notes = $5,
         rsvp_updated_at = NOW()
       WHERE id = $3
         AND role = 'guest'
-      RETURNING id, rsvp_status, number_of_guests, rsvp_updated_at
+      RETURNING id, rsvp_status, number_of_guests, rsvp_updated_at, requested_dish_type, dish_notes
     `,
-    [payload.rsvp_status, normalizedCount, guestId],
+    [payload.rsvp_status, normalizedCount, guestId, payload.requested_dish_type ?? null, payload.dish_notes ?? null],
   );
 
   if (rows.length === 0) throw createError('אורח לא נמצא', 404);

@@ -164,6 +164,8 @@ export async function updateMyRsvp(req: Request, res: Response, next: NextFuncti
     const payload = req.body as {
       rsvp_status?: RsvpStatus;
       number_of_guests?: number;
+      requested_dish_type?: string | null;
+      dish_notes?: string | null;
     };
 
     const status = payload.rsvp_status;
@@ -179,6 +181,8 @@ export async function updateMyRsvp(req: Request, res: Response, next: NextFuncti
     const updated = await guestsService.updateGuestRsvpById(guestId, {
       rsvp_status: status,
       number_of_guests: count,
+      requested_dish_type: payload.requested_dish_type ?? null,
+      dish_notes: payload.dish_notes ?? null,
     });
 
     res.json({ success: true, data: updated });

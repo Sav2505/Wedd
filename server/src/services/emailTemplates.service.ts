@@ -158,8 +158,8 @@ export function buildFirstContactBitTemplate(input: {
                           href="${escapeHtml(input.bitUrl)}"
                           target="_blank"
                           rel="noopener noreferrer"
-                          style="display:inline-block;padding:12px 28px;background:#C9A84C;border-radius:999px;text-decoration:none;color:#fff;font-size:16px;font-weight:700;letter-spacing:.5px;">
-                          לתשלום בBIT לחצו כאן
+                          style="display:inline-block;padding:12px 24px;background:#C9A84C;border-radius:999px;text-decoration:none;color:white;font-size:17px;font-weight:700;letter-spacing:.5px;">
+                          לחצו כאן לתשלום
                         </a>
 
                         <p style="margin:20px 0 0;font-size:13px;line-height:1.8;color:#777;">

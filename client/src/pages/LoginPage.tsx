@@ -216,6 +216,7 @@ export default function LoginPage() {
       >
         <Box
           sx={{
+            mt: 1.2,
             background: 'rgba(255,255,255,0.88)',
             backdropFilter: 'blur(20px)',
             WebkitBackdropFilter: 'blur(20px)',

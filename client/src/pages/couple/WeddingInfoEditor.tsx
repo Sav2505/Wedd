@@ -196,7 +196,7 @@ const WeddingInfoEditor = forwardRef<WeddingInfoEditorHandle>(function WeddingIn
     }
   }
 
-  useImperativeHandle(ref, () => ({ isDirty, save: handleSave }), [isDirty]);
+  useImperativeHandle(ref, () => ({ isDirty, save: handleSave }), [isDirty, form]);
 
   if (loading) {
     return (

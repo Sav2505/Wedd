@@ -138,7 +138,7 @@ const MessageEditor = forwardRef<MessageEditorHandle>(function MessageEditor(_, 
     }
   }
 
-  useImperativeHandle(ref, () => ({ isDirty, save: handleSave }), [isDirty]);
+  useImperativeHandle(ref, () => ({ isDirty, save: handleSave }), [isDirty, message]);
 
   if (infoLoading) {
     return (

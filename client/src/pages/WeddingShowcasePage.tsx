@@ -10,6 +10,7 @@ import FinalCTASection from '../sections/FinalCTASection';
 import StickyMobileCTA from '../components/StickyMobileCTA';
 import { useEffect } from 'react';
 import PublicFooter from '../components/PublicFooter';
+import GallerySection from '../sections/GallerySection';
 
 // ─── Wedding Showcase / Landing page ───────────────────────
 // Sits between "לחצו כאן לפרטים" on the login screen and the
@@ -46,6 +47,7 @@ export default function WeddingShowcasePage() {
             <WhyLoveIt />
             {/* <CoupleDashboardSection /> */}
             <GuestExperienceSection />
+            <GallerySection />
             <RsvpTimelineSection />
 
             <Box sx={{ px: 2, pt: { xs: 4, sm: 5 }, pb: { xs: 2, sm: 3 } }}>
@@ -59,7 +61,7 @@ export default function WeddingShowcasePage() {
                         textShadow: '0 2px 14px rgba(201,168,76,0.18)',
                     }}
                 >
-                   נו.. אהבתם ? :)
+                    נו.. אהבתם ? :)
                 </Typography>
             </Box>
 

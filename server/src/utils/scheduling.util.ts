@@ -96,3 +96,21 @@ export function getIsraelNow(): DateTime {
 export function toIsraelDate(dateValue: string | Date): DateTime {
   return normalizeToIsraelNoon(dateValue);
 }
+
+/**
+ * Returns a Hebrew label for how many days until the wedding.
+ * Used as {{2}} in the wedding_day_before WhatsApp template.
+ */
+export function computeWhenLabel(daysUntil: number): string {
+  switch (daysUntil) {
+    case 0: return 'היום';
+    case 1: return 'מחר';
+    case 2: return 'מחרתיים';
+    case 3: return 'בעוד שלושה ימים';
+    case 4: return 'בעוד ארבעה ימים';
+    case 5: return 'בעוד חמישה ימים';
+    case 6: return 'בעוד שישה ימים';
+    case 7: return 'בעוד שבעה ימים';
+    default: return `בעוד ${daysUntil} ימים`;
+  }
+}

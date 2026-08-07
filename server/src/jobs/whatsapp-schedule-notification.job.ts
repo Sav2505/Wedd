@@ -3,7 +3,7 @@
 import cron from 'node-cron';
 import { DateTime } from 'luxon';
 import { pool } from '../db/pool';
-import { ISRAEL_TIMEZONE, computeWeddingMessageScheduleDates } from '../utils/scheduling.util';
+import { ISRAEL_TIMEZONE, computeWeddingMessageScheduleDates, computeWhenLabel } from '../utils/scheduling.util';
 import { sendMail } from '../services/email.service';
 import {
   buildTomorrowWhatsappNotificationEmail,
@@ -176,21 +176,26 @@ function buildMessagePreviews(
       recipientCount = stats.pending + stats.notComing;
 
     } else if (templateName === 'wedding_day_before') {
+      // Compute days from the scheduled send date to the wedding date for the whenLabel
+      const dayBeforeSendDate = DateTime.fromISO(sendAtFormattedMap[templateName], { zone: ISRAEL_TIMEZONE });
+      const weddingDay = DateTime.fromISO(wedding.wedding_date, { zone: ISRAEL_TIMEZONE }).startOf('day');
+      const daysUntil = Math.round(weddingDay.diff(dayBeforeSendDate.startOf('day'), 'days').days);
+      const whenLabel = computeWhenLabel(Math.max(1, daysUntil));
       // wedding_day_before
       messageHeader = `💍✨ מחר אנחנו מתחתנים ✨💍`;
       messageBody =
         `שלום ${sampleGuest} ❤️\n\n` +
-        `ההתרגשות בשיאה... נשאר רק יום אחד עד שנחגוג יחד את היום המאושר בחיינו! 🥂\n\n` +
-        `📍 מיקום: ${venueName}\n` +
-        `🥂 קבלת פנים: ${receptionTime}\n` +
-        `⛪ חופה: ${canopyTime}\n\n` +
+        `מחכים ומתרגשים לראותכם ${whenLabel} בחתונה של ${coupleNames} 🥂💍\n\n` +
+        `📍 *מיקום האירוע:* ${venueName}\n` +
+        `🥂 *קבלת פנים:* ${receptionTime}\n` +
+        `⛪ *חופה:* ${canopyTime}\n\n` +
         `דרך ההזמנה הדיגיטלית שלנו מחכים לך כל הפרטים שתצטרך/י:\n` +
         `📍 ניווט ישירות ל-Waze\n` +
         `🪑 מיקום הישיבה שלך\n` +
+        `🎁 מתנה לחתן/כלה דרך קישור ל-Bit\n` +
         `📸 גלריה משותפת להעלאת תמונות מהאירוע\n` +
-        `ℹ️ מידע נוסף על הערב\n\n` +
-        `כבר לא יכולים לחכות לראות אותך ולחגוג יחד! 🥳\n\n` +
-        `נתראה מחר! ❤️\n\n` +
+        `ℹ️ מידע על האירוע\n\n` +
+        `💛 מומלץ להגיע מספר דקות לפני קבלת הפנים, ליהנות מהאווירה, ממנות הפתיחה ולהתחיל את החגיגות איתנו.\n\n` +
         `באהבה,\n${coupleNames} 💕`;
       recipientCount = stats.total;
 

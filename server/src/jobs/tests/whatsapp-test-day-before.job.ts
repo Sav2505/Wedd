@@ -147,6 +147,7 @@ export async function runOneOffTestSendToDan(): Promise<void> {
                 venueName: guest.venue_name,
                 venueAddress: guest.venue_address,
                 guestUrl,
+                whenLabel: 'מחר',
             });
 
             const sendResult = await sendTemplateMessageWithRetry({

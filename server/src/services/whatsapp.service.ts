@@ -234,6 +234,8 @@ export interface BuildTemplateComponentsInput {
     venueAddress: string;
     guestUrl: string;
     invitationImageMediaId?: string;
+    /** Hebrew label for {{2}} in wedding_day_before, e.g. 'מחר', 'מחרתיים', 'בעוד שלושה ימים' */
+    whenLabel?: string;
 }
 
 function formatWeddingDateForMessage(dateValue: string): string {
@@ -310,12 +312,13 @@ export function buildTemplateComponents(input: BuildTemplateComponentsInput): un
                 {
                     type: 'body',
                     parameters: [
-                        { type: 'text', text: input.guestFirstName },      // {{1}}
-                        { type: 'text', text: formattedDate },             // {{2}}
-                        { type: 'text', text: input.venueName },           // {{3}}
-                        { type: 'text', text: input.weddingTime },         // {{4}} קבלת פנים
-                        { type: 'text', text: input.weddingCanpoyTime },   // {{5}} חופה
-                        { type: 'text', text: input.weddingDisplayName },  // {{6}}
+                        { type: 'text', text: input.guestFirstName },                          // {{1}}
+                        { type: 'text', text: input.whenLabel ?? formattedDate },              // {{2}} מחר/מחרתיים/בעוד X ימים
+                        { type: 'text', text: input.weddingDisplayName },                      // {{3}} חתונה של ...
+                        { type: 'text', text: input.venueName },                               // {{4}} מיקום האירוע
+                        { type: 'text', text: input.weddingTime },                             // {{5}} קבלת פנים
+                        { type: 'text', text: input.weddingCanpoyTime },                       // {{6}} חופה
+                        { type: 'text', text: input.weddingDisplayName },                      // {{7}} חתימה
                     ],
                 },
                 buttonComponent,

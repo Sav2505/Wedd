@@ -26,6 +26,8 @@ CREATE TABLE IF NOT EXISTS guests (
   gift_amount INTEGER     DEFAULT NULL,
   wedding_id  INTEGER     NOT NULL REFERENCES wedding_info(id) ON DELETE CASCADE,
   gift_kind   TEXT        DEFAULT NULL,
+  requested_dish_type TEXT DEFAULT NULL,
+  dish_notes TEXT DEFAULT NULL,
   CONSTRAINT uq_guests_wedding_name_phone UNIQUE (wedding_id, full_name, phone)
 );
 

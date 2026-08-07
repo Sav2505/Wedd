@@ -13,7 +13,7 @@ import {
   MessageTemplateName,
   upsertPendingLog,
 } from '../services/weddingMessageLog.service';
-import { computeWeddingMessageScheduleDates, ISRAEL_TIMEZONE } from '../utils/scheduling.util';
+import { computeWeddingMessageScheduleDates, computeWhenLabel, ISRAEL_TIMEZONE } from '../utils/scheduling.util';
 
 interface WeddingInfoRow {
   id: number;
@@ -266,6 +266,11 @@ async function processTemplateForWedding(
         const tabIndex = TEMPLATE_TO_TAB_INDEX[templateName as SupportedWeddingTemplate];
         const guestUrl = buildGuestUrl(wedding.id, guest.full_name, guest.phone, tabIndex);
 
+        const daysUntilWedding = Math.round(
+          DateTime.fromISO(wedding.wedding_date, { zone: ISRAEL_TIMEZONE }).startOf('day')
+            .diff(todayIsrael.startOf('day'), 'days').days
+        );
+
         const components = buildTemplateComponents({
           templateName,
           guestFullName: guest.full_name,
@@ -278,6 +283,7 @@ async function processTemplateForWedding(
           venueAddress: wedding.venue_address,
           guestUrl,
           invitationImageMediaId: invitationMediaId,
+          whenLabel: templateName === 'wedding_day_before' ? computeWhenLabel(daysUntilWedding) : undefined,
         });
 
         const sendResult = await sendTemplateMessageWithRetry({

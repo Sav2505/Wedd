@@ -196,7 +196,7 @@ export async function sendFirstContact(requestId: number): Promise<{
         brideName: request.bride_name,
         groomName: request.groom_name,
         amountNis: Number(process.env.PRICE) ?? 179,
-        bitPhone: 'XXX',
+        bitUrl: process.env.ADMIN_BIT_URL ?? '',
     });
 
     let mailResult: SendEmailResult;

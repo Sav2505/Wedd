@@ -1045,7 +1045,7 @@ export default function GuestListEditor() {
                 sx={{ marginTop: '6px !important' }}
                 fullWidth
                 label='סכום מתנה בש"ח'
-                value={guestForm.gift_amount}
+                value={guestForm.gift_amount ?? undefined}
                 onChange={(e) => setGuestForm((p) => ({ ...p, gift_amount: Number(e.target.value) }))}
                 size="small"
                 type="number"

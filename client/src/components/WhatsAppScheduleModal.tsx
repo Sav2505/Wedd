@@ -182,7 +182,7 @@ export default function WhatsAppScheduleModal({ open, weddingId, weddingDate, on
     async function handleUploadImage(file: File) {
         if (!schedule) return;
         setSaving(true);
-        setLoadingMessage('מעלה את תמונת ההזמנה ל-WhatsApp...');
+        setLoadingMessage('מעלה את תמונת ההזמנה...');
 
         try {
             const updated = await uploadWeddingInvitationImage(weddingId, file);

@@ -13,7 +13,7 @@ export function buildFirstContactBitTemplate(input: {
   brideName: string;
   groomName: string;
   amountNis: number;
-  bitPhone: string;
+  bitUrl: string;
 }): FirstContactMailPayload {
   const coupleTitle = `${input.brideName} ו${input.groomName}`;
   const subject = `💍 החשבון שלכם כמעט מוכן | ${coupleTitle}`;
@@ -22,7 +22,7 @@ export function buildFirstContactBitTemplate(input: {
     `שלום ${coupleTitle},\n\n` +
     'מזל טוב! 🎉\n\n' +
     'תודה שבחרתם ב-WedFlow ללוות אתכם בדרך לאחד הימים המרגשים בחייכם.\n\n' +
-    `נותר רק שלב אחד קטן כדי להפעיל את החשבון שלכם - תשלום בסך ${input.amountNis} ₪ באמצעות BIT למספר ${input.bitPhone}.\n\n` +
+    `נותר רק שלב אחד קטן כדי להפעיל את החשבון שלכם - תשלום בסך ${input.amountNis} ₪ באמצעות BIT: ${input.bitUrl}\n\n` +
     'מיד לאחר קבלת התשלום נפתח עבורכם את החשבון ונשלח אליכם את פרטי הכניסה כדי שתוכלו להתחיל לנהל את החתונה שלכם.\n\n' +
     'מחכים להתחיל את המסע איתכם,\nצוות WedFlow';
 
@@ -154,14 +154,13 @@ export function buildFirstContactBitTemplate(input: {
                           תשלום באמצעות BIT
                         </p>
 
-                        <div
-                          style="display:inline-block;padding:12px 22px;background:#fff;border:1px solid rgba(201,168,76,.3);border-radius:999px;">
-
-                          <span style="font-size:22px;font-weight:700;color:#B8944A;direction:ltr;letter-spacing:1px;">
-                            ${escapeHtml(input.bitPhone)}
-                          </span>
-
-                        </div>
+                        <a
+                          href="${escapeHtml(input.bitUrl)}"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style="display:inline-block;padding:12px 28px;background:#C9A84C;border-radius:999px;text-decoration:none;color:#fff;font-size:16px;font-weight:700;letter-spacing:.5px;">
+                          לתשלום בBIT לחצו כאן
+                        </a>
 
                         <p style="margin:20px 0 0;font-size:13px;line-height:1.8;color:#777;">
                           לאחר ביצוע התשלום נפתח עבורכם את החשבון

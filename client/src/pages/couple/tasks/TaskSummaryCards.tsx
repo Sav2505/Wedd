@@ -136,6 +136,7 @@ export default function TaskSummaryCards({ tasks, guests, guestCount, avgGift, o
 
   const isProfitable = stats.profitLoss >= 0;
   const isActuallyProfitable = stats.actualProfitLoss >= 0;
+  const isZeroProfit = stats.actualProfitLoss === 0;
 
   const cards: CardData[] = [
     {
@@ -262,13 +263,13 @@ export default function TaskSummaryCards({ tasks, guests, guestCount, avgGift, o
         <Typography
           component="span"
           variant="h5"
-          sx={{ fontWeight: 800, color: isProfitable ? '#2e7d32' : '#c62828', lineHeight: 1.1 }}
+          sx={{ fontWeight: 800, color: isProfitable ? isZeroProfit ? 'orange' : '#2e7d32' : '#c62828', lineHeight: 1.1 }}
         >
-          {isProfitable ? '+' : ''}{fmt(stats.profitLoss)}
+          {isProfitable ? isZeroProfit ? '' : '+' : ''}{fmt(stats.profitLoss)}
         </Typography>
       ),
       icon: <CalculateIcon />,
-      accent: isProfitable ? '#4caf50' : '#ef5350',
+      accent: isProfitable ? isZeroProfit ? 'orange' : '#4caf50' : '#ef5350',
       delay: 0.48,
     },
   ];
@@ -292,13 +293,13 @@ export default function TaskSummaryCards({ tasks, guests, guestCount, avgGift, o
         <Typography
           component="span"
           variant="h5"
-          sx={{ fontWeight: 800, color: isActuallyProfitable ? '#2e7d32' : '#c62828', lineHeight: 1.1 }}
+          sx={{ fontWeight: 800, color: isActuallyProfitable ? isZeroProfit ? 'orange' : '#2e7d32' : '#c62828', lineHeight: 1.1 }}
         >
-          {isActuallyProfitable ? '+' : ''}{fmt(stats.actualProfitLoss)}
+          {isActuallyProfitable ? isZeroProfit ? '' : '+' : ''}{fmt(stats.actualProfitLoss)}
         </Typography>
       ),
       icon: <CalculateIcon />,
-      accent: isActuallyProfitable ? '#4caf50' : '#ef5350',
+      accent: isActuallyProfitable ? isZeroProfit ? 'orange' : '#4caf50' : '#ef5350',
       delay: 0.6,
     },
   ];

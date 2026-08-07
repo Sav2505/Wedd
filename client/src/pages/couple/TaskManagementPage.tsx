@@ -33,7 +33,7 @@ const AVG_GIFT_KEY = 'wedding_avg_gift';
 
 export default function TaskManagementPage() {
   const [tasks, setTasks] = useState<WeddingTask[]>([]);
-  const [guestCount, setGuestCount] = useState(300);
+  const [guestCount, setGuestCount] = useState(0);
   const [avgGift, setAvgGiftState] = useState<number>(() => {
     const stored = localStorage.getItem(AVG_GIFT_KEY);
     return stored ? Number(stored) : 450;

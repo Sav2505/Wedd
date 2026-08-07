@@ -214,6 +214,7 @@ export default function WeddingRegisterPage() {
                 >
                     <Box
                         sx={{
+                            mt: 1,
                             background: 'rgba(255,255,255,0.88)',
                             backdropFilter: 'blur(20px)',
                             WebkitBackdropFilter: 'blur(20px)',

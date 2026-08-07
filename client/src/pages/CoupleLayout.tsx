@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, type ReactElement } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   Box, Tab, Tabs, Typography, IconButton, Tooltip, Fade,
   Button, Dialog, DialogContent, DialogActions,
@@ -392,7 +393,10 @@ export default function CoupleLayout() {
   ];
   const panels = isDanHavivAdmin ? [...basePanels, <WeddingRequestsAdminPage />] : basePanels;
 
-  const [activeTab, setActiveTab] = useState(0);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialTab = Math.max(0, Number(searchParams.get('t') ?? 0) || 0);
+
+  const [activeTab, setActiveTab] = useState(initialTab);
   const [pendingTab, setPendingTab] = useState<number | null>(null);
   const [showUnsavedModal, setShowUnsavedModal] = useState(false);
 
@@ -410,6 +414,10 @@ export default function CoupleLayout() {
       return;
     }
     setActiveTab(newTab);
+    // clear the ?t param once consumed so the URL stays clean
+    if (searchParams.has('t')) {
+      setSearchParams((prev) => { prev.delete('t'); return prev; }, { replace: true });
+    }
   }
 
   async function handleSaveAndSwitch() {

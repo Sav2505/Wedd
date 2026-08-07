@@ -481,6 +481,37 @@ const WeddingInfoEditor = forwardRef<WeddingInfoEditorHandle>(function WeddingIn
                     <QrCode2OutlinedIcon sx={{ color: '#C9A84C', fontSize: 20 }} />
                   </InputAdornment>
                 ),
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      disabled={!form.bride_bit_url}
+                      onClick={() => {
+                        if (!form.bride_bit_url) return;
+
+                        const url = /^https?:\/\//i.test(form.bride_bit_url)
+                          ? form.bride_bit_url
+                          : `https://${form.bride_bit_url}`;
+
+                        window.open(url, '_blank', 'noopener,noreferrer');
+                      }}
+                      sx={{
+                        textTransform: 'none',
+                        fontSize: '0.75rem',
+                        p: 1.2,
+                        borderColor: '#C9A84C',
+                        color: '#9A7833',
+                        '&:hover': {
+                          borderColor: '#9A7833',
+                          backgroundColor: 'rgba(201,168,76,0.08)',
+                        },
+                      }}
+                    >
+                      בדיקת קישור
+                    </Button>
+                  </InputAdornment>
+                ),
                 inputProps: {
                   dir: 'ltr',
                 },
@@ -498,6 +529,37 @@ const WeddingInfoEditor = forwardRef<WeddingInfoEditorHandle>(function WeddingIn
                 startAdornment: (
                   <InputAdornment position="start">
                     <QrCode2OutlinedIcon sx={{ color: '#C9A84C', fontSize: 20 }} />
+                  </InputAdornment>
+                ),
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      disabled={!form.groom_bit_url}
+                      onClick={() => {
+                        if (!form.groom_bit_url) return;
+
+                        const url = /^https?:\/\//i.test(form.groom_bit_url)
+                          ? form.groom_bit_url
+                          : `https://${form.groom_bit_url}`;
+
+                        window.open(url, '_blank', 'noopener,noreferrer');
+                      }}
+                      sx={{
+                        textTransform: 'none',
+                        fontSize: '0.75rem',
+                        p: 1.2,
+                        borderColor: '#C9A84C',
+                        color: '#9A7833',
+                        '&:hover': {
+                          borderColor: '#9A7833',
+                          backgroundColor: 'rgba(201,168,76,0.08)',
+                        },
+                      }}
+                    >
+                      בדיקת קישור
+                    </Button>
                   </InputAdornment>
                 ),
                 inputProps: {

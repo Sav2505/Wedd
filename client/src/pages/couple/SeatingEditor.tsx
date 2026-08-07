@@ -295,8 +295,12 @@ export default function SeatingEditor() {
     // ── Add table ─────────────────────────────────────────────
 
     async function handleAddTable() {
-        const num = parseInt(newNum, 10);
-        if (!num || num < 1) return;
+        const num = Number(newNum);
+        if (!Number.isInteger(num) || num < 1) return;
+        if (tables.some(t => t.table_number === num)) {
+            setError('מספר שולחן זה כבר קיים. בחר מספר אחר.');
+            return;
+        }
         setIsSaving(true);
         try {
             // Spread new tables evenly — place at a random free-ish spot
@@ -447,6 +451,10 @@ export default function SeatingEditor() {
     const tableIdsWithDeclinedGuest = new Set(
         tables.filter(t => t.guests.some(g => g.rsvp_status === 'NOT_COMING')).map(t => t.id)
     );
+    const parsedNewTableNumber = Number(newNum);
+    const isNewTableNumberInvalid = !Number.isInteger(parsedNewTableNumber) || parsedNewTableNumber < 1;
+    const isDuplicateTableNumber =
+        !isNewTableNumberInvalid && tables.some(t => t.table_number === parsedNewTableNumber);
 
     return (
         <Box sx={{ p: { xs: 1.5, sm: 2.5 } }}>
@@ -1088,6 +1096,8 @@ export default function SeatingEditor() {
                         onChange={e => setNewNum(e.target.value)}
                         size="small"
                         inputProps={{ min: 1, max: 999 }}
+                        error={isDuplicateTableNumber}
+                        helperText={isDuplicateTableNumber ? 'מספר שולחן זה כבר קיים בסקיצה' : undefined}
                         fullWidth
                         autoFocus
                     />
@@ -1182,7 +1192,7 @@ export default function SeatingEditor() {
                     <Button
                         variant="contained"
                         onClick={handleAddTable}
-                        disabled={!newNum || parseInt(newNum, 10) < 1 || isSaving}
+                        disabled={isNewTableNumberInvalid || isDuplicateTableNumber || isSaving}
                         sx={{
                             background: 'linear-gradient(135deg, #E0C97A, #C9A84C)',
                             color: '#2C1810',

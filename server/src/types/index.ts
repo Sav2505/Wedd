@@ -18,6 +18,7 @@ export interface Guest {
   created_at: string;
   gift_amount: number | null;
   gift_kind: string | null;
+  is_toured: boolean;
   wedding_id: number;
 }
 

@@ -20,10 +20,10 @@ export function generateCoupleLoginCodeFromGuestId(guestId: string): string {
 
 type LoginResult = Pick<
   Guest,
-  'id' | 'full_name' | 'table_number' | 'side' | 'role' | 'rsvp_status' | 'number_of_guests' | 'rsvp_updated_at' | `wedding_id`
+  'id' | 'full_name' | 'table_number' | 'side' | 'role' | 'rsvp_status' | 'number_of_guests' | 'rsvp_updated_at' | 'is_toured' | `wedding_id`
 >;
 
-const SELECT_FIELDS = `id, full_name, table_number, side, role, rsvp_status, number_of_guests, rsvp_updated_at, wedding_id`;
+const SELECT_FIELDS = `id, full_name, table_number, side, role, rsvp_status, number_of_guests, rsvp_updated_at, is_toured, wedding_id`;
 
 /**
  * Throws a clear, generic-safe error if more than one row matched.

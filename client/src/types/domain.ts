@@ -11,6 +11,7 @@ export interface Guest {
   rsvp_status: RsvpStatus;
   number_of_guests: number;
   rsvp_updated_at: string | null;
+  is_toured: boolean;
   wedding_id: number;
 }
 
@@ -175,6 +176,7 @@ export interface ManagedGuest {
   gift_kind: string | null;
   requested_dish_type: string | null;
   dish_notes: string | null;
+  is_toured: boolean;
   wedding_id?: number;
 }
 

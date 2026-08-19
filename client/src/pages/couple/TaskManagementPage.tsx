@@ -210,7 +210,9 @@ export default function TaskManagementPage() {
       ) : (
         <>
           {/* ─── Summary Cards ─── */}
-          <TaskSummaryCards tasks={tasks} guests={guests} guestCount={guestCount} avgGift={avgGift} onAvgGiftChange={handleAvgGiftChange} />
+          <Box data-tour-anchor="tasks-summary">
+            <TaskSummaryCards tasks={tasks} guests={guests} guestCount={guestCount} avgGift={avgGift} onAvgGiftChange={handleAvgGiftChange} />
+          </Box>
 
           {/* ─── Tasks Table ─── */}
           <motion.div
@@ -218,7 +220,7 @@ export default function TaskManagementPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: 0.2, ease: 'easeOut' }}
           >
-            <Box sx={{ mb: 1.5 }}>
+            <Box data-tour-anchor="tasks-table" sx={{ mb: 1.5 }}>
               <Typography
                 variant="h6"
                 sx={{ fontFamily: "'Frank Ruhl Libre', serif", fontWeight: 700, mb: 1.5 }}
@@ -238,11 +240,13 @@ export default function TaskManagementPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: 0.28, ease: 'easeOut' }}
           >
-            <GuestGiftsTable
-              guests={guests}
-              onUpdateGiftAmount={handleUpdateGiftAmount}
-              onUpdateGiftKind={handleUpdateGiftKind}
-            />
+            <Box data-tour-anchor="tasks-gifts-table">
+              <GuestGiftsTable
+                guests={guests}
+                onUpdateGiftAmount={handleUpdateGiftAmount}
+                onUpdateGiftKind={handleUpdateGiftKind}
+              />
+            </Box>
           </motion.div>
 
           {/* ─── Divider ─── */}
@@ -254,13 +258,16 @@ export default function TaskManagementPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: 0.35, ease: 'easeOut' }}
           >
-            <BudgetAnalytics tasks={tasks} />
+            <Box data-tour-anchor="tasks-budget-analytics">
+              <BudgetAnalytics tasks={tasks} />
+            </Box>
           </motion.div>
         </>
       )}
 
       {/* ─── FAB ─── */}
       <Fab
+        data-tour-anchor="tasks-add-button"
         onClick={openAdd}
         sx={{
           position: 'fixed',

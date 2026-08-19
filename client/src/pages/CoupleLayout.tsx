@@ -13,9 +13,10 @@ import AssignmentOutlinedIcon from '@mui/icons-material/AssignmentOutlined';
 import ManageAccountsOutlinedIcon from '@mui/icons-material/ManageAccountsOutlined';
 import LogoutIcon from '@mui/icons-material/LogoutOutlined';
 import SaveOutlinedIcon from '@mui/icons-material/SaveOutlined';
+import PlayCircleOutlineRoundedIcon from '@mui/icons-material/PlayCircleOutlineRounded';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useAppDispatch, useAppSelector } from '../store';
-import { logout } from '../store/authSlice';
+import { logout, setGuest } from '../store/authSlice';
 import { WeddingInfo } from '../types/domain';
 import WeddingInfoEditor, { WeddingInfoEditorHandle } from './couple/WeddingInfoEditor';
 import MessageEditor, { MessageEditorHandle } from './couple/MessageEditor';
@@ -25,6 +26,8 @@ import PhotosTab from './PhotosTab';
 import TaskManagementPage from './couple/TaskManagementPage';
 import WeddingRequestsAdminPage from './couple/WeddingRequestsAdminPage';
 import { useWeddingInfo } from '../hooks/useWeddingInfo';
+import CoupleOnboardingTour from '../tour/CoupleOnboardingTour';
+import { markToured } from '../services/auth.service';
 
 function getFirstName(fullName: string): string {
   return fullName.trim().split(/\s+/)[0] || '';
@@ -33,12 +36,12 @@ function getFirstName(fullName: string): string {
 // ─── Tab config ──────────────────────────────────────────────
 
 const BASE_TABS = [
-  { label: 'פרטי האירוע', icon: <EditCalendarOutlinedIcon sx={{ fontSize: 22 }} /> },
-  { label: 'הודעה לאורחים', icon: <FavoriteBorderIcon sx={{ fontSize: 22 }} /> },
-  { label: 'מעקב משימות', icon: <AssignmentOutlinedIcon sx={{ fontSize: 22 }} /> },
-  { label: 'אורחים והזמנות', icon: <Groups2Icon sx={{ fontSize: 22 }} /> },
-  { label: 'הושבה', icon: <TableBarIcon sx={{ fontSize: 22 }} /> },
-  { label: 'גלריה', icon: <PhotoLibraryOutlinedIcon sx={{ fontSize: 22 }} /> },
+  { label: 'פרטי האירוע', anchorId: 'tab-event-info', icon: <EditCalendarOutlinedIcon sx={{ fontSize: 22 }} /> },
+  { label: 'הודעה לאורחים', anchorId: 'tab-message', icon: <FavoriteBorderIcon sx={{ fontSize: 22 }} /> },
+  { label: 'מעקב משימות', anchorId: 'tab-tasks', icon: <AssignmentOutlinedIcon sx={{ fontSize: 22 }} /> },
+  { label: 'אורחים והזמנות', anchorId: 'tab-guests', icon: <Groups2Icon sx={{ fontSize: 22 }} /> },
+  { label: 'הושבה', anchorId: 'tab-seating', icon: <TableBarIcon sx={{ fontSize: 22 }} /> },
+  { label: 'גלריה', anchorId: 'tab-gallery', icon: <PhotoLibraryOutlinedIcon sx={{ fontSize: 22 }} /> },
 ] as const;
 
 // ─── Panel animation ─────────────────────────────────────────
@@ -164,7 +167,7 @@ function OrnamentalHeader({
   activeTab: number;
   onTabChange: (v: number) => void;
   onLogout: () => void;
-  tabs: Array<{ label: string; icon: ReactElement }>;
+  tabs: Array<{ label: string; icon: ReactElement; anchorId?: string }>;
 }) {
   return (
     <Box sx={{ position: 'sticky', top: 0, zIndex: 100 }}>
@@ -246,6 +249,7 @@ function OrnamentalHeader({
         {/* Tabs */}
         <Box sx={{ position: 'relative', zIndex: 2 }}>
           <Tabs
+            data-tour-anchor="couple-tabs"
             value={activeTab}
             onChange={(_, v) => onTabChange(v)}
             variant="scrollable"
@@ -269,7 +273,14 @@ function OrnamentalHeader({
             }}
           >
             {tabs.map((tab, i) => (
-              <Tab key={i} icon={tab.icon} iconPosition="top" label={tab.label} disableRipple={false} />
+              <Tab
+                key={i}
+                data-tour-anchor={tab.anchorId}
+                icon={tab.icon}
+                iconPosition="top"
+                label={tab.label}
+                disableRipple={false}
+              />
             ))}
           </Tabs>
         </Box>
@@ -399,6 +410,9 @@ export default function CoupleLayout() {
   const [activeTab, setActiveTab] = useState(initialTab);
   const [pendingTab, setPendingTab] = useState<number | null>(null);
   const [showUnsavedModal, setShowUnsavedModal] = useState(false);
+  const [isTourOpen, setIsTourOpen] = useState(false);
+
+  const shouldRunTour = Boolean(guest?.role === 'couple' && guest.is_toured !== true && info?.id != null);
 
   function getActiveEditorRef(): EditorHandle | null {
     if (activeTab === 0) return weddingInfoRef.current;
@@ -452,6 +466,28 @@ export default function CoupleLayout() {
       setActiveTab(0);
     }
   }, [activeTab, tabs.length]);
+
+  useEffect(() => {
+    if (shouldRunTour) {
+      setIsTourOpen(true);
+    }
+  }, [shouldRunTour]);
+
+  async function handleTourCompleted() {
+    const updatedGuest = await markToured();
+    dispatch(setGuest(updatedGuest));
+    setIsTourOpen(false);
+  }
+
+  function handleTourTabChange(nextTab: number) {
+    setActiveTab(nextTab);
+    if (searchParams.has('t')) {
+      setSearchParams((prev) => {
+        prev.delete('t');
+        return prev;
+      }, { replace: true });
+    }
+  }
 
   return (
     <Box
@@ -507,6 +543,42 @@ export default function CoupleLayout() {
         onDiscard={handleDiscard}
         onStay={handleStay}
       />
+
+      {shouldRunTour && !isTourOpen && (
+        <Button
+          onClick={() => setIsTourOpen(true)}
+          startIcon={<PlayCircleOutlineRoundedIcon />}
+          sx={{
+            position: 'fixed',
+            bottom: 16,
+            right: 16,
+            zIndex: 1500,
+            borderRadius: 999,
+            px: 2,
+            py: 1,
+            fontWeight: 700,
+            textTransform: 'none',
+            color: '#fff',
+            boxShadow: '0 8px 28px rgba(154,120,51,0.35)',
+            background: 'linear-gradient(135deg, #C9A84C, #9A7833)',
+            '&:hover': { background: 'linear-gradient(135deg, #E0C97A, #C9A84C)' },
+          }}
+        >
+          המשך סיור
+        </Button>
+      )}
+
+      {shouldRunTour && guest && info?.id != null && (
+        <CoupleOnboardingTour
+          open={isTourOpen}
+          guestId={guest.id}
+          weddingId={info.id}
+          activeTab={activeTab}
+          onTabChange={handleTourTabChange}
+          onComplete={handleTourCompleted}
+          onSkip={() => setIsTourOpen(false)}
+        />
+      )}
     </Box>
   );
 }

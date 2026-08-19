@@ -481,6 +481,7 @@ export default function SeatingEditor() {
                     </Typography>
                 </Box>
                 <Button
+                    data-tour-anchor="seating-add-table-button"
                     variant="contained"
                     startIcon={<AddIcon />}
                     onClick={openAddDialog}
@@ -527,6 +528,7 @@ export default function SeatingEditor() {
 
             {/* ── Floor Plan ─────────────────────────────────── */}
             <Box
+                data-tour-anchor="seating-publish-toggle"
                 sx={{
                     mb: 2,
                     p: 2,
@@ -725,6 +727,7 @@ export default function SeatingEditor() {
             </Box>
 
             <motion.div
+                data-tour-anchor="seating-floorplan"
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.45, ease: 'easeOut' }}

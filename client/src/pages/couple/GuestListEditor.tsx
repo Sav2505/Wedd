@@ -689,6 +689,7 @@ export default function GuestListEditor() {
         </Alert>
       )}
       <Box
+        data-tour-anchor="guests-toolbar"
         sx={{
           position: 'sticky',
           zIndex: 10,
@@ -742,6 +743,7 @@ export default function GuestListEditor() {
         {/* שורה 3: קבוצה חדשה + הוסף אורח */}
         <Stack direction="row" spacing={1} mt={1.5}>
           <Button
+            data-tour-anchor="guests-add-button"
             variant="contained"
             startIcon={<PersonAddAlt1Icon />}
             onClick={() => openCreateGuest(null)}
@@ -759,6 +761,7 @@ export default function GuestListEditor() {
             הוסף אורח
           </Button>
           <Button
+            data-tour-anchor="guests-new-group-button"
             variant="outlined"
             startIcon={<GroupAddIcon />}
             onClick={openCreateGroup}
@@ -818,6 +821,7 @@ export default function GuestListEditor() {
 
         {/* שורה 5: תזמון הודעות לאורחים - שורה שלמה בפני עצמו */}
         <Button
+          data-tour-anchor="guests-whatsapp-button"
           fullWidth
           variant="contained"
           startIcon={<ScheduleSendIcon />}
@@ -910,7 +914,7 @@ export default function GuestListEditor() {
           </Box>
         </Box>
       ) : (
-        <>
+        <Box data-tour-anchor="guests-list">
           {groups.map((group) => (
             <GroupAccordionItem
               key={group.id}
@@ -945,7 +949,7 @@ export default function GuestListEditor() {
             registerGuestRef={registerGuestRef}
             highlightedGuestId={highlightedGuestId}
           />
-        </>
+        </Box>
       )}
 
       <Dialog open={groupDialogOpen} onClose={() => setGroupDialogOpen(false)} maxWidth="xs" fullWidth>

@@ -41,3 +41,14 @@ export async function login(req: Request, res: Response, next: NextFunction): Pr
     next(err);
   }
 }
+
+export async function markToured(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const guestId = (req as Request & { guestId: string }).guestId;
+    const guest = await authService.markCoupleTouredByGuestId(guestId);
+
+    res.status(200).json({ success: true, data: { guest } });
+  } catch (err) {
+    next(err);
+  }
+}

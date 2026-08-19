@@ -140,3 +140,20 @@ export async function loginGroomOrBride(
 
   throw createError('שם מלא או קוד שגויים', 401);
 }
+
+export async function markCoupleTouredByGuestId(guestId: string): Promise<LoginResult> {
+  const result = await pool.query<Guest>(
+    `UPDATE guests
+        SET is_toured = TRUE
+      WHERE id = $1
+        AND role = 'couple'
+    RETURNING ${SELECT_FIELDS}`,
+    [guestId],
+  );
+
+  if (result.rows.length === 0) {
+    throw createError('משתמש לא מורשה לפעולה זו', 403);
+  }
+
+  return result.rows[0];
+}

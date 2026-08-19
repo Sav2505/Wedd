@@ -174,6 +174,7 @@ const MessageEditor = forwardRef<MessageEditorHandle>(function MessageEditor(_, 
         </Box>
 
         <TextField
+          data-tour-anchor="message-textarea"
           label="הודעה לאורחים"
           fullWidth
           multiline
@@ -191,9 +192,12 @@ const MessageEditor = forwardRef<MessageEditorHandle>(function MessageEditor(_, 
           }}
         />
 
-        <PreviewCard message={message} />
+        <Box data-tour-anchor="message-preview">
+          <PreviewCard message={message} />
+        </Box>
 
         <Button
+          data-tour-anchor="message-save-button"
           variant="contained"
           fullWidth
           size="large"

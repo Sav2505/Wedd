@@ -224,7 +224,7 @@ const WeddingInfoEditor = forwardRef<WeddingInfoEditorHandle>(function WeddingIn
         <Box sx={{ px: 2, pt: 2, pb: 4, maxWidth: 560, mx: 'auto' }}>
           {/* ── שמות ── */}
           <SectionTitle>שמות בני הזוג</SectionTitle>
-          <Box sx={{ display: 'flex', gap: 2 }}>
+          <Box data-tour-anchor="event-couple-names" sx={{ display: 'flex', gap: 2 }}>
             <TextField
               label="שם הכלה"
               fullWidth
@@ -355,6 +355,7 @@ const WeddingInfoEditor = forwardRef<WeddingInfoEditorHandle>(function WeddingIn
             לחץ על המפה לקביעת מיקום מדויק לניווט (Waze / Google Maps)
           </Typography>
           <Box
+            data-tour-anchor="event-location-map"
             sx={{
               height: 250,
               borderRadius: 1,
@@ -426,6 +427,7 @@ const WeddingInfoEditor = forwardRef<WeddingInfoEditorHandle>(function WeddingIn
           {/* ── תשלום BIT ── */}
           <SectionTitle>תשלום (לא חובה)</SectionTitle>
           <Box
+            data-tour-anchor="event-bit-links"
             sx={{
               mb: 2,
               p: 1.5,
@@ -607,6 +609,7 @@ const WeddingInfoEditor = forwardRef<WeddingInfoEditorHandle>(function WeddingIn
           <Divider sx={{ my: 3, borderColor: 'rgba(201,168,76,0.2)' }} />
 
           <Button
+            data-tour-anchor="event-save-button"
             variant="contained"
             fullWidth
             size="large"

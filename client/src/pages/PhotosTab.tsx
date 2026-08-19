@@ -233,6 +233,7 @@ function DropZone({ onFilesSelect, uploading }: { onFilesSelect: (files: File[])
       />
       <motion.div animate={{ scale: dragOver ? 1.02 : 1 }} transition={{ duration: 0.18 }}>
         <Box
+          data-tour-anchor="gallery-dropzone"
           onClick={() => !uploading && inputRef.current?.click()}
           onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
           onDragLeave={() => setDragOver(false)}
@@ -645,6 +646,7 @@ export default function PhotosTab() {
       {/* Photo grid */}
       {!loading && photos.length > 0 && (
         <Box
+          data-tour-anchor="gallery-grid"
           component={motion.div}
           layout
           sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: 1.5 }}

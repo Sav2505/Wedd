@@ -385,7 +385,7 @@ export default function LoginPage() {
                   <motion.div variants={itemVariants}>
                     <TextField
                       fullWidth
-                      label="4 ספרות אחרונות של הטלפון"
+                      label="קוד ההתחברות שלך"
                       placeholder="לדוגמה: 4567"
                       value={lastFourDigits}
                       onChange={(e) =>
@@ -463,9 +463,9 @@ export default function LoginPage() {
                     display="block"
                     sx={{ mt: 3, color: '#A08070', lineHeight: 1.6 }}
                   >
-                    כדי להיכנס, הזינו את שמכם המלא
+                    כדי להיכנס, יש להזין את שמך המלא
                     <br />
-                    ו-4 הספרות האחרונות של מספר הטלפון שלכם
+                    ו-4 ספרות של קוד ההתחברות שקיבלת למייל
                   </Typography>
                 </motion.div>
 

@@ -401,16 +401,9 @@ export default function GuestListEditor() {
     return '';
   }, [rsvpListStatus]);
 
-  // function handleOpenRsvpList(status: RsvpStatus) {
-  //   if (rsvpListLoadingStatus) return;
-  //   setRsvpListLoadingStatus(status);
-
-  //   // Small defer lets the loading state render before heavy dialog content mounts.
-  //   window.setTimeout(() => {
-  //     setRsvpListStatus(status);
-  //     setRsvpListLoadingStatus(null);
-  //   }, 140);
-  // }
+  function handleOpenRsvpList(status: RsvpStatus) {
+    setRsvpListStatus(status);
+  }
 
   const handleEditGuestOpen = useCallback((guest: ManagedGuest) => {
     setEditingGuest(guest);
@@ -853,9 +846,43 @@ export default function GuestListEditor() {
           </Typography>
         )}
 
-        {/* שורה 5: סיכום סטטיסטי - נשארת כמו שהיא */}
-        <Stack direction="row" spacing={0} mt={1.2} gap={1} ml={1} mb={0.2} flexWrap="wrap">
-          {/* ה-Chips נשארים ללא שינוי */}
+        {/* שורה 6: סיכום סטטיסטי */}
+        <Stack direction="row" spacing={0} mt={1.5} gap={1} ml={1} mb={0.2} flexWrap="wrap">
+          {rsvpSummary.effectiveTotalPeople > allGuests.length && (
+            <Chip
+              size="small"
+              icon={<PeopleAltIcon sx={{ fontSize: 14 }} />}
+              label={`סה"כ ${rsvpSummary.effectiveTotalPeople} אנשים`}
+              sx={{ bgcolor: 'rgba(79,134,247,0.13)', color: '#3A6AD4', fontWeight: 700 }}
+            />
+          )}
+          <Chip
+            size="small"
+            label={`${rsvpSummary.coming} אישרו`}
+            sx={{ bgcolor: 'rgba(46,139,87,0.14)', color: '#2E8B57', border: '1px solid rgba(46,139,87,0.3)', fontWeight: 700 }}
+            onClick={() => handleOpenRsvpList('COMING')}
+            clickable
+          />
+          <Chip
+            size="small"
+            label={`${rsvpSummary.notComing} סירבו`}
+            sx={{ bgcolor: 'rgba(185,71,61,0.13)', color: '#B9473D', border: '1px solid rgba(185,71,61,0.3)', fontWeight: 700 }}
+            onClick={() => handleOpenRsvpList('NOT_COMING')}
+            clickable
+          />
+          <Chip
+            size="small"
+            label={`${rsvpSummary.pending} טרם אישרו`}
+            sx={{ bgcolor: 'rgba(140,140,140,0.14)', color: '#6C6C6C', border: '1px solid rgba(140,140,140,0.3)', fontWeight: 700 }}
+            onClick={() => handleOpenRsvpList('PENDING')}
+            clickable
+          />
+          <Chip size="small" label={`${processedGuests.length} רשומות`} sx={{ bgcolor: 'rgba(201,168,76,0.18)', color: '#8A6A2B' }} />
+          {processedGuests.length !== allGuests.length && (
+            <Chip size="small" label={`מתוך ${allGuests.length} אורחים`} sx={{ bgcolor: 'rgba(201,168,76,0.11)', color: '#9A7833' }} />
+          )}
+          <Chip size="small" label={`${groups.length} קבוצות`} sx={{ bgcolor: 'rgba(154,120,51,0.13)', color: '#8A6A2B' }} />
+          
         </Stack>
       </Box>
 

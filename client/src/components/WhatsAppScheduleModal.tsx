@@ -70,6 +70,7 @@ export default function WhatsAppScheduleModal({ open, weddingId, weddingDate, on
     });
     const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement | null>(null);
+    const isWeddingDateMissing = !weddingDate?.trim();
 
     const canLoad = open && weddingId > 0;
 
@@ -131,6 +132,19 @@ export default function WhatsAppScheduleModal({ open, weddingId, weddingDate, on
 
     function togglePreview(key: 'invitation' | 'reminder' | 'dayBefore') {
         setPreviewOpen((p) => ({ ...p, [key]: !p[key] }));
+    }
+
+    function parseNonNegativeInt(rawValue: string, fallback: number) {
+        if (rawValue === '') return 0;
+        const parsed = Number(rawValue);
+        if (!Number.isFinite(parsed)) return fallback;
+        return Math.max(0, Math.floor(parsed));
+    }
+
+    function blockInvalidNumberKeys(e: React.KeyboardEvent<HTMLInputElement>) {
+        if (e.key === '-' || e.key === '+' || e.key === 'e' || e.key === 'E' || e.key === '.') {
+            e.preventDefault();
+        }
     }
 
     const previewDates = useMemo(() => {
@@ -261,6 +275,11 @@ export default function WhatsAppScheduleModal({ open, weddingId, weddingDate, on
                             כל עוד ההרשאה מבוטלת, לא תישלח אף הודעה לאורחים. כדי לאפשר שליחה מחדש, אשר את ההרשאה בסעיף למטה.
                         </Alert>
                     )}
+                    {isWeddingDateMissing && (
+                        <Alert severity="warning" sx={{ borderRadius: 2, fontWeight: 600 }}>
+                            לפני שמגדירים תזמון הודעות, יש למלא תאריך חתונה בעמוד פרטי האירוע.
+                        </Alert>
+                    )}
                     <Typography sx={{ ml: 3, fontWeight: 400, color: '#302209', fontSize: "14px" }}>תקבלו למייל שלכם עדכון 24 שעות טרם שליחת ההודעות</Typography>
 
                     {loading || !schedule ? (
@@ -275,10 +294,11 @@ export default function WhatsAppScheduleModal({ open, weddingId, weddingDate, on
                                     type="number"
                                     label="כמה ימים מראש"
                                     value={invitationDays}
-                                    disabled={invitationLocked || saving}
-                                    onChange={(e) => setInvitationDays(Math.max(0, Number(e.target.value || 0)))}
+                                    disabled={invitationLocked || saving || isWeddingDateMissing}
+                                    onKeyDown={blockInvalidNumberKeys}
+                                    onChange={(e) => setInvitationDays((prev) => parseNonNegativeInt(e.target.value, prev))}
                                     size="small"
-                                    inputProps={{ min: 0 }}
+                                    inputProps={{ min: 0, step: 1, inputMode: 'numeric' }}
                                 />
                                 <Typography variant="body2" sx={{ color: '#5A4A2A' }}>
                                     תאריך שליחה מחושב: {displayInvitationDate ? formatScheduleDateTime(displayInvitationDate) : '-'}
@@ -333,10 +353,11 @@ export default function WhatsAppScheduleModal({ open, weddingId, weddingDate, on
                                     type="number"
                                     label="כמה ימים מראש"
                                     value={reminderDays}
-                                    disabled={reminderLocked || saving}
-                                    onChange={(e) => setReminderDays(Math.max(0, Number(e.target.value || 0)))}
+                                    disabled={reminderLocked || saving || isWeddingDateMissing}
+                                    onKeyDown={blockInvalidNumberKeys}
+                                    onChange={(e) => setReminderDays((prev) => parseNonNegativeInt(e.target.value, prev))}
                                     size="small"
-                                    inputProps={{ min: 0 }}
+                                    inputProps={{ min: 0, step: 1, inputMode: 'numeric' }}
                                 />
                                 <Typography variant="body2" sx={{ color: '#5A4A2A' }}>
                                     תאריך שליחה מחושב: {displayReminderDate ? formatScheduleDateTime(displayReminderDate) : '-'}
@@ -392,10 +413,11 @@ export default function WhatsAppScheduleModal({ open, weddingId, weddingDate, on
                                     type="number"
                                     label="כמה ימים מראש"
                                     value={dayBeforeDays}
-                                    disabled={dayBeforeLocked || saving}
-                                    onChange={(e) => setDayBeforeDays(Math.max(0, Number(e.target.value || 0)))}
+                                    disabled={dayBeforeLocked || saving || isWeddingDateMissing}
+                                    onKeyDown={blockInvalidNumberKeys}
+                                    onChange={(e) => setDayBeforeDays((prev) => parseNonNegativeInt(e.target.value, prev))}
                                     size="small"
-                                    inputProps={{ min: 0 }}
+                                    inputProps={{ min: 0, step: 1, inputMode: 'numeric' }}
                                 />
                                 <Typography variant="body2" sx={{ color: '#5A4A2A' }}>
                                     תאריך שליחה מחושב: {displayDayBeforeDate ? formatScheduleDateTime(displayDayBeforeDate) : '-'}
@@ -586,7 +608,7 @@ export default function WhatsAppScheduleModal({ open, weddingId, weddingDate, on
                 <Button
                     variant="contained"
                     startIcon={saving ? <CircularProgress size={14} color="inherit" /> : <SaveIcon />}
-                    disabled={loading || saving || !schedule}
+                    disabled={loading || saving || !schedule || isWeddingDateMissing}
                     onClick={handleSave}
                     sx={{
                         background: 'linear-gradient(135deg, #E0C97A, #C9A84C)',

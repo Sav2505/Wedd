@@ -8,8 +8,7 @@ export type SupportedWeddingTemplate =
     | 'wedding_confirmation'
     | 'wedding_reminder'
     | 'wedding_day_before'
-    | 'wedding_post_thanks'
-    | 'wedding_thank_you';
+    | 'wedding_post_thanks';
 
 /**
  * Tab index mapping for guest UI:
@@ -24,7 +23,6 @@ export const TEMPLATE_TO_TAB_INDEX: Record<SupportedWeddingTemplate, number> = {
     'wedding_reminder': 4,           // סטטוס הגעה
     'wedding_day_before': 0,         // פרטי האירוע
     'wedding_post_thanks': 2,        // גלריה
-    'wedding_thank_you': 0,          // פרטי האירוע (default)
 };
 
 export interface SendTemplatePayload {

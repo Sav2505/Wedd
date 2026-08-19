@@ -149,8 +149,9 @@ async function getEligibleGuests(
 
   // בסביבת בדיקות (לא IS_PROD) - שולחים אך ורק לאיש הבדיקה, בתוך אותה חתונה
   const testFilter = !isProd
-    ? `AND g.phone LIKE '%${TEST_PHONE_SUFFIX}' AND TRIM(g.first_name) = '${TEST_FIRST_NAME} LIMIT 1'`
+    ? `AND g.phone LIKE '%${TEST_PHONE_SUFFIX}' AND TRIM(COALESCE(g.first_name, '')) = '${TEST_FIRST_NAME}'`
     : '';
+  const testLimit = !isProd ? 'LIMIT 1' : '';
 
   const query = `SELECT
       g.id,
@@ -172,7 +173,8 @@ async function getEligibleGuests(
          l.id IS NULL
          OR l.status NOT IN ('sent', 'delivered', 'read')
        )
-     ORDER BY g.created_at ASC`;
+     ORDER BY g.created_at ASC
+     ${testLimit}`;
 
   const { rows } = await pool.query<GuestRow>(query, [weddingId, templateName]);
 
@@ -244,6 +246,19 @@ async function processTemplateForWedding(
     return;
   }
 
+  if (templateName === 'wedding_day_before') {
+    const weddingDay = DateTime.fromISO(wedding.wedding_date, { zone: ISRAEL_TIMEZONE }).startOf('day');
+    const today = todayIsrael.startOf('day');
+
+    // Never send "day before" once the wedding date has already passed.
+    if (today > weddingDay) {
+      if (isProd) {
+        await maybeLockTemplate(wedding.id, templateName);
+      }
+      return;
+    }
+  }
+
   const guests = await getEligibleGuests(wedding.id, templateName, isProd);
   const invitationMediaId =
     templateName === 'wedding_confirmation'
@@ -283,7 +298,7 @@ async function processTemplateForWedding(
           venueAddress: wedding.venue_address,
           guestUrl,
           invitationImageMediaId: invitationMediaId,
-          whenLabel: templateName === 'wedding_day_before' ? computeWhenLabel(daysUntilWedding) : undefined,
+          whenLabel: templateName === 'wedding_day_before' ? computeWhenLabel(Math.max(0, daysUntilWedding)) : undefined,
         });
 
         const sendResult = await sendTemplateMessageWithRetry({

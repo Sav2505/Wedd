@@ -22,10 +22,10 @@ export default function DramaticWelcomeScreen({ firstName, ready = true, onCompl
     // Ensure the enter animation (~1.35s) has had time to complete before exiting.
     // If data loads slower than 1.4s, we exit immediately (no extra wait).
     const elapsed = Date.now() - mountTimeRef.current;
-    const delay = Math.max(0, 1400 - elapsed);
+    const delay = Math.max(0, 2800 - elapsed);
 
     const exitTimer = window.setTimeout(() => setPhase('exit'), delay);
-    const doneTimer = window.setTimeout(() => onComplete(), delay + 600);
+    const doneTimer = window.setTimeout(() => onComplete(), delay + 1200);
 
     return () => {
       window.clearTimeout(exitTimer);

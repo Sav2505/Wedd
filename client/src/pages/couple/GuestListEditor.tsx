@@ -846,7 +846,7 @@ export default function GuestListEditor() {
         </Button>
         {!isWhatsappDeclarationConfirmed && (
           <Typography variant="caption" sx={{ display: 'block', mt: 0.75, color: '#8A7565' }}>
-            לפני שימוש ב-WhatsApp יש לאשר שיש לכם הרשאה לשליחת הודעות לאורחים.
+            לפני השימוש במנגנון הודעות אישורי ההגעה, יש לתת את הסכמתכם על השימוש.
           </Typography>
         )}
 
@@ -886,7 +886,7 @@ export default function GuestListEditor() {
             <Chip size="small" label={`מתוך ${allGuests.length} אורחים`} sx={{ bgcolor: 'rgba(201,168,76,0.11)', color: '#9A7833' }} />
           )}
           <Chip size="small" label={`${groups.length} קבוצות`} sx={{ bgcolor: 'rgba(154,120,51,0.13)', color: '#8A6A2B' }} />
-          
+
         </Stack>
       </Box>
 
@@ -1255,7 +1255,7 @@ export default function GuestListEditor() {
               />
             }
             label="אני מאשר/ת לאפשר למערכת לשלוח הודעות WhatsApp למוזמנים שלי."
-            sx={{ alignItems: 'flex-start', mt: 0.25, color: "rgba(0, 0, 0, 0.88)" }}
+            sx={{ alignItems: 'center', mt: 0.25, color: "rgba(0, 0, 0, 0.88)" }}
           />
         </DialogContent>
         <DialogActions>

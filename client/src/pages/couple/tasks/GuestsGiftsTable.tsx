@@ -289,7 +289,7 @@ export default function GuestGiftsTable({ guests, onUpdateGiftAmount, onUpdateGi
             ) : (
                 <TableContainer
                     sx={{
-                        borderRadius: 3,
+                        borderRadius: 1,
                         border: '1px solid rgba(201,168,76,0.18)',
                         boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
                         maxHeight: 480,

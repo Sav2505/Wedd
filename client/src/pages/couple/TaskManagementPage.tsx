@@ -200,7 +200,7 @@ export default function TaskManagementPage() {
           {/* Summary card skeletons */}
           <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr 1fr', sm: 'repeat(3, 1fr)', lg: 'repeat(4, 1fr)' }, gap: 2, mb: 3 }}>
             {skeletonRows.concat(skeletonRows).map((_, i) => (
-              <Skeleton key={i} variant="rectangular" height={100} sx={{ borderRadius: 3 }} />
+              <Skeleton key={i} variant="rectangular" height={100} sx={{ borderRadius: 1 }} />
             ))}
           </Box>
           <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>

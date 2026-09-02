@@ -135,6 +135,7 @@ function buildMessagePreviews(
   wedding: WeddingScheduleRow,
   templateNames: ReadonlyArray<'wedding_confirmation' | 'wedding_reminder' | 'wedding_day_before' | 'wedding_post_thanks'>,
   sendAtFormattedMap: Record<string, string>,
+  dayBeforeWhenLabel: string,
   stats: GuestStats,
 ): TomorrowWhatsappScheduledMessage[] {
   const receptionTime = formatTime(wedding.wedding_time);
@@ -176,16 +177,10 @@ function buildMessagePreviews(
       recipientCount = stats.pending + stats.notComing;
 
     } else if (templateName === 'wedding_day_before') {
-      // Compute days from the scheduled send date to the wedding date for the whenLabel
-      const dayBeforeSendDate = DateTime.fromISO(sendAtFormattedMap[templateName], { zone: ISRAEL_TIMEZONE });
-      const weddingDay = DateTime.fromISO(wedding.wedding_date, { zone: ISRAEL_TIMEZONE }).startOf('day');
-      const daysUntil = Math.round(weddingDay.diff(dayBeforeSendDate.startOf('day'), 'days').days);
-      const whenLabel = computeWhenLabel(Math.max(1, daysUntil));
-      // wedding_day_before
-      messageHeader = `💍✨ מחר אנחנו מתחתנים ✨💍`;
+      messageHeader = `💍✨ ${dayBeforeWhenLabel} אנחנו מתחתנים ✨💍`;
       messageBody =
         `שלום ${sampleGuest} ❤️\n\n` +
-        `מחכים ומתרגשים לראותכם ${whenLabel} בחתונה של ${coupleNames} 🥂💍\n\n` +
+        `מחכים ומתרגשים לראותכם ${dayBeforeWhenLabel} בחתונה של ${coupleNames} 🥂💍\n\n` +
         `📍 *מיקום האירוע:* ${venueName}\n` +
         `🥂 *קבלת פנים:* ${receptionTime}\n` +
         `⛪ *חופה:* ${canopyTime}\n\n` +
@@ -281,6 +276,11 @@ export async function runWhatsappScheduleNotificationOnce(): Promise<void> {
         wedding_post_thanks: DateTime.fromISO(computed.postThanksSendAt, { zone: ISRAEL_TIMEZONE }).toFormat('dd/LL/yyyy HH:mm'),
       };
 
+      const dayBeforeSendDate = DateTime.fromISO(computed.dayBeforeSendAt, { zone: ISRAEL_TIMEZONE });
+      const weddingDay = DateTime.fromISO(wedding.wedding_date, { zone: ISRAEL_TIMEZONE }).startOf('day');
+      const daysUntilWedding = Math.round(weddingDay.diff(dayBeforeSendDate.startOf('day'), 'days').days);
+      const dayBeforeWhenLabel = computeWhenLabel(Math.max(1, daysUntilWedding));
+
       const lockedMap: Record<string, boolean> = {
         wedding_confirmation: Boolean(wedding.invitation_locked_at),
         wedding_reminder: Boolean(wedding.reminder_locked_at),
@@ -325,6 +325,7 @@ export async function runWhatsappScheduleNotificationOnce(): Promise<void> {
         wedding,
         templatesTomorrow,
         formattedMap,
+        dayBeforeWhenLabel,
         stats,
       );
 

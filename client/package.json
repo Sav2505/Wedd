@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "vitest run"
   },
   "dependencies": {
     "@emotion/cache": "^11.14.0",
@@ -21,6 +22,7 @@
     "browser-image-compression": "^2.0.2",
     "dayjs": "^1.11.21",
     "exceljs": "^3.4.0",
+    "facenet-js": "^0.1.2",
     "file-saver": "^2.0.5",
     "framer-motion": "^12.35.2",
     "leaflet": "^1.9.4",
@@ -49,6 +51,7 @@
     "globals": "^16.5.0",
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.48.0",
+    "vitest": "^4.0.1",
     "vite": "^7.3.3"
   }
 }

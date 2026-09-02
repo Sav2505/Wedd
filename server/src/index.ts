@@ -6,6 +6,7 @@ import dotenv from 'dotenv';
 import authRoutes from './routes/auth.routes';
 import infoRoutes from './routes/info.routes';
 import photosRoutes from './routes/photos.routes';
+import faceRecognitionRoutes from './routes/faceRecognition.routes';
 import tablesRoutes from './routes/tables.routes';
 import guestsRoutes from './routes/guests.routes';
 import tasksRoutes from './routes/tasks.routes';
@@ -85,6 +86,7 @@ app.use(
 app.use('/auth', authRoutes);
 app.use('/info', infoRoutes);
 app.use('/photos', photosRoutes);
+app.use('/photos/faces', faceRecognitionRoutes);
 app.use('/tables', tablesRoutes);
 app.use('/guests', guestsRoutes);
 app.use('/tasks', tasksRoutes);

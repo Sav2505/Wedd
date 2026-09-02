@@ -64,6 +64,51 @@ export interface Photo {
   mime_type?: string;
 }
 
+export interface FaceBoundingBox {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+export interface PhotoFaceRecord {
+  id: string;
+  wedding_id: number;
+  photo_id: string;
+  cluster_id: string | null;
+  bounding_box: FaceBoundingBox;
+  embedding: number[];
+  confidence: number | null;
+  source_width: number;
+  source_height: number;
+  scan_version: string;
+  model_version: string;
+  created_at?: string;
+}
+
+export interface FaceClusterRecord {
+  id: string;
+  wedding_id: number;
+  representative_photo_id: string;
+  representative_face_id: string | null;
+  face_count: number;
+  photo_count: number;
+  centroid_embedding: number[];
+  confidence: number;
+  scan_version: string;
+  model_version: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface PersistFaceScanPayload {
+  weddingId: number;
+  scanVersion: string;
+  modelVersion: string;
+  faces: PhotoFaceRecord[];
+  clusters: FaceClusterRecord[];
+}
+
 export interface WeddingInfo {
   id: number;
   bride_name: string;

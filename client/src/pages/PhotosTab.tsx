@@ -415,7 +415,12 @@ function PhotoCard({
 
 // ─── Lightbox ────────────────────────────────────────────────
 
-function Lightbox({ photo, photos, onClose, onNav }: {
+function Lightbox({
+  photo,
+  photos,
+  onClose,
+  onNav,
+}: {
   photo: Photo;
   photos: Photo[];
   onClose: () => void;
@@ -599,6 +604,7 @@ export default function PhotosTab() {
           <Typography variant="body2" sx={{ color: '#A08070' }}>
             {photos.length} תמונות שותפו עד כה, שתפו גם אתם עם עוד תמונות מהאירוע !
           </Typography>
+
         </Box>
       </motion.div>
 

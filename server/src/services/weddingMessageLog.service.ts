@@ -22,11 +22,51 @@ interface UpsertPendingResult {
   attempt_count: number;
 }
 
+let ensureSchemaPromise: Promise<void> | null = null;
+
+async function ensureWeddingMessageLogSchema(): Promise<void> {
+  if (!ensureSchemaPromise) {
+    ensureSchemaPromise = (async () => {
+      const { rows } = await pool.query<{ needsUpdate: boolean }>(`
+        SELECT NOT EXISTS (
+          SELECT 1
+          FROM pg_constraint
+          WHERE conname = 'chk_wml_template_name'
+            AND pg_get_constraintdef(oid) LIKE '%wedding_post_thanks%'
+        ) AS "needsUpdate"
+      `);
+
+      if (!rows[0]?.needsUpdate) {
+        return;
+      }
+
+      await pool.query(`
+        ALTER TABLE wedding_message_log
+        DROP CONSTRAINT IF EXISTS chk_wml_template_name
+      `);
+
+      await pool.query(`
+        ALTER TABLE wedding_message_log
+        ADD CONSTRAINT chk_wml_template_name
+          CHECK (template_name IN ('wedding_confirmation', 'wedding_reminder', 'wedding_day_before', 'wedding_post_thanks'))
+          NOT VALID
+      `);
+    })().catch((err) => {
+      ensureSchemaPromise = null;
+      throw err;
+    });
+  }
+
+  await ensureSchemaPromise;
+}
+
 export async function upsertPendingLog(
   weddingId: number,
   guestId: string,
   templateName: MessageTemplateName,
 ): Promise<UpsertPendingResult> {
+  await ensureWeddingMessageLogSchema();
+
   const { rows } = await pool.query<UpsertPendingResult>(
     `INSERT INTO wedding_message_log
       (wedding_id, guest_id, template_name, status, attempt_count, last_attempt_at, created_at, updated_at)

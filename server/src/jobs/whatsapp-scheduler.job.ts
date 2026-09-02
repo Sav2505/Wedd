@@ -58,6 +58,7 @@ const INTERVAL_MS = Math.ceil(60_000 / RATE_PER_MINUTE);
 const ADVISORY_LOCK_KEY = 748921;
 
 const IS_PROD = String(process.env.IS_PROD ?? 'false').toLowerCase() === 'true';
+const TEST_ONLY_MODE = String(process.env.WHATSAPP_TEST_ONLY ?? 'false').toLowerCase() === 'true';
 
 const TEST_PHONE_SUFFIX = '9899';
 const TEST_FIRST_NAME = 'דן';
@@ -147,11 +148,11 @@ async function getEligibleGuests(
         ? "AND g.rsvp_status = 'COMING'"
       : '';
 
-  // בסביבת בדיקות (לא IS_PROD) - שולחים אך ורק לאיש הבדיקה, בתוך אותה חתונה
-  const testFilter = !isProd
+  // במצב test-only מפנים רק לנמען בדיקה אחד; אחרת שולחים לכל האורחים הזכאים.
+  const testFilter = TEST_ONLY_MODE
     ? `AND g.phone LIKE '%${TEST_PHONE_SUFFIX}' AND TRIM(COALESCE(g.first_name, '')) = '${TEST_FIRST_NAME}'`
     : '';
-  const testLimit = !isProd ? 'LIMIT 1' : '';
+  const testLimit = TEST_ONLY_MODE ? 'LIMIT 1' : '';
 
   const query = `SELECT
       g.id,
@@ -344,8 +345,8 @@ export async function runWhatsappSchedulerOnce(): Promise<void> {
     return;
   }
   try {
-    if (!IS_PROD) {
-      console.log(`[WhatsApp Scheduler] ⚠️ TEST MODE - sending only to ${TEST_FIRST_NAME} / *${TEST_PHONE_SUFFIX}`);
+    if (TEST_ONLY_MODE) {
+      console.log(`[WhatsApp Scheduler] ⚠️ TEST-ONLY MODE - sending only to ${TEST_FIRST_NAME} / *${TEST_PHONE_SUFFIX}`);
     }
 
     const weddings = await getWeddingScheduleRows();

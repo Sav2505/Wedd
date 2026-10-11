@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Alert, Box, Button, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, IconButton, Snackbar, TextField, Tooltip, Typography } from '@mui/material';
+import { Alert, Box, Button, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, IconButton, Skeleton, Snackbar, TextField, Tooltip, Typography } from '@mui/material';
 import FavoriteBorderOutlinedIcon from '@mui/icons-material/FavoriteBorderOutlined';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import SendOutlinedIcon from '@mui/icons-material/SendOutlined';
@@ -8,6 +8,7 @@ import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import { useAppSelector } from '../store';
 import { getMyBlessing, saveMyBlessing } from '../services/guests.service';
 import BlessingLetter from './BlessingLetter';
+import GoldCard from './GoldCard';
 
 export default function GuestBlessing({ recipient, demo = false }: { recipient: string; demo?: boolean }) {
     const guest = useAppSelector((state) => state.auth.guest);
@@ -58,25 +59,45 @@ export default function GuestBlessing({ recipient, demo = false }: { recipient: 
     if (!demo && guest?.role !== 'guest') return null;
 
     return (
-        <Box component="section" sx={{ py: 3, px: 1, mb: 2, textAlign: 'center', borderBlock: '1px solid rgba(201,168,76,0.22)' }}>
-            <FavoriteBorderOutlinedIcon sx={{ color: '#9A7833', fontSize: 28, mb: 1 }} />
-            <Typography component="h2" sx={{ fontFamily: "'Frank Ruhl Libre', serif", fontSize: '1.5rem', color: '#2C1810', mb: 0.75 }}>
-                כמה מילים מהלב
-            </Typography>
-            <Typography sx={{ color: '#806D61', fontSize: '0.9rem', mb: 2 }}>
-                ברכה אישית לחתן ולכלה, מזכרת לדרך המשותפת
-            </Typography>
-            {loadError ? <Alert severity="error" sx={{ textAlign: 'start' }} action={
-                <Button color="inherit" onClick={() => { setLoading(true); setLoadError(''); setReload((value) => value + 1); }}>נסו שוב</Button>
-            }>{loadError}</Alert> : <Button
-                variant="outlined" disabled={loading} startIcon={loading ? <CircularProgress size={16} color="inherit" /> : <EditOutlinedIcon />}
-                onClick={() => { setSaveError(''); setOpen(true); }}
-                sx={{ borderRadius: 1, borderColor: '#C9A84C', color: '#9A7833', px: 3, py: 1, fontWeight: 600 }}
-            >{saved ? 'עריכת הברכה שלי' : 'השארת ברכה לחתן ולכלה'}</Button>}
-            {saved && <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.75, mt: 1.5, color: '#527460' }}>
-                <CheckCircleOutlineIcon fontSize="small" />
-                <Typography variant="caption">{demo ? 'הברכה נשמרה להדגמה בלבד' : 'הברכה שלכם נשלחה באהבה'}</Typography>
-            </Box>}
+        <Box component="section" dir="rtl" aria-labelledby="guest-blessing-heading" sx={{ mb: 2 }}>
+            <GoldCard delay={0.28}>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1, mb: 0.75 }}>
+                    <FavoriteBorderOutlinedIcon sx={{ color: '#9A7833', fontSize: 22 }} />
+                    <Typography id="guest-blessing-heading" component="h2" sx={{ fontFamily: "'Frank Ruhl Libre', serif", fontSize: '1.3rem', color: '#2C1810' }}>
+                        ברכה לחתן והכלה
+                    </Typography>
+                </Box>
+                <Typography sx={{ color: '#806D61', fontSize: '0.85rem', textAlign: 'center', mb: 2 }}>
+                    ברכה אישית לחתן ולכלה, אותה יקראו בהתרגשות אחרי שיתאוששו מהחגיגה
+                </Typography>
+                {loading ? <Box aria-label="טעינת הברכה" sx={{ py: 1 }}>
+                    <Skeleton width="45%" />
+                    <Skeleton width="100%" />
+                    <Skeleton width="85%" />
+                </Box> : saved && <Box component="article" aria-label="הברכה שלי" sx={{ py: 1, textAlign: 'start', overflowWrap: 'anywhere' }}>
+                    <Typography sx={{ fontFamily: "'Frank Ruhl Libre', serif", color: '#9A7833', fontSize: '1.05rem', mb: 1.25 }}>
+                        ל{recipient},
+                    </Typography>
+                    <Typography sx={{ fontFamily: "'Frank Ruhl Libre', serif", color: '#3C3430', fontSize: '1.1rem', lineHeight: 1.9, whiteSpace: 'pre-wrap' }}>
+                        {saved}
+                    </Typography>
+                    <Typography sx={{ color: '#806D61', fontSize: '0.8rem', mt: 2 }}>באהבה,</Typography>
+                    <Typography sx={{ fontFamily: "'Frank Ruhl Libre', serif", color: '#73552B', fontSize: '1.05rem', fontWeight: 600 }}>{sender}</Typography>
+                </Box>}
+                <Box sx={{ mt: saved || loading ? 2 : 0, pt: saved || loading ? 2 : 0, borderTop: saved || loading ? '1px solid rgba(201,168,76,0.18)' : 'none', textAlign: 'center' }}>
+                    {saved && <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.75, mb: 1.5, color: '#527460' }}>
+                        <CheckCircleOutlineIcon sx={{ fontSize: 16 }} />
+                        <Typography variant="caption">{demo ? 'הברכה נשמרה להדגמה בלבד' : 'הברכה שלכם נשלחה באהבה'}</Typography>
+                    </Box>}
+                    {loadError ? <Alert severity="error" sx={{ textAlign: 'start' }} action={
+                        <Button color="inherit" onClick={() => { setLoading(true); setLoadError(''); setReload((value) => value + 1); }}>נסו שוב</Button>
+                    }>{loadError}</Alert> : <Button
+                        variant="outlined" disabled={loading} startIcon={loading ? <CircularProgress size={16} color="inherit" /> : <EditOutlinedIcon />}
+                        onClick={() => { setSaveError(''); setOpen(true); }}
+                        sx={{ borderRadius: 1, borderColor: 'rgba(201,168,76,0.5)', color: '#9A7833', px: 2.5, py: 1, fontWeight: 600, maxWidth: '100%' }}
+                    >{saved ? 'עריכת הברכה שלי' : 'השארת ברכה לחתן ולכלה'}</Button>}
+                </Box>
+            </GoldCard>
 
             <Dialog open={open} onClose={() => { if (!saving) setOpen(false); }} fullWidth maxWidth="sm" dir="rtl"
                 aria-labelledby="blessing-dialog-title" PaperProps={{ dir: 'rtl', sx: { borderRadius: 2, direction: 'rtl', textAlign: 'start', bgcolor: '#FCFAF7', m: { xs: 1.5, sm: 4 }, width: '100%' } }}>

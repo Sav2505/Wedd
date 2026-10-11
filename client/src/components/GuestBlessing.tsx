@@ -107,16 +107,16 @@ export default function GuestBlessing({ recipient, demo = false }: { recipient: 
                 </DialogTitle>
                 <DialogContent dir="rtl" sx={{ px: { xs: 2, sm: 3 } }}>
                     {demo && <Alert severity="info" sx={{ mb: 2 }}>זוהי הדגמה בלבד. הברכה לא תישלח לזוג.</Alert>}
-                    <TextField autoFocus fullWidth multiline minRows={4} maxRows={8} label="ההקדשה שלכם" value={draft} disabled={saving}
+                    <Typography sx={{ color: '#9A7833', fontSize: '0.8rem' }}>ההקדשה שלכם</Typography>
+                    <TextField autoFocus fullWidth multiline minRows={4} maxRows={8} value={draft} disabled={saving}
                         onChange={(event) => { setDraft(event.target.value); setSaveError(''); }}
-                        placeholder="ההקדשה שלכם..."
+                        placeholder="כאן תכתבו את ההקדשה..."
                         slotProps={{ htmlInput: { maxLength: 2000, dir: 'rtl', style: { textAlign: 'start' } } }} sx={{ mt: 1 }} />
-                    <Typography sx={{ textAlign: 'end', color: '#806D61', mt: 0.75, fontSize: '0.75rem' }}>{draft.length.toLocaleString('he-IL')} / 2,000</Typography>
                     <Typography sx={{ color: '#9A7833', fontSize: '0.8rem', mb: 1, mt: 2 }}>תצוגה מקדימה</Typography>
                     <BlessingLetter content={draft} sender={sender} recipient={recipient} />
                     {saveError && <Alert severity="error" role="alert" sx={{ mt: 2 }}>{saveError}</Alert>}
                 </DialogContent>
-                <DialogActions sx={{ px: { xs: 2, sm: 3 }, pb: 2.5, pt: 1.5, gap: 1, flexWrap: 'wrap' }}>
+                <DialogActions dir="rtl" sx={{ px: { xs: 2, sm: 3 }, pb: 2.5, pt: 1.5, gap: 1, flexWrap: 'wrap' }}>
                     <Button disabled={saving} onClick={() => setOpen(false)} sx={{ color: '#806D61' }}>סגירה</Button>
                     <Button variant="contained" onClick={handleSend} disabled={saving || !draft.trim() || draft.length > 2000 || draft.trim() === saved}
                         dir="rtl" endIcon={saving ? <CircularProgress size={18} color="inherit" /> : <SendOutlinedIcon sx={{ rotate: '180deg' }} />}

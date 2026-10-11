@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import * as infoService from '../services/info.service';
+import { createWeddingCalendar } from '../services/calendar.service';
 import { createError } from '../middleware/errorHandler';
 
 export async function getInfo(
@@ -21,6 +22,29 @@ export async function getInfo(
       data: info,
     });
 
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function getWeddingCalendar(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
+  try {
+    const guestId = (req as Request & { guestId: string }).guestId;
+    const info = await infoService.getWeddingInfoByGuestId(guestId);
+    const calendar = createWeddingCalendar(info);
+
+    res
+      .status(200)
+      .set({
+        'Content-Type': 'text/calendar; charset=utf-8',
+        'Content-Disposition': 'inline; filename="wedding.ics"',
+        'Cache-Control': 'private, no-store',
+      })
+      .send(calendar);
   } catch (err) {
     next(err);
   }

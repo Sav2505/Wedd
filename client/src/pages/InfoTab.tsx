@@ -1,5 +1,5 @@
 import {
-  Box, Typography, Skeleton, Divider, Dialog, DialogTitle, DialogContent, DialogActions, Button,
+  Alert, Box, IconButton, Snackbar, Tooltip, Typography, Skeleton, Divider, Dialog, DialogTitle, DialogContent, DialogActions, Button,
 } from '@mui/material';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
@@ -15,6 +15,7 @@ import GoldCard from '../components/GoldCard';
 import CountdownTimer from '../components/CountdownTimer';
 import WeddingRegisterCTA from '../components/WeddingRegisterCTA';
 import { useWeddingInfo } from '../hooks/useWeddingInfo';
+import { downloadWeddingCalendar } from '../services/info.service';
 import { palette } from '../shared/animations';
 import { useState } from 'react';
 
@@ -337,6 +338,15 @@ export default function InfoTab({ demoInfo, hideRegisterCta = false }: Props) {
   const brideBitUrl = toSafeExternalUrl(resolvedInfo?.bride_bit_url);
   const groomBitUrl = toSafeExternalUrl(resolvedInfo?.groom_bit_url);
   const [isBitDemoModalOpen, setIsBitDemoModalOpen] = useState(false);
+  const [calendarErrorOpen, setCalendarErrorOpen] = useState(false);
+
+  const handleAddToCalendar = async () => {
+    try {
+      await downloadWeddingCalendar();
+    } catch {
+      setCalendarErrorOpen(true);
+    }
+  };
 
   if (!demoInfo && loading) {
     return <InfoSkeleton />;
@@ -367,12 +377,26 @@ export default function InfoTab({ demoInfo, hideRegisterCta = false }: Props) {
         <Box sx={{ flex: 1, height: '1px', background: 'rgba(201,168,76,0.22)' }} />
       </Box>
       <GoldCard delay={0.05} sx={{ mb: 2 }}>
-        <Typography
-          variant="caption"
-          sx={{ fontSize: compactDemo ? '12px' : '14px', color: '#A08070', display: 'block', mb: 0.5, fontWeight: 500 }}
-        >
-          פרטי האירוע
-        </Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 0.5 }}>
+          <Typography
+            variant="caption"
+            sx={{ fontSize: compactDemo ? '12px' : '14px', color: '#A08070', display: 'block', fontWeight: 500 }}
+          >
+            פרטי האירוע
+          </Typography>
+          {!compactDemo && (
+            <Tooltip title="הוספה ליומן">
+              <IconButton
+                aria-label="הוספה ליומן"
+                onClick={handleAddToCalendar}
+                size="small"
+                sx={{ color: '#9A7833' }}
+              >
+                <CalendarMonthIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          )}
+        </Box>
         <InfoRow icon={<CalendarMonthIcon sx={{ fontSize: compactDemo ? 18 : 20 }} />} label="תאריך" value={formatHebrewDate(resolvedInfo.wedding_date)} delay={0.05} compact={compactDemo} />
         <Divider sx={{ borderColor: 'rgba(201,168,76,0.15)' }} />
         <InfoRow icon={<AccessTimeIcon sx={{ fontSize: compactDemo ? 18 : 20 }} />} label="קבלת פנים" value={`${resolvedInfo.wedding_time.slice(0, 5)}`} delay={0.12} compact={compactDemo} />
@@ -443,6 +467,16 @@ export default function InfoTab({ demoInfo, hideRegisterCta = false }: Props) {
           </Button>
         </DialogActions>
       </Dialog>
+      <Snackbar
+        open={calendarErrorOpen}
+        autoHideDuration={5000}
+        onClose={() => setCalendarErrorOpen(false)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert onClose={() => setCalendarErrorOpen(false)} severity="error" variant="filled">
+          לא הצלחנו ליצור את האירוע ליומן. נסו שוב.
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }

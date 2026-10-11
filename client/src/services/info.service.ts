@@ -1,6 +1,18 @@
 import api from './api';
 import { ApiResponse, WeddingInfo } from '../types/domain';
 
+export async function downloadWeddingCalendar(): Promise<void> {
+  const { data } = await api.get<Blob>('/info/calendar.ics', { responseType: 'blob' });
+  const objectUrl = URL.createObjectURL(new Blob([data], { type: 'text/calendar;charset=utf-8' }));
+  const link = document.createElement('a');
+  link.href = objectUrl;
+  link.download = 'wedding.ics';
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.setTimeout(() => URL.revokeObjectURL(objectUrl), 60_000);
+}
+
 export async function getWeddingInfo(weddingId: number): Promise<WeddingInfo> {
   if (!weddingId) {
     throw new Error('Wedding ID is required to fetch wedding info');

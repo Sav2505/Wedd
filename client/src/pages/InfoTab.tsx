@@ -385,16 +385,21 @@ export default function InfoTab({ demoInfo, hideRegisterCta = false }: Props) {
             פרטי האירוע
           </Typography>
           {!compactDemo && (
-            <Tooltip title="הוספה ליומן">
-              <IconButton
-                aria-label="הוספה ליומן"
-                onClick={handleAddToCalendar}
-                size="small"
-                sx={{ color: '#9A7833' }}
-              >
-                <CalendarMonthIcon fontSize="small" />
-              </IconButton>
-            </Tooltip>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              <Typography variant="caption" sx={{ color: '#A08070', fontSize: '0.7rem' }}>
+                הוספה ליומן
+              </Typography>
+              <Tooltip title="הוספה ליומן">
+                <IconButton
+                  aria-label="הוספה ליומן"
+                  onClick={handleAddToCalendar}
+                  size="small"
+                  sx={{ color: '#9A7833' }}
+                >
+                  <CalendarMonthIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            </Box>
           )}
         </Box>
         <InfoRow icon={<CalendarMonthIcon sx={{ fontSize: compactDemo ? 18 : 20 }} />} label="תאריך" value={formatHebrewDate(resolvedInfo.wedding_date)} delay={0.05} compact={compactDemo} />

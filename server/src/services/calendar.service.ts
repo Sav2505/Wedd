@@ -3,8 +3,8 @@ import { createError } from '../middleware/errorHandler';
 import { WeddingInfo } from '../types';
 import { ISRAEL_TIMEZONE } from '../utils/scheduling.util';
 
-// wedding_info has no end-time column, so calendar events default to four hours.
-const DEFAULT_EVENT_DURATION_HOURS = 4;
+// wedding_info has no end-time column, so calendar events default to 5.5 hours.
+const DEFAULT_EVENT_DURATION_HOURS = 5.5;
 
 function escapeIcsText(value: string): string {
   return value
@@ -60,10 +60,10 @@ export function createWeddingCalendar(
   const groom = wedding.groom_name?.trim();
   const bride = wedding.bride_name?.trim();
   const summary = groom && bride
-    ? `החתונה של ${groom} ו${bride}`
+    ? `💍 החתונה של ${bride} ו${groom} 💍`
     : groom || bride
-      ? `החתונה של ${groom || bride}`
-      : 'החתונה';
+      ? `💍 החתונה של ${bride || groom} 💍`
+      : '💍 החתונה 💍';
   const location = [wedding.venue_name, wedding.venue_address]
     .map((part) => part?.trim())
     .filter((part): part is string => Boolean(part))

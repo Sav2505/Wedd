@@ -19,8 +19,8 @@ test('creates a stable event at the Israel-local wedding date and time', () => {
   assert.match(calendar, /UID:wedding-42@wedflow/);
   assert.match(calendar, /DTSTAMP:20260102T030405Z/);
   assert.match(calendar, /DTSTART:20261015T163000Z/);
-  assert.match(calendar, /DTEND:20261015T203000Z/);
-  assert.match(calendar, /SUMMARY:החתונה של דן ושירה/);
+  assert.match(calendar, /DTEND:20261015T220000Z/);
+  assert.ok(calendar.includes('SUMMARY:💍 החתונה של שירה ודן 💍'));
   assert.match(calendar, /LOCATION:גן\\, האירועים — רחוב\\; השלום/);
   assert.match(calendar, /DESCRIPTION:פרטי האירוע והזמנה דרך WedFlow/);
   assert.ok(calendar.endsWith('\r\n'));
@@ -41,7 +41,7 @@ test('escapes backslashes and line breaks in calendar text', () => {
     groom_name: 'דן\\כהן\nושירה',
   }, new Date('2026-01-02T03:04:05Z'));
 
-  assert.ok(calendar.includes('SUMMARY:החתונה של דן\\\\כהן\\nושירה ושירה'));
+  assert.ok(calendar.includes('SUMMARY:💍 החתונה של שירה ודן\\\\כהן\\nושירה 💍'));
 });
 
 test('rejects a missing reception time instead of inventing one', () => {

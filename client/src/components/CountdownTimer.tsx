@@ -111,7 +111,7 @@ export default function CountdownTimer({ weddingDate, compact = false }: Props) 
         variant="body2"
         sx={{ color: '#A08070', mb: 1.5, textAlign: 'center', fontWeight: 500, fontSize: compact ? '0.82rem' : undefined }}
       >
-        {isPast ? '🎉 החתונה כבר הגיעה !' : '⏳ נותרו עד החתונה'}
+        {isPast ? 'החתונה כבר הגיעה ! 🎉' : 'נותרו עד החתונה ⏳'}
       </Typography>
       {!isPast && (
         <Box

@@ -190,6 +190,8 @@ export async function unassignGuest(guestId: string): Promise<void> {
 export async function getUnassignedGuests(
   wedding_id: number
 ): Promise<Array<Pick<Guest, 'id' | 'full_name' | 'side'> & {
+  guest_group_id: string | null;
+  group_name: string | null;
   plus_count: number;
   rsvp_status: Guest['rsvp_status'];
   number_of_guests: number;
@@ -198,6 +200,8 @@ export async function getUnassignedGuests(
 }>> {
   const { rows } = await pool.query<
     Pick<Guest, 'id' | 'full_name' | 'side'> & {
+      guest_group_id: string | null;
+      group_name: string | null;
       plus_count: number;
       rsvp_status: Guest['rsvp_status'];
       number_of_guests: number;
@@ -210,6 +214,8 @@ export async function getUnassignedGuests(
       id,
       full_name,
       side,
+      guest_group_id,
+      (SELECT name FROM guest_groups WHERE guest_groups.id = guests.guest_group_id) AS group_name,
       COALESCE(plus_count, 0) AS plus_count,
       COALESCE(rsvp_status, 'PENDING') AS rsvp_status,
       GREATEST(COALESCE(number_of_guests, 1), 1) AS number_of_guests,

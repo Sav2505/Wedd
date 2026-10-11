@@ -23,7 +23,7 @@ import FormControlLabel from '@mui/material/FormControlLabel';
 import PublicIcon from '@mui/icons-material/Public';
 import LockIcon from '@mui/icons-material/Lock';
 import FloorPlanCanvas from '../../components/FloorPlanCanvas';
-import { WeddingTableWithGuests } from '../../types/domain';
+import { UnassignedGuest, WeddingTableWithGuests } from '../../types/domain';
 import { updatePublishTables, updateWeddingInfo } from '../../services/info.service';
 import { useWeddingInfo } from '../../hooks/useWeddingInfo';
 import {
@@ -37,6 +37,7 @@ import {
     getUnassignedGuests,
 } from '../../services/tables.service';
 import { getEffectivePartySize, getEffectivePlusCount } from '../../utils/effectiveAttendance';
+import { filterSeatingGuests, getSeatingGuestGroups, type SeatingGuestGroup } from '../../utils/seatingGuestGroups';
 
 const STAGE_LABEL_STORAGE_KEY = 'wedding.floorPlan.stageLabel';
 const ENTRANCE_POSITION_STORAGE_KEY = 'wedding.floorPlan.entrancePosition';
@@ -50,17 +51,6 @@ function clampTableScaleFactor(value: number) {
 }
 
 // ─── Types ───────────────────────────────────────────────────
-
-interface UnassignedGuest {
-    id: string;
-    full_name: string;
-    side: string | null;
-    plus_count: number;
-    rsvp_status?: 'PENDING' | 'COMING' | 'NOT_COMING';
-    number_of_guests?: number;
-    effective_plus_count?: number;
-    effective_party_size?: number;
-}
 
 // פונקציית עזר חדשה - סטיילינג לפי סטטוס RSVP, בשימוש רק במסך העריכה (חתן/כלה)
 
@@ -131,6 +121,7 @@ export default function SeatingEditor() {
     const [editCap, setEditCap] = useState(10);
     const [guestToAdd, setGuestToAdd] = useState<UnassignedGuest | null>(null);
     const [confirmedGuestToAdd, setConfirmedGuestToAdd] = useState<UnassignedGuest | null>(null);
+    const [selectedGuestGroup, setSelectedGuestGroup] = useState<SeatingGuestGroup | null>(null);
 
     // ── Load data ─────────────────────────────────────────────
 
@@ -179,9 +170,27 @@ export default function SeatingEditor() {
     // ── Helpers ───────────────────────────────────────────────
 
     const selectedTable = tables.find(t => t.id === selectedId) ?? null;
-    const confirmedUnassignedGuests = unassigned.filter(
-        g => g.rsvp_status === 'COMING'
-    );
+    const guestGroups = getSeatingGuestGroups(unassigned, selectedGuestGroup);
+    const filteredUnassignedGuests = filterSeatingGuests(unassigned, selectedGuestGroup);
+    const confirmedUnassignedGuests = filterSeatingGuests(unassigned, selectedGuestGroup, true);
+
+    function handleSelectTable(id: string) {
+        setSelectedId(id);
+        setGuestToAdd(null);
+        setConfirmedGuestToAdd(null);
+    }
+
+    function handleGuestGroupChange(group: SeatingGuestGroup | null) {
+        setSelectedGuestGroup(group);
+        setGuestToAdd(null);
+        setConfirmedGuestToAdd(null);
+    }
+
+    function getGuestOptionLabel(guest: UnassignedGuest) {
+        const plus = getEffectivePlusCount(guest);
+        const attendance = getEffectivePartySize(guest) === 0 ? ' (לא מגיע)' : plus > 0 ? ` (+${plus})` : '';
+        return `${guest.full_name}${attendance} · ${guest.group_name || 'ללא קבוצה'}`;
+    }
 
     function nextTableNumber(): number {
         const used = new Set(tables.map(t => t.table_number));
@@ -376,9 +385,7 @@ export default function SeatingEditor() {
 
     // ── Assign guest ──────────────────────────────────────────
 
-    async function handleAssignGuest() {
-        const guest = guestToAdd ?? confirmedGuestToAdd;
-
+    async function handleAssignGuest(guest: UnassignedGuest | null) {
         if (!selectedId || !guest) return;
 
         setIsSaving(true);
@@ -739,7 +746,7 @@ export default function SeatingEditor() {
                     tableScaleFactor={tableScaleFactor}
                     editable
                     selectedId={selectedId}
-                    onSelectTable={setSelectedId}
+                    onSelectTable={handleSelectTable}
                     onDragEnd={handleDragEnd}
                     warningTableIds={tableIdsWithDeclinedGuest}
                 />
@@ -953,24 +960,44 @@ export default function SeatingEditor() {
                                 {/* Add guest autocompletes */}
                                 {selectedTable.guests.reduce((s, g) => s + getEffectivePartySize(g), 0) < selectedTable.capacity && (
                                     <>
-                                        {confirmedUnassignedGuests.length > 0 && (
+                                        {(unassigned.length > 0 || selectedGuestGroup) && (
+                                            <Autocomplete<SeatingGuestGroup>
+                                                options={guestGroups}
+                                                value={selectedGuestGroup}
+                                                onChange={(_, group) => handleGuestGroupChange(group)}
+                                                getOptionLabel={group => group.name}
+                                                isOptionEqualToValue={(option, value) => option.id === value.id}
+                                                size="small"
+                                                disabled={isSaving}
+                                                clearText="כל הקבוצות"
+                                                openText="הצג קבוצות"
+                                                closeText="סגור קבוצות"
+                                                noOptionsText="לא נמצאו קבוצות"
+                                                sx={{ width: '100%', maxWidth: { sm: 380 } }}
+                                                renderInput={params => (
+                                                    <TextField {...params} label="קבוצה" placeholder="כל הקבוצות" />
+                                                )}
+                                            />
+                                        )}
+                                        {filteredUnassignedGuests.length === 0 && selectedGuestGroup && (
+                                            <Typography variant="body2" role="status" sx={{ color: '#A08070', overflowWrap: 'anywhere' }}>
+                                                אין מוזמנים פנויים לשיבוץ בקבוצה {selectedGuestGroup.name}
+                                            </Typography>
+                                        )}
+                                        {unassigned.some(guest => guest.rsvp_status === 'COMING') && (
                                             <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-start' }}>
                                                 <Autocomplete<UnassignedGuest>
                                                     options={confirmedUnassignedGuests}
-                                                    getOptionLabel={o => {
-                                                        const plus = getEffectivePlusCount(o);
-
-                                                        if (getEffectivePartySize(o) === 0)
-                                                            return `${o.full_name} (לא מגיע)`;
-
-                                                        return plus > 0
-                                                            ? `${o.full_name} (+${plus})`
-                                                            : o.full_name;
-                                                    }}
+                                                    getOptionLabel={getGuestOptionLabel}
+                                                    isOptionEqualToValue={(option, value) => option.id === value.id}
                                                     value={confirmedGuestToAdd}
-                                                    onChange={(_, v) => setConfirmedGuestToAdd(v)}
+                                                    onChange={(_, guest) => {
+                                                        setConfirmedGuestToAdd(guest);
+                                                        setGuestToAdd(null);
+                                                    }}
+                                                    disabled={isSaving}
                                                     size="small"
-                                                    sx={{ flex: '1 1 0' }}
+                                                    sx={{ flex: '1 1 0', minWidth: 0 }}
                                                     renderInput={params => (
                                                         <TextField
                                                             {...params}
@@ -978,13 +1005,13 @@ export default function SeatingEditor() {
                                                             placeholder="חיפוש לפי שם…"
                                                         />
                                                     )}
-                                                    noOptionsText="אין מוזמנים מאושרים ללא שולחן"
+                                                    noOptionsText={selectedGuestGroup ? 'אין מוזמנים מאושרים פנויים בקבוצה זו' : 'אין מוזמנים מאושרים ללא שולחן'}
                                                 />
 
                                                 <Button
                                                     variant="contained"
                                                     size="small"
-                                                    onClick={handleAssignGuest}
+                                                    onClick={() => handleAssignGuest(confirmedGuestToAdd)}
                                                     disabled={!confirmedGuestToAdd || isSaving}
                                                     sx={{
                                                         minWidth: 70,
@@ -1009,30 +1036,31 @@ export default function SeatingEditor() {
                                         {unassigned.length > 0 && (
                                             <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-start' }}>
                                                 <Autocomplete<UnassignedGuest>
-                                                    options={unassigned}
-                                                    getOptionLabel={o => {
-                                                        const plus = getEffectivePlusCount(o);
-                                                        if (getEffectivePartySize(o) === 0) return `${o.full_name} (לא מגיע)`;
-                                                        return plus > 0 ? `${o.full_name} (+${plus})` : o.full_name;
-                                                    }}
+                                                    options={filteredUnassignedGuests}
+                                                    getOptionLabel={getGuestOptionLabel}
+                                                    isOptionEqualToValue={(option, value) => option.id === value.id}
                                                     value={guestToAdd}
-                                                    onChange={(_, v) => setGuestToAdd(v)}
+                                                    onChange={(_, guest) => {
+                                                        setGuestToAdd(guest);
+                                                        setConfirmedGuestToAdd(null);
+                                                    }}
+                                                    disabled={isSaving}
                                                     size="small"
-                                                    sx={{ flex: '1 1 0' }}
+                                                    sx={{ flex: '1 1 0', minWidth: 0 }}
                                                     renderInput={params => (
                                                         <TextField
                                                             {...params}
-                                                            label="הוסף מוזמן שטרם אישר"
+                                                            label="הוסף מוזמן מכל הסטטוסים"
                                                             placeholder="חיפוש לפי שם…"
                                                         />
                                                     )}
-                                                    noOptionsText="לא נמצאו אורחים ללא שולחן"
+                                                    noOptionsText={selectedGuestGroup ? 'אין מוזמנים פנויים בקבוצה זו' : 'לא נמצאו אורחים ללא שולחן'}
                                                 />
 
                                                 <Button
                                                     variant="contained"
                                                     size="small"
-                                                    onClick={handleAssignGuest}
+                                                    onClick={() => handleAssignGuest(guestToAdd)}
                                                     disabled={!guestToAdd || isSaving}
                                                     sx={{
                                                         minWidth: 70,
@@ -1055,7 +1083,7 @@ export default function SeatingEditor() {
                                             </Box>
                                         )}
 
-                                        {unassigned.length === 0 && confirmedUnassignedGuests.length === 0 && (
+                                        {unassigned.length === 0 && !selectedGuestGroup && (
                                             <Typography
                                                 variant="caption"
                                                 sx={{

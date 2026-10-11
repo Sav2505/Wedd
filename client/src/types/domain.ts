@@ -148,6 +148,19 @@ export interface WeddingTableWithGuests extends WeddingTable {
   }[];
 }
 
+export interface UnassignedGuest {
+  id: string;
+  full_name: string;
+  side: string | null;
+  guest_group_id: string | null;
+  group_name: string | null;
+  plus_count: number;
+  rsvp_status?: RsvpStatus;
+  number_of_guests?: number;
+  effective_plus_count?: number;
+  effective_party_size?: number;
+}
+
 // ─── Couple Guest Management ────────────────────────────────
 
 export interface GuestGroup {

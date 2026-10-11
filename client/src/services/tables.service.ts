@@ -1,5 +1,5 @@
 import api from './api';
-import { ApiResponse, WeddingTableWithGuests } from '../types/domain';
+import { ApiResponse, UnassignedGuest, WeddingTableWithGuests } from '../types/domain';
 
 function toFiniteNumber(value: unknown, fallback: number): number {
   const n = Number(value);
@@ -66,26 +66,8 @@ export async function unassignGuest(guestId: string): Promise<void> {
   await api.delete(`/tables/guests/${guestId}`);
 }
 
-export async function getUnassignedGuests(wedding_id: number | null): Promise<Array<{
-  id: string;
-  full_name: string;
-  side: string | null;
-  plus_count: number;
-  rsvp_status?: 'PENDING' | 'COMING' | 'NOT_COMING';
-  number_of_guests?: number;
-  effective_plus_count?: number;
-  effective_party_size?: number;
-}>> {
-  const { data } = await api.get<ApiResponse<Array<{
-    id: string;
-    full_name: string;
-    side: string | null;
-    plus_count: number;
-    rsvp_status?: 'PENDING' | 'COMING' | 'NOT_COMING';
-    number_of_guests?: number;
-    effective_plus_count?: number;
-    effective_party_size?: number;
-  }>>>('/tables/unassigned', {
+export async function getUnassignedGuests(wedding_id: number | null): Promise<UnassignedGuest[]> {
+  const { data } = await api.get<ApiResponse<UnassignedGuest[]>>('/tables/unassigned', {
     params: {
       wedding_id,
     },

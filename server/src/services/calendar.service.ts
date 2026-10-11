@@ -5,6 +5,7 @@ import { ISRAEL_TIMEZONE } from '../utils/scheduling.util';
 
 // wedding_info has no end-time column, so calendar events default to 5.5 hours.
 const DEFAULT_EVENT_DURATION_HOURS = 5.5;
+const DEFAULT_REMINDER_DAYS = 7;
 
 function escapeIcsText(value: string): string {
   return value
@@ -84,6 +85,11 @@ export function createWeddingCalendar(
     `SUMMARY:${escapeIcsText(summary)}`,
     ...(location ? [`LOCATION:${escapeIcsText(location)}`] : []),
     `DESCRIPTION:${escapeIcsText('פרטי האירוע והזמנה דרך WedFlow')}`,
+    'BEGIN:VALARM',
+    `TRIGGER:-P${DEFAULT_REMINDER_DAYS}D`,
+    'ACTION:DISPLAY',
+    `DESCRIPTION:${escapeIcsText('תזכורת: החתונה בעוד שבוע')}`,
+    'END:VALARM',
     'END:VEVENT',
     'END:VCALENDAR',
   ];

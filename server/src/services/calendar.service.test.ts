@@ -23,6 +23,7 @@ test('creates a stable event at the Israel-local wedding date and time', () => {
   assert.ok(calendar.includes('SUMMARY:💍 החתונה של שירה ודן 💍'));
   assert.match(calendar, /LOCATION:גן\\, האירועים — רחוב\\; השלום/);
   assert.match(calendar, /DESCRIPTION:פרטי האירוע והזמנה דרך WedFlow/);
+  assert.match(calendar, /BEGIN:VALARM\r\nTRIGGER:-P7D\r\nACTION:DISPLAY\r\nDESCRIPTION:תזכורת: החתונה בעוד שבוע\r\nEND:VALARM/);
   assert.ok(calendar.endsWith('\r\n'));
 });
 

@@ -1,5 +1,5 @@
 import {
-  Alert, Box, IconButton, Snackbar, Typography, Skeleton, Divider, Dialog, DialogTitle, DialogContent, DialogActions, Button,
+  Alert, Box, ButtonBase, IconButton, Snackbar, Typography, Skeleton, Divider, Dialog, DialogTitle, DialogContent, DialogActions, Button,
 } from '@mui/material';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
@@ -386,9 +386,13 @@ export default function InfoTab({ demoInfo, hideRegisterCta = false }: Props) {
           </Typography>
           {!compactDemo && (
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-              <Typography variant="caption" sx={{ color: '#A08070', fontSize: '0.7rem' }}>
+              <ButtonBase
+                aria-label="הוספה ליומן"
+                onClick={handleAddToCalendar}
+                sx={{ color: '#A08070', fontSize: '0.7rem', borderRadius: 0.5 }}
+              >
                 הוספה ליומן
-              </Typography>
+              </ButtonBase>
               <IconButton
                 aria-label="הוספה ליומן"
                 onClick={handleAddToCalendar}

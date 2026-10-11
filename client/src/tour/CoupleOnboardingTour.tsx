@@ -7,7 +7,7 @@ import { COUPLE_TOUR_STEPS } from './coupleTourScript';
 
 const MAX_ANCHOR_RETRIES = 18;
 const ANCHOR_RETRY_MS = 160;
-const TOUR_MODAL_ESTIMATED_HEIGHT = 220;
+const TOUR_MODAL_ESTIMATED_HEIGHT = 252;
 const TOUR_MODAL_GAP = 14;
 const VIEWPORT_SAFE_MARGIN = 16;
 
@@ -216,15 +216,20 @@ export default function CoupleOnboardingTour({
   const position = computeOverlayPosition(targetRect);
   const spotlight = targetRect
     ? {
-        top: Math.max(0, targetRect.top - 6),
-        left: Math.max(0, targetRect.left - 6),
-        right: Math.min(window.innerWidth, targetRect.right + 6),
-        bottom: Math.min(window.innerHeight, targetRect.bottom + 6),
-      }
+      top: Math.max(0, targetRect.top - 6),
+      left: Math.max(0, targetRect.left - 6),
+      right: Math.min(window.innerWidth, targetRect.right + 6),
+      bottom: Math.min(window.innerHeight, targetRect.bottom + 6),
+    }
     : null;
 
   const handleBack = () => {
     setStepIndex((prev) => clamp(prev - 1, 0, COUPLE_TOUR_STEPS.length - 1));
+  };
+
+  const handleCompleteTour = async () => {
+    localStorage.removeItem(progressKey);
+    await onComplete();
   };
 
   const handleNext = async () => {
@@ -233,8 +238,7 @@ export default function CoupleOnboardingTour({
       return;
     }
 
-    localStorage.removeItem(progressKey);
-    await onComplete();
+    await handleCompleteTour();
   };
 
   return (
@@ -393,12 +397,20 @@ export default function CoupleOnboardingTour({
           />
 
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 0.8 }}>
-            <Button
-              onClick={onSkip}
-              sx={{ color: '#A08070', textTransform: 'none', fontWeight: 600, fontSize: '0.82rem' }}
-            >
-              דלג כרגע
-            </Button>
+            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+              <Button
+                onClick={onSkip}
+                sx={{ color: '#A08070', textTransform: 'none', fontWeight: 600, fontSize: '0.82rem' }}
+              >
+                דלג כרגע
+              </Button>
+              <Button
+                onClick={handleCompleteTour}
+                sx={{ color: '#9A7833', textTransform: 'none', fontWeight: 700, fontSize: '0.76rem' }}
+              >
+                סיימתי
+              </Button>
+            </Box>
 
             <Box sx={{ display: 'flex', gap: 0.8 }}>
               <Button

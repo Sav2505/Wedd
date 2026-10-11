@@ -16,6 +16,25 @@
 
 ---
 
+## Guest Blessings (Existing Database)
+
+Before deploying the blessings feature, run only the new migration against your existing database:
+
+```bash
+psql -U <user> -d <database> -f database/migration_017_guest_blessings.sql
+```
+
+Alternatively, run this SQL in your database console:
+
+```sql
+ALTER TABLE guests ADD COLUMN IF NOT EXISTS blessing TEXT;
+ALTER TABLE guests ADD COLUMN IF NOT EXISTS blessing_updated_at TIMESTAMPTZ;
+```
+
+Each guest has one editable blessing (up to 2,000 characters). The couple can read blessings only from their own wedding. Do not rerun the full migration or seed just to add these columns.
+
+---
+
 ## Tables
 
 | Table          | Purpose                                           |

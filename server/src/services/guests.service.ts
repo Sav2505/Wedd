@@ -11,6 +11,45 @@ export interface GuestRsvpDetails {
   dish_notes: string | null;
 }
 
+export interface GuestBlessing {
+  id: string;
+  full_name: string;
+  blessing: string | null;
+  blessing_updated_at: string | null;
+}
+
+export async function getGuestBlessingById(guestId: string): Promise<GuestBlessing> {
+  const { rows } = await pool.query<GuestBlessing>(
+    `SELECT id, full_name, blessing, blessing_updated_at FROM guests WHERE id = $1 AND role = 'guest'`,
+    [guestId],
+  );
+  if (!rows.length) throw createError('אורח לא נמצא', 404);
+  return rows[0];
+}
+
+export async function saveGuestBlessing(guestId: string, blessing: string): Promise<GuestBlessing> {
+  const { rows } = await pool.query<GuestBlessing>(
+    `UPDATE guests SET blessing = $2, blessing_updated_at = NOW()
+     WHERE id = $1 AND role = 'guest'
+     RETURNING id, full_name, blessing, blessing_updated_at`,
+    [guestId, blessing],
+  );
+  if (!rows.length) throw createError('אורח לא נמצא', 404);
+  return rows[0];
+}
+
+export async function listCoupleBlessings(coupleId: string): Promise<GuestBlessing[]> {
+  const { rows } = await pool.query<GuestBlessing>(
+    `SELECT g.id, g.full_name, g.blessing, g.blessing_updated_at
+     FROM guests g JOIN guests couple ON couple.wedding_id = g.wedding_id
+     WHERE couple.id = $1 AND couple.role = 'couple' AND g.role = 'guest'
+       AND NULLIF(BTRIM(g.blessing), '') IS NOT NULL
+     ORDER BY g.blessing_updated_at DESC NULLS LAST, g.id`,
+    [coupleId],
+  );
+  return rows;
+}
+
 function compactName(firstName: string, lastName: string): string {
   return `${firstName.trim()} ${lastName.trim()}`.replace(/\s+/g, ' ').trim();
 }

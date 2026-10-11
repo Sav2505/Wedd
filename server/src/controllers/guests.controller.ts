@@ -5,6 +5,37 @@ import { RsvpStatus } from '../types';
 
 const RSVP_MAX_GUESTS = Number(process.env.RSVP_MAX_GUESTS ?? 10);
 
+export async function getMyBlessing(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const guestId = (req as Request & { guestId: string }).guestId;
+    res.json({ success: true, data: await guestsService.getGuestBlessingById(guestId) });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function saveMyBlessing(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const blessing = req.body?.blessing;
+    if (typeof blessing !== 'string' || !blessing.trim() || blessing.length > 2000) {
+      return next(createError('הברכה צריכה להכיל בין 1 ל־2,000 תווים', 400));
+    }
+    const guestId = (req as Request & { guestId: string }).guestId;
+    res.json({ success: true, data: await guestsService.saveGuestBlessing(guestId, blessing.trim()) });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function getBlessings(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const coupleId = (req as Request & { coupleId: string }).coupleId;
+    res.json({ success: true, data: await guestsService.listCoupleBlessings(coupleId) });
+  } catch (err) {
+    next(err);
+  }
+}
+
 export async function getGuestGroups(
   req: Request,
   res: Response,

@@ -7,6 +7,7 @@ import {
 import EditCalendarOutlinedIcon from '@mui/icons-material/EditCalendarOutlined';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import PhotoLibraryOutlinedIcon from '@mui/icons-material/PhotoLibraryOutlined';
+import MailOutlineIcon from '@mui/icons-material/MailOutline';
 import TableBarIcon from '@mui/icons-material/TableBar';
 import Groups2Icon from '@mui/icons-material/Groups2';
 import AssignmentOutlinedIcon from '@mui/icons-material/AssignmentOutlined';
@@ -23,6 +24,7 @@ import MessageEditor, { MessageEditorHandle } from './couple/MessageEditor';
 import SeatingEditor from './couple/SeatingEditor';
 import GuestListEditor from './couple/GuestListEditor';
 import PhotosTab from './PhotosTab';
+import BlessingsTab from './couple/BlessingsTab';
 import TaskManagementPage from './couple/TaskManagementPage';
 import WeddingRequestsAdminPage from './couple/WeddingRequestsAdminPage';
 import { useWeddingInfo } from '../hooks/useWeddingInfo';
@@ -42,6 +44,7 @@ const BASE_TABS = [
   { label: 'אורחים והזמנות', anchorId: 'tab-guests', icon: <Groups2Icon sx={{ fontSize: 22 }} /> },
   { label: 'הושבה', anchorId: 'tab-seating', icon: <TableBarIcon sx={{ fontSize: 22 }} /> },
   { label: 'גלריה', anchorId: 'tab-gallery', icon: <PhotoLibraryOutlinedIcon sx={{ fontSize: 22 }} /> },
+  { label: 'ברכות', anchorId: 'tab-blessings', icon: <MailOutlineIcon sx={{ fontSize: 22 }} /> },
 ] as const;
 
 // ─── Panel animation ─────────────────────────────────────────
@@ -401,6 +404,7 @@ export default function CoupleLayout() {
     <GuestListEditor />,
     <SeatingEditor />,
     <PhotosTab />,
+    <BlessingsTab />,
   ];
   const panels = isDanHavivAdmin ? [...basePanels, <WeddingRequestsAdminPage />] : basePanels;
 

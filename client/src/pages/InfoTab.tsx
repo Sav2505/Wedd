@@ -12,6 +12,7 @@ import QrCode2OutlinedIcon from '@mui/icons-material/QrCode2Outlined';
 import { motion } from 'framer-motion';
 import { WeddingInfo } from '../types/domain';
 import GoldCard from '../components/GoldCard';
+import GuestBlessing from '../components/GuestBlessing';
 import CountdownTimer from '../components/CountdownTimer';
 import WeddingRegisterCTA from '../components/WeddingRegisterCTA';
 import { useWeddingInfo } from '../hooks/useWeddingInfo';
@@ -440,6 +441,8 @@ export default function InfoTab({ demoInfo, hideRegisterCta = false }: Props) {
           />
         </GoldCard>
       )}
+
+      <GuestBlessing recipient={`${resolvedInfo.bride_name} ו${resolvedInfo.groom_name}`} demo={compactDemo} />
 
       {/* Countdown timer */}
       <GoldCard delay={0.3}>

@@ -10,6 +10,31 @@ export interface GuestRsvpDetails {
   dish_notes: string | null;
 }
 
+export interface GuestBlessing {
+  id: string;
+  full_name: string;
+  blessing: string | null;
+  blessing_updated_at: string | null;
+}
+
+export async function getMyBlessing(): Promise<GuestBlessing> {
+  const { data } = await api.get<ApiResponse<GuestBlessing>>('/guests/me/blessing');
+  if (!data.success || !data.data) throw new Error(data.message ?? 'שגיאה בטעינת הברכה');
+  return data.data;
+}
+
+export async function saveMyBlessing(blessing: string): Promise<GuestBlessing> {
+  const { data } = await api.put<ApiResponse<GuestBlessing>>('/guests/me/blessing', { blessing });
+  if (!data.success || !data.data) throw new Error(data.message ?? 'שגיאה בשליחת הברכה');
+  return data.data;
+}
+
+export async function getBlessings(): Promise<GuestBlessing[]> {
+  const { data } = await api.get<ApiResponse<GuestBlessing[]>>('/guests/blessings');
+  if (!data.success || !data.data) throw new Error(data.message ?? 'שגיאה בטעינת הברכות');
+  return data.data;
+}
+
 export async function getGuestGroups(weddingId: number | undefined): Promise<GuestGroup[]> {
   if (!weddingId) {
     throw new Error('לא נמצא מזהה חתונה');

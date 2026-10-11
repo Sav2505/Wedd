@@ -44,6 +44,9 @@
 \echo '==> Running migration_014_table_scale_factor.sql...'
 \i migration_014_table_scale_factor.sql
 
+\echo '==> Running migration_017_guest_blessings.sql...'
+\i migration_017_guest_blessings.sql
+
 \echo '==> Running seed.sql...'
 \i seed.sql
 

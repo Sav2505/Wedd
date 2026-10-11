@@ -15,6 +15,9 @@ import CheckIcon from '@mui/icons-material/Check';
 import CloseIcon from '@mui/icons-material/Close';
 import { WeddingTask } from '../../../types/domain';
 
+// Global Variables
+const expectedComingPresent = 0.8;
+
 // ─── Helpers ─────────────────────────────────────────────────
 
 function fmt(n: number) {
@@ -122,7 +125,7 @@ export default function TaskSummaryCards({ tasks, guests, guestCount, avgGift, o
     const paid = tasks.reduce((s, t) => s + Number(t.paid_amount), 0);
     const remaining = budget - paid;
     const deposits = tasks.reduce((s, t) => s + Number(t.deposit), 0);
-    const income = guestCount * avgGift * 0.9;
+    const income = guestCount * avgGift * expectedComingPresent;
     const profitLoss = income - budget;
     const paidPct = budget > 0 ? Math.min(100, (paid / budget) * 100) : 0;
     const completePct = total > 0 ? Math.round((completed / total) * 100) : 0;
@@ -242,7 +245,7 @@ export default function TaskSummaryCards({ tasks, guests, guestCount, avgGift, o
           ) : (
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
               <Typography variant="caption" color="text.secondary">
-                {guestCount} אורחים × ₪{avgGift.toLocaleString('he-IL')} × 90%
+                {guestCount} אורחים × ₪{avgGift.toLocaleString('he-IL')} × {expectedComingPresent * 100}%
               </Typography>
               <Tooltip title="ערוך סכום מתנה ממוצע">
                 <IconButton size="small" onClick={startEdit} sx={{ p: 0.3, color: 'text.disabled', '&:hover': { color: 'primary.main' } }}>

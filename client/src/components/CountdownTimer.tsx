@@ -9,8 +9,20 @@ interface TimeLeft {
   seconds: number;
 }
 
-function calcTimeLeft(targetDate: string): TimeLeft {
-  const diff = new Date(targetDate + 'T00:00:00').getTime() - Date.now();
+function calcTimeLeft(targetDate: string, targetTime: string): TimeLeft {
+  const [year, month, day] = targetDate.slice(0, 10).split('-').map(Number);
+  const [hours, minutes] = targetTime.slice(0, 5).split(':').map(Number);
+  const now = new Date();
+  const eventTimestamp = Date.UTC(year, month - 1, day, hours, minutes);
+  const currentTimestamp = Date.UTC(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate(),
+    now.getHours(),
+    now.getMinutes(),
+    now.getSeconds(),
+  );
+  const diff = eventTimestamp - currentTimestamp;
   if (diff <= 0) return { days: 0, hours: 0, minutes: 0, seconds: 0 };
   return {
     days: Math.floor(diff / 86_400_000),
@@ -92,16 +104,17 @@ function Separator({ compact = false }: { compact?: boolean }) {
 
 interface Props {
   weddingDate: string; // ISO "2026-07-15"
+  weddingTime: string;
   compact?: boolean;
 }
 
-export default function CountdownTimer({ weddingDate, compact = false }: Props) {
-  const [timeLeft, setTimeLeft] = useState<TimeLeft>(() => calcTimeLeft(weddingDate));
+export default function CountdownTimer({ weddingDate, weddingTime, compact = false }: Props) {
+  const [timeLeft, setTimeLeft] = useState<TimeLeft>(() => calcTimeLeft(weddingDate, weddingTime));
 
   useEffect(() => {
-    const id = setInterval(() => setTimeLeft(calcTimeLeft(weddingDate)), 1000);
+    const id = setInterval(() => setTimeLeft(calcTimeLeft(weddingDate, weddingTime)), 1000);
     return () => clearInterval(id);
-  }, [weddingDate]);
+  }, [weddingDate, weddingTime]);
 
   const isPast = Object.values(timeLeft).every((v) => v === 0);
 

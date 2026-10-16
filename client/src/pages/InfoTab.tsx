@@ -446,7 +446,7 @@ export default function InfoTab({ demoInfo, hideRegisterCta = false }: Props) {
 
       {/* Countdown timer */}
       <GoldCard delay={0.3}>
-        <CountdownTimer weddingDate={resolvedInfo.wedding_date} compact={compactDemo} />
+        <CountdownTimer weddingDate={resolvedInfo.wedding_date} weddingTime={resolvedInfo.wedding_time} compact={compactDemo} />
       </GoldCard>
 
       {!hideRegisterCta && (

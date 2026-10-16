@@ -29,6 +29,8 @@ import 'dayjs/locale/he';
 import { updateWeddingInfo, WeddingInfoUpdate } from '../../services/info.service';
 import { useWeddingInfo } from '../../hooks/useWeddingInfo';
 import { useWeddingId } from '../../hooks/useWeddingId';
+import CountdownTimer from '../../components/CountdownTimer';
+import GoldCard from '../../components/GoldCard';
 import LoadingOverlay from '../../components/LoadingOverlay';
 
 dayjs.locale('he');
@@ -605,6 +607,11 @@ const WeddingInfoEditor = forwardRef<WeddingInfoEditorHandle>(function WeddingIn
               ),
             }}
           />
+          {form.wedding_date && form.wedding_time && (
+            <GoldCard sx={{ my: 2 }}>
+              <CountdownTimer weddingDate={form.wedding_date} weddingTime={form.wedding_time} />
+            </GoldCard>
+          )}
 
           <Divider sx={{ my: 3, borderColor: 'rgba(201,168,76,0.2)' }} />
 

@@ -7,6 +7,9 @@ export interface GuestRsvpDetails {
   rsvp_status: RsvpStatus;
   number_of_guests: number;
   rsvp_updated_at: string | null;
+  vegetarian_count: number;
+  vegan_count: number;
+  regular_count: number;
   requested_dish_type: string | null;
   dish_notes: string | null;
 }
@@ -157,6 +160,9 @@ export async function listGuests(
     g.rsvp_status,
     g.number_of_guests,
     g.rsvp_updated_at,
+    g.vegetarian_count,
+    g.vegan_count,
+    GREATEST(g.number_of_guests - g.vegetarian_count - g.vegan_count, 0)::int AS regular_count,
     g.created_at,
     g.gift_amount,
     g.gift_kind,
@@ -226,6 +232,9 @@ export async function createGuest(payload: {
       rsvp_status,
       number_of_guests,
       rsvp_updated_at,
+      vegetarian_count,
+      vegan_count,
+      GREATEST(number_of_guests - vegetarian_count - vegan_count, 0)::int AS regular_count,
       created_at,
       gift_amount
   `, [payload.wedding_id, fullName, firstName, lastName, phone, payload.side ?? null, payload.guest_group_id ?? null, plusCount, giftAmount ?? null]);
@@ -301,6 +310,9 @@ export async function updateGuest(id: string, payload: {
       rsvp_status,
       number_of_guests,
       rsvp_updated_at,
+      vegetarian_count,
+      vegan_count,
+      GREATEST(number_of_guests - vegetarian_count - vegan_count, 0)::int AS regular_count,
       created_at,
       gift_amount,
       gift_kind
@@ -322,7 +334,8 @@ export async function deleteGuest(id: string): Promise<void> {
 export async function getGuestByGuestId(guestId: number): Promise<ManagedGuest> {
   const { rows } = await pool.query<ManagedGuest>(
     `
-      SELECT *
+      SELECT *,
+        GREATEST(number_of_guests - vegetarian_count - vegan_count, 0)::int AS regular_count
       FROM guests
       WHERE id = $1
         AND role = 'guest'
@@ -343,6 +356,9 @@ export async function getGuestRsvpById(guestId: string): Promise<GuestRsvpDetail
         rsvp_status,
         number_of_guests,
         rsvp_updated_at,
+        vegetarian_count,
+        vegan_count,
+        GREATEST(number_of_guests - vegetarian_count - vegan_count, 0)::int AS regular_count,
         requested_dish_type,
         dish_notes
       FROM guests
@@ -362,11 +378,16 @@ export async function updateGuestRsvpById(
   payload: {
     rsvp_status: RsvpStatus;
     number_of_guests: number;
-    requested_dish_type?: string | null;
+    vegetarian_count: number;
+    vegan_count: number;
     dish_notes?: string | null;
   },
 ): Promise<GuestRsvpDetails> {
-  const normalizedCount = payload.rsvp_status === 'COMING' ? payload.number_of_guests : 1;
+  const legacyDishType = payload.vegetarian_count === payload.number_of_guests && payload.vegan_count === 0
+    ? 'vegetarian'
+    : payload.vegan_count === payload.number_of_guests && payload.vegetarian_count === 0
+      ? 'vegan'
+      : payload.vegetarian_count === 0 && payload.vegan_count === 0 ? 'regular' : null;
 
   const { rows } = await pool.query<GuestRsvpDetails>(
     `
@@ -374,14 +395,20 @@ export async function updateGuestRsvpById(
       SET
         rsvp_status = $1,
         number_of_guests = $2,
-        requested_dish_type = $4,
-        dish_notes = $5,
+        vegetarian_count = $4,
+        vegan_count = $5,
+        requested_dish_type = $6,
+        dish_notes = $7,
         rsvp_updated_at = NOW()
       WHERE id = $3
         AND role = 'guest'
-      RETURNING id, rsvp_status, number_of_guests, rsvp_updated_at, requested_dish_type, dish_notes
+      RETURNING id, rsvp_status, number_of_guests, rsvp_updated_at,
+        vegetarian_count, vegan_count,
+        GREATEST(number_of_guests - vegetarian_count - vegan_count, 0)::int AS regular_count,
+        requested_dish_type, dish_notes
     `,
-    [payload.rsvp_status, normalizedCount, guestId, payload.requested_dish_type ?? null, payload.dish_notes ?? null],
+    [payload.rsvp_status, payload.number_of_guests, guestId, payload.vegetarian_count, payload.vegan_count,
+      legacyDishType, payload.dish_notes ?? null],
   );
 
   if (rows.length === 0) throw createError('אורח לא נמצא', 404);

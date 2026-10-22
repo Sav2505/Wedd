@@ -28,6 +28,8 @@ CREATE TABLE IF NOT EXISTS guests (
   gift_kind   TEXT        DEFAULT NULL,
   requested_dish_type TEXT DEFAULT NULL,
   dish_notes TEXT DEFAULT NULL,
+  vegetarian_count INTEGER NOT NULL DEFAULT 0,
+  vegan_count INTEGER NOT NULL DEFAULT 0,
   is_toured BOOLEAN DEFAULT FALSE,
   CONSTRAINT uq_guests_wedding_name_phone UNIQUE (wedding_id, full_name, phone)
 );

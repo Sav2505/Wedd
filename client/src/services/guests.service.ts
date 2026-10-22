@@ -6,6 +6,9 @@ export interface GuestRsvpDetails {
   rsvp_status: RsvpStatus;
   number_of_guests: number;
   rsvp_updated_at: string | null;
+  vegetarian_count: number;
+  vegan_count: number;
+  regular_count: number;
   requested_dish_type: string | null;
   dish_notes: string | null;
 }
@@ -132,7 +135,8 @@ export async function getMyRsvp(): Promise<GuestRsvpDetails> {
 export async function updateMyRsvp(payload: {
   rsvp_status: RsvpStatus;
   number_of_guests: number;
-  requested_dish_type?: string | null;
+  vegetarian_count: number;
+  vegan_count: number;
   dish_notes?: string | null;
 }): Promise<GuestRsvpDetails> {
   const { data } = await api.put<ApiResponse<GuestRsvpDetails>>('/guests/me/rsvp', payload);

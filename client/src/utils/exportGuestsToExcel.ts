@@ -13,15 +13,6 @@ function translateStatus(status: ManagedGuest['rsvp_status']) {
     }
 }
 
-function translateDishType(dishType: string | null | undefined): string {
-    switch (dishType) {
-        case 'vegetarian': return 'צמחונית';
-        case 'vegan':       return 'טבעונית';
-        case 'regular':     return 'רגילה';
-        default:            return 'לא צוין';
-    }
-}
-
 export async function exportGuestsToExcel(
     guests: ManagedGuest[],
     coupleName: string,
@@ -50,7 +41,7 @@ export async function exportGuestsToExcel(
     // Title
     // ==========================
 
-    sheet.mergeCells('A1:L1');
+    sheet.mergeCells('A1:N1');
 
     const reportTitle = sheet.getCell('A1');
 
@@ -84,7 +75,9 @@ export async function exportGuestsToExcel(
         { key: 'status', width: 18 },
         { key: 'gift_kind', width: 18 },
         { key: 'gift_amount', width: 16 },
-        { key: 'dish_type', width: 16 },
+        { key: 'regular_count', width: 16 },
+        { key: 'vegetarian_count', width: 18 },
+        { key: 'vegan_count', width: 18 },
         { key: 'dish_notes', width: 28 },
     ];
 
@@ -99,7 +92,9 @@ export async function exportGuestsToExcel(
         'סטטוס',
         'סוג מתנה',
         'מתנה בש"ח',
-        'סוג מנה',
+        'מנות רגילות',
+        'מנות צמחוניות',
+        'מנות טבעוניות',
         'הערות מנה',
     ]);
 
@@ -151,7 +146,9 @@ export async function exportGuestsToExcel(
             status: translateStatus(guest.rsvp_status),
             gift_kind: guest.gift_kind ?? '',
             gift_amount: guest.gift_amount ?? '',
-            dish_type: guest.rsvp_status === 'COMING' ? translateDishType(guest.requested_dish_type) : '',
+            regular_count: guest.rsvp_status === 'COMING' ? guest.regular_count : '',
+            vegetarian_count: guest.rsvp_status === 'COMING' ? guest.vegetarian_count : '',
+            vegan_count: guest.rsvp_status === 'COMING' ? guest.vegan_count : '',
             dish_notes: guest.rsvp_status === 'COMING' ? (guest.dish_notes ?? '') : '',
         });
     });

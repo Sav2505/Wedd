@@ -21,6 +21,7 @@ import CelebrationIcon from '@mui/icons-material/Celebration';
 import SentimentSatisfiedAltIcon from '@mui/icons-material/SentimentSatisfiedAlt';
 import LocalFloristIcon from '@mui/icons-material/LocalFlorist';
 import NatureIcon from '@mui/icons-material/Nature';
+import RestaurantIcon from '@mui/icons-material/Restaurant';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import { motion } from 'framer-motion';
 import { setGuest } from '../store/authSlice';
@@ -28,8 +29,6 @@ import { useAppDispatch, useAppSelector } from '../store';
 import GoldCard from '../components/GoldCard';
 import { getMyRsvp, updateMyRsvp } from '../services/guests.service';
 import { RsvpStatus } from '../types/domain';
-
-type DishType = 'vegetarian' | 'vegan' | null;
 
 const RSVP_MAX_GUESTS = Number(import.meta.env.VITE_RSVP_MAX_GUESTS ?? 12);
 
@@ -113,13 +112,108 @@ function StatusCard({
   );
 }
 
+function MealCountRow({
+  label,
+  icon,
+  value,
+  max,
+  onChange,
+}: {
+  label: string;
+  icon: React.ReactNode;
+  value: number;
+  max: number;
+  onChange: (value: number) => void;
+}) {
+  return (
+    <Stack direction="row" spacing={1} alignItems="center">
+      <Box sx={{ color: '#9A7833', display: 'grid', placeItems: 'center' }}>{icon}</Box>
+      <Typography sx={{ flex: 1, color: '#2C1810', fontWeight: 600 }}>{label}</Typography>
+      <IconButton
+        size="small"
+        aria-label={`הפחתת ${label}`}
+        disabled={value <= 0}
+        onClick={() => onChange(Math.max(0, value - 1))}
+      >
+        <RemoveCircleOutlineIcon sx={{ color: value <= 0 ? '#C8B89A' : '#C9A84C' }} />
+      </IconButton>
+      <TextField
+        type="number"
+        size="small"
+        value={value}
+        onChange={(event) => {
+          const parsed = Number.parseInt(event.target.value, 10);
+          if (Number.isFinite(parsed)) onChange(Math.max(0, Math.min(max, parsed)));
+        }}
+        slotProps={{ htmlInput: { min: 0, max, step: 1, 'aria-label': label } }}
+        sx={{ width: 74, '& input': { textAlign: 'center', p: 1 } }}
+      />
+      <IconButton
+        size="small"
+        aria-label={`הוספת ${label}`}
+        disabled={value >= max}
+        onClick={() => onChange(Math.min(max, value + 1))}
+      >
+        <AddCircleOutlineIcon sx={{ color: value >= max ? '#C8B89A' : '#C9A84C' }} />
+      </IconButton>
+    </Stack>
+  );
+}
+
+function SoloMealChoice({
+  selected,
+  label,
+  icon,
+  onClick,
+}: {
+  selected: boolean;
+  label: string;
+  icon: React.ReactNode;
+  onClick: () => void;
+}) {
+  return (
+    <motion.button
+      type="button"
+      onClick={onClick}
+      whileTap={{ scale: 0.98 }}
+      style={{ border: 'none', padding: 0, background: 'transparent', cursor: 'pointer', width: '100%', textAlign: 'right' }}
+    >
+      <Box
+        sx={{
+          borderRadius: 2.5,
+          border: selected ? '2px solid #2E8B57' : '1px solid rgba(201,168,76,0.25)',
+          background: selected ? 'linear-gradient(145deg, #41A86A, #2E8B57)' : 'rgba(255,255,255,0.74)',
+          boxShadow: selected ? '0 8px 22px rgba(46,139,87,0.28)' : '0 2px 10px rgba(44,24,16,0.07)',
+          p: 1.4,
+          transition: 'all 0.2s ease',
+        }}
+      >
+        <Stack direction="row" spacing={1.1} alignItems="center">
+          <Box sx={{
+            width: 34, height: 34, borderRadius: '50%', display: 'grid', placeItems: 'center',
+            color: selected ? '#fff' : '#9A7833',
+            background: selected ? 'rgba(255,255,255,0.25)' : 'rgba(201,168,76,0.14)',
+          }}>
+            {icon}
+          </Box>
+          <Typography sx={{ flex: 1, fontWeight: 700, color: selected ? '#fff' : '#2C1810', lineHeight: 1.2 }}>
+            {label}
+          </Typography>
+          {selected && <CheckCircleIcon sx={{ color: 'rgba(255,255,255,0.9)', fontSize: 18 }} />}
+        </Stack>
+      </Box>
+    </motion.button>
+  );
+}
+
 export default function AttendanceStatusTab({ onSaved, initialRsvp }: Props) {
   const dispatch = useAppDispatch();
   const guest = useAppSelector((s) => s.auth.guest);
 
   const [status, setStatus] = useState<RsvpStatus>(initialRsvp?.status ?? 'PENDING');
   const [count, setCount] = useState(initialRsvp?.count ?? 1);
-  const [dishType, setDishType] = useState<DishType>(null);
+  const [vegetarianCount, setVegetarianCount] = useState(0);
+  const [veganCount, setVeganCount] = useState(0);
   const [dishNotes, setDishNotes] = useState('');
   const [fetching, setFetching] = useState(!initialRsvp);
   const [saving, setSaving] = useState(false);
@@ -127,6 +221,20 @@ export default function AttendanceStatusTab({ onSaved, initialRsvp }: Props) {
   const [success, setSuccess] = useState<string | null>(null);
   const [saveOutcome, setSaveOutcome] = useState<SaveOutcome>(null);
   const autoNavRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const soloDishType = vegetarianCount === 1 ? 'vegetarian' : veganCount === 1 ? 'vegan' : 'regular';
+
+  function chooseSoloDish(dishType: 'regular' | 'vegetarian' | 'vegan') {
+    setVegetarianCount(dishType === 'vegetarian' ? 1 : 0);
+    setVeganCount(dishType === 'vegan' ? 1 : 0);
+  }
+
+  function decreasePartySize() {
+    const nextCount = Math.max(1, count - 1);
+    const nextVegetarianCount = Math.min(vegetarianCount, nextCount);
+    setCount(nextCount);
+    setVegetarianCount(nextVegetarianCount);
+    setVeganCount(Math.min(veganCount, nextCount - nextVegetarianCount));
+  }
 
   useEffect(() => {
     if (saveOutcome === 'COMING') {
@@ -147,7 +255,8 @@ export default function AttendanceStatusTab({ onSaved, initialRsvp }: Props) {
       .then((data) => {
         setStatus(data.rsvp_status);
         setCount(Math.max(1, Math.min(RSVP_MAX_GUESTS, data.number_of_guests || 1)));
-        setDishType((data.requested_dish_type as DishType) ?? null);
+        setVegetarianCount(data.vegetarian_count ?? (data.requested_dish_type === 'vegetarian' ? data.number_of_guests : 0));
+        setVeganCount(data.vegan_count ?? (data.requested_dish_type === 'vegan' ? data.number_of_guests : 0));
         setDishNotes(data.dish_notes ?? '');
       })
       .catch((e) => setError(e instanceof Error ? e.message : 'שגיאה בטעינת סטטוס נוכחות'))
@@ -185,8 +294,9 @@ export default function AttendanceStatusTab({ onSaved, initialRsvp }: Props) {
       const updated = await updateMyRsvp({
         rsvp_status: status,
         number_of_guests: count,
-        requested_dish_type: status === 'COMING' ? (dishType ?? 'regular') : null,
-        dish_notes: status === 'COMING' ? (dishNotes.trim() || null) : null,
+        vegetarian_count: vegetarianCount,
+        vegan_count: veganCount,
+        dish_notes: dishNotes.trim() || null,
       });
 
       dispatch(setGuest({
@@ -419,7 +529,7 @@ export default function AttendanceStatusTab({ onSaved, initialRsvp }: Props) {
               <IconButton
                 size="small"
                 disabled={count <= 1}
-                onClick={() => setCount((v) => Math.max(1, v - 1))}
+                onClick={decreasePartySize}
               >
                 <RemoveCircleOutlineIcon sx={{ color: count <= 1 ? '#C8B89A' : '#C9A84C' }} />
               </IconButton>
@@ -442,57 +552,51 @@ export default function AttendanceStatusTab({ onSaved, initialRsvp }: Props) {
         {status === 'COMING' && (
           <GoldCard delay={0.14} sx={{ mb: 2.2 }}>
             <Typography sx={{ color: '#2C1810', fontWeight: 700, mb: 1.1 }}>
-              העדפת מנה
+              {count === 1 ? 'תרצה/י בקשה מיוחדת ?' : 'תרצו בקשות מיוחדות ?'}
             </Typography>
-
-            <Stack spacing={1}>
-              {([
-                { value: 'vegetarian', label: 'מנה צמחונית 🥗', icon: <LocalFloristIcon sx={{ fontSize: 19 }} /> },
-                { value: 'vegan', label: 'מנה טבעונית 🌿', icon: <NatureIcon sx={{ fontSize: 19 }} /> },
-              ] as { value: DishType; label: string; subtitle: string; icon: React.ReactNode }[]).map(({ value, label, subtitle, icon }) => (
-                <motion.button
-                  key={value as string}
-                  type="button"
-                  onClick={() => setDishType(dishType === value ? null : value)}
-                  whileTap={{ scale: 0.98 }}
-                  style={{ border: 'none', padding: 0, background: 'transparent', cursor: 'pointer', width: '100%', textAlign: 'right' }}
-                >
-                  <Box
-                    sx={{
-                      borderRadius: 2.5,
-                      border: dishType === value ? '2px solid #2E8B57' : '1px solid rgba(201,168,76,0.25)',
-                      background: dishType === value
-                        ? 'linear-gradient(145deg, #41A86A, #2E8B57)'
-                        : 'rgba(255,255,255,0.74)',
-                      boxShadow: dishType === value ? '0 8px 22px rgba(46,139,87,0.28)' : '0 2px 10px rgba(44,24,16,0.07)',
-                      p: 1.4,
-                      transition: 'all 0.2s ease',
-                    }}
-                  >
-                    <Stack direction="row" spacing={1.1} alignItems="center">
-                      <Box sx={{
-                        width: 34, height: 34, borderRadius: '50%', display: 'grid', placeItems: 'center',
-                        color: dishType === value ? '#fff' : '#9A7833',
-                        background: dishType === value ? 'rgba(255,255,255,0.25)' : 'rgba(201,168,76,0.14)',
-                      }}>
-                        {icon}
-                      </Box>
-                      <Box sx={{ flex: 1 }}>
-                        <Typography sx={{ fontWeight: 700, color: dishType === value ? '#fff' : '#2C1810', lineHeight: 1.2 }}>
-                          {label}
-                        </Typography>
-                        <Typography variant="caption" sx={{ color: dishType === value ? 'rgba(255,255,255,0.9)' : '#8A7565' }}>
-                          {subtitle}
-                        </Typography>
-                      </Box>
-                      {dishType === value && (
-                        <CheckCircleIcon sx={{ color: 'rgba(255,255,255,0.85)', fontSize: 18 }} />
-                      )}
-                    </Stack>
-                  </Box>
-                </motion.button>
-              ))}
-            </Stack>
+            {count === 1 ? (
+              <Stack spacing={1}>
+                <SoloMealChoice
+                  selected={soloDishType === 'regular'}
+                  label="ללא בקשה מיוחדת"
+                  icon={<RestaurantIcon sx={{ fontSize: 19 }} />}
+                  onClick={() => chooseSoloDish('regular')}
+                />
+                <SoloMealChoice
+                  selected={soloDishType === 'vegetarian'}
+                  label="מנה צמחונית"
+                  icon={<LocalFloristIcon sx={{ fontSize: 19 }} />}
+                  onClick={() => chooseSoloDish('vegetarian')}
+                />
+                <SoloMealChoice
+                  selected={soloDishType === 'vegan'}
+                  label="מנה טבעונית"
+                  icon={<NatureIcon sx={{ fontSize: 19 }} />}
+                  onClick={() => chooseSoloDish('vegan')}
+                />
+              </Stack>
+            ) : (
+              <Stack spacing={1.2}>
+                <MealCountRow
+                  label="מנות צמחוניות"
+                  icon={<LocalFloristIcon sx={{ fontSize: 19 }} />}
+                  value={vegetarianCount}
+                  max={count - veganCount}
+                  onChange={setVegetarianCount}
+                />
+                <MealCountRow
+                  label="מנות טבעוניות"
+                  icon={<NatureIcon sx={{ fontSize: 19 }} />}
+                  value={veganCount}
+                  max={count - vegetarianCount}
+                  onChange={setVeganCount}
+                />
+                <Box sx={{ borderTop: '1px solid rgba(201,168,76,0.25)', pt: 1, display: 'flex', justifyContent: 'space-between' }}>
+                  <Typography sx={{ color: '#6B5240', fontWeight: 600 }}>מנות רגילות</Typography>
+                  <Typography sx={{ color: '#2C1810', fontWeight: 800 }}>{count - vegetarianCount - veganCount}</Typography>
+                </Box>
+              </Stack>
+            )}
 
             <TextField
               fullWidth

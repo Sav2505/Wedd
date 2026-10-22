@@ -3,7 +3,7 @@ import { createError } from '../middleware/errorHandler';
 import * as guestsService from '../services/guests.service';
 import { RsvpStatus } from '../types';
 
-const RSVP_MAX_GUESTS = Number(process.env.RSVP_MAX_GUESTS ?? 10);
+const RSVP_MAX_GUESTS = Number(process.env.RSVP_MAX_GUESTS ?? 12);
 
 export async function getMyBlessing(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
@@ -195,6 +195,8 @@ export async function updateMyRsvp(req: Request, res: Response, next: NextFuncti
     const payload = req.body as {
       rsvp_status?: RsvpStatus;
       number_of_guests?: number;
+      vegetarian_count?: number;
+      vegan_count?: number;
       requested_dish_type?: string | null;
       dish_notes?: string | null;
     };
@@ -209,10 +211,29 @@ export async function updateMyRsvp(req: Request, res: Response, next: NextFuncti
       return next(createError(`מספר משתתפים חייב להיות בין 1 ל-${RSVP_MAX_GUESTS}`, 400));
     }
 
+    const hasMealCounts = payload.vegetarian_count !== undefined || payload.vegan_count !== undefined;
+    const vegetarianCount = hasMealCounts
+      ? Number(payload.vegetarian_count ?? 0)
+      : payload.requested_dish_type === 'vegetarian' ? count : 0;
+    const veganCount = hasMealCounts
+      ? Number(payload.vegan_count ?? 0)
+      : payload.requested_dish_type === 'vegan' ? count : 0;
+
+    if (
+      !Number.isInteger(vegetarianCount)
+      || vegetarianCount < 0
+      || !Number.isInteger(veganCount)
+      || veganCount < 0
+      || vegetarianCount + veganCount > count
+    ) {
+      return next(createError('כמות המנות המיוחדות חייבת להיות מספר שלם ולא לחרוג ממספר המשתתפים', 400));
+    }
+
     const updated = await guestsService.updateGuestRsvpById(guestId, {
       rsvp_status: status,
       number_of_guests: count,
-      requested_dish_type: payload.requested_dish_type ?? null,
+      vegetarian_count: vegetarianCount,
+      vegan_count: veganCount,
       dish_notes: payload.dish_notes ?? null,
     });
 

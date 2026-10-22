@@ -33,6 +33,16 @@ ALTER TABLE guests ADD COLUMN IF NOT EXISTS blessing_updated_at TIMESTAMPTZ;
 
 Each guest has one editable blessing (up to 2,000 characters). The couple can read blessings only from their own wedding. Do not rerun the full migration or seed just to add these columns.
 
+## Guest Meal Counts (Existing Database)
+
+Before deploying the per-meal RSVP counts, run the standalone migration against your existing database:
+
+```bash
+psql -U <user> -d <database> -f database/migration_019_guest_meal_counts.sql
+```
+
+The migration adds vegetarian and vegan meal quantities, backfills existing single-meal preferences for the saved party size, and leaves `dish_notes` unchanged. Regular meals are calculated from the remaining guest count. Apply the migration before deploying the updated server and client.
+
 ---
 
 ## Tables

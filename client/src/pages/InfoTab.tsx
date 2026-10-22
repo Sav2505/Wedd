@@ -632,7 +632,7 @@ export default function InfoTab({ demoInfo, hideRegisterCta = false }: Props) {
             component="p"
             sx={{
               m: 0,
-              p: 0,
+              pb: 1,
               color: '#3C3430',
               fontFamily: "'Frank Ruhl Libre', serif",
               fontSize: { xs: '1.08rem', sm: '1.2rem' },
@@ -651,6 +651,7 @@ export default function InfoTab({ demoInfo, hideRegisterCta = false }: Props) {
             sx={{
               minWidth: 96,
               borderRadius: 1,
+              mt: 1.5,
               background: 'linear-gradient(135deg, #C9A84C, #9A7833)',
               color: '#FFFEFC',
               '&:hover': { background: 'linear-gradient(135deg, #B8953F, #826326)' },

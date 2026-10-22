@@ -47,6 +47,9 @@
 \echo '==> Running migration_017_guest_blessings.sql...'
 \i migration_017_guest_blessings.sql
 
+\echo '==> Running migration_019_guest_meal_counts.sql...'
+\i migration_019_guest_meal_counts.sql
+
 \echo '==> Running seed.sql...'
 \i seed.sql
 

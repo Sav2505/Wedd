@@ -43,6 +43,9 @@ export interface ManagedGuest {
   rsvp_status: RsvpStatus;
   number_of_guests: number;
   rsvp_updated_at: string | null;
+  vegetarian_count: number;
+  vegan_count: number;
+  regular_count: number;
   created_at: string;
   gift_amount: number | null;
   gift_kind: string | null;

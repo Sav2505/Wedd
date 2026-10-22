@@ -1,0 +1,26 @@
+CREATE TABLE IF NOT EXISTS wedding_event_maps (
+  wedding_id INTEGER PRIMARY KEY REFERENCES wedding_info(id) ON DELETE CASCADE,
+  draft_document JSONB NOT NULL DEFAULT '{"schemaVersion":1,"width":1000,"height":700,"hasBackground":false,"elements":[]}'::jsonb,
+  revision INTEGER NOT NULL DEFAULT 0 CHECK (revision >= 0),
+  draft_background_data BYTEA DEFAULT NULL,
+  draft_background_mime_type VARCHAR(100) DEFAULT NULL,
+  published_document JSONB DEFAULT NULL,
+  published_revision INTEGER DEFAULT NULL,
+  published_background_data BYTEA DEFAULT NULL,
+  published_background_mime_type VARCHAR(100) DEFAULT NULL,
+  published_at TIMESTAMPTZ DEFAULT NULL,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CHECK (jsonb_typeof(draft_document) = 'object'),
+  CHECK (published_document IS NULL OR jsonb_typeof(published_document) = 'object'),
+  CHECK ((draft_background_data IS NULL) = (draft_background_mime_type IS NULL)),
+  CHECK ((published_background_data IS NULL) = (published_background_mime_type IS NULL)),
+  CHECK (draft_background_mime_type IS NULL OR draft_background_mime_type = 'image/webp'),
+  CHECK (published_background_mime_type IS NULL OR published_background_mime_type = 'image/webp'),
+  CHECK (octet_length(draft_background_data) <= 5242880),
+  CHECK (octet_length(published_background_data) <= 5242880),
+  CHECK ((published_document IS NULL AND published_revision IS NULL AND published_at IS NULL AND published_background_data IS NULL)
+    OR (published_document IS NOT NULL AND published_revision IS NOT NULL AND published_at IS NOT NULL)),
+  CHECK (published_revision IS NULL OR published_revision BETWEEN 0 AND revision),
+  CHECK ((draft_document->>'hasBackground')::boolean = (draft_background_data IS NOT NULL)),
+  CHECK (published_document IS NULL OR (published_document->>'hasBackground')::boolean = (published_background_data IS NOT NULL))
+);

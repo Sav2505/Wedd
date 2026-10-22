@@ -16,6 +16,9 @@ import MessageTab from './MessageTab';
 import AttendanceStatusTab from './AttendanceStatusTab';
 import { useWeddingInfo } from '../hooks/useWeddingInfo';
 import DramaticWelcomeScreen from '../components/DramaticWelcomeScreen';
+import MapOutlinedIcon from '@mui/icons-material/MapOutlined';
+import EventMapTab from './EventMapTab';
+import { getPublishedEventMap } from '../services/eventMap.service';
 
 // ─── Show welcome screen once per page load ────────────────
 let _welcomeShown = false;
@@ -23,12 +26,16 @@ let _welcomeShown = false;
 // ─── Tab config ──────────────────────────────────────────────
 
 const TABS = [
-  { label: 'פרטי האירוע', icon: <InfoOutlinedIcon sx={{ fontSize: 22 }} />, component: <InfoTab /> },
-  { label: 'הושבה', icon: <TableBarIcon sx={{ fontSize: 22 }} />, component: <SeatingTab /> },
-  { label: 'גלריה', icon: <PhotoLibraryOutlinedIcon sx={{ fontSize: 22 }} />, component: <PhotosTab /> },
-  { label: 'מאיתנו אליכם', icon: <FavoriteIcon sx={{ fontSize: 22 }} />, component: <MessageTab /> },
-  { label: 'סטטוס הגעה', icon: <HowToRegIcon sx={{ fontSize: 22 }} />, component: <AttendanceStatusTab /> },
+  { id: 'info', label: 'פרטי האירוע', icon: <InfoOutlinedIcon sx={{ fontSize: 22 }} />, component: <InfoTab /> },
+  { id: 'seating', label: 'הושבה', icon: <TableBarIcon sx={{ fontSize: 22 }} />, component: <SeatingTab /> },
+  { id: 'event-map', label: 'מפת האירוע', icon: <MapOutlinedIcon sx={{ fontSize: 22 }} />, component: <EventMapTab /> },
+  { id: 'photos', label: 'גלריה', icon: <PhotoLibraryOutlinedIcon sx={{ fontSize: 22 }} />, component: <PhotosTab /> },
+  { id: 'message', label: 'מאיתנו אליכם', icon: <FavoriteIcon sx={{ fontSize: 22 }} />, component: <MessageTab /> },
+  { id: 'rsvp', label: 'סטטוס הגעה', icon: <HowToRegIcon sx={{ fontSize: 22 }} />, component: <AttendanceStatusTab /> },
 ] as const;
+
+const EVENT_MAP_TAB_INDEX = TABS.findIndex(tab => tab.id === 'event-map');
+const RSVP_TAB_INDEX = TABS.findIndex(tab => tab.id === 'rsvp');
 
 // ─── Tab panel ───────────────────────────────────────────────
 
@@ -146,13 +153,15 @@ function BotanicalSVG() {
 // ─── Ornamental header (adapted for guest layout) ─────────────
 
 function OrnamentalHeader({
-  guest, couple, activeTab, onTabChange, onLogout,
+  guest, couple, activeTab, onTabChange, onLogout, showEventMap, isTablesPublished,
 }: {
   guest: { full_name: string; table_number?: number | null } | null;
   couple: string;
   activeTab: number;
   onTabChange: (v: number) => void;
   onLogout: () => void;
+  showEventMap: boolean;
+  isTablesPublished: boolean;
 }) {
   return (
     <Box sx={{ position: 'sticky', top: 0, zIndex: 100 }}>
@@ -210,7 +219,7 @@ function OrnamentalHeader({
           {guest && (
             <Typography sx={{ fontSize: '0.82rem', color: '#A08070', mt: 0.4, fontWeight: 500, letterSpacing: 0.3 }}>
               שלום, {guest.full_name} !
-              {guest.table_number && (
+              {isTablesPublished && guest.table_number && (
                 <Box
                   component="span"
                   sx={{
@@ -254,8 +263,8 @@ function OrnamentalHeader({
               },
             }}
           >
-            {TABS.map((tab, i) => (
-              <Tab key={i} icon={tab.icon} iconPosition="top" label={tab.label} disableRipple={false} />
+            {TABS.map((tab, index) => (tab.id !== 'event-map' || showEventMap) && (
+              <Tab key={tab.id} value={index} icon={tab.icon} iconPosition="top" label={tab.label} disableRipple={false} />
             ))}
           </Tabs>
         </Box>
@@ -270,7 +279,11 @@ export default function MainLayout() {
   const dispatch = useAppDispatch();
   const { info, loading: infoLoading } = useWeddingInfo();
   const guest = useAppSelector((s) => s.auth.guest);
+  const guestId = guest?.id;
+  const [mapPublication, setMapPublication] = useState<{ guestId: string; published: boolean } | null>(null);
   const [activeTab, setActiveTab] = useState(0);
+  const showEventMap = mapPublication?.guestId === guestId && mapPublication?.published === true;
+  const visibleActiveTab = activeTab === EVENT_MAP_TAB_INDEX && !showEventMap ? 0 : activeTab;
   const [showWelcome, setShowWelcome] = useState(
     !_welcomeShown && sessionStorage.getItem('wedding.welcomeShown') !== '1'
   );
@@ -280,6 +293,35 @@ export default function MainLayout() {
     sessionStorage.setItem('wedding.welcomeShown', '1');
     setShowWelcome(false);
   }, []);
+
+  useEffect(() => {
+    if (!guestId) return;
+    let request: AbortController | null = null;
+    const refresh = () => {
+      request?.abort();
+      const controller = new AbortController();
+      request = controller;
+      getPublishedEventMap(controller.signal).then(result => {
+        if (controller.signal.aborted) return;
+        const published = result !== null;
+        setMapPublication({ guestId, published });
+        if (!published) setActiveTab(current => current === EVENT_MAP_TAB_INDEX ? 0 : current);
+      }).catch(() => {
+        if (controller.signal.aborted) return;
+        setMapPublication({ guestId, published: false });
+        setActiveTab(current => current === EVENT_MAP_TAB_INDEX ? 0 : current);
+      });
+    };
+    const refreshWhenVisible = () => { if (document.visibilityState === 'visible') refresh(); };
+    refresh();
+    window.addEventListener('focus', refreshWhenVisible);
+    document.addEventListener('visibilitychange', refreshWhenVisible);
+    return () => {
+      request?.abort();
+      window.removeEventListener('focus', refreshWhenVisible);
+      document.removeEventListener('visibilitychange', refreshWhenVisible);
+    };
+  }, [guestId]);
 
   useEffect(() => {
     // Priority 1: Check for explicit tab index from URL parameter
@@ -298,7 +340,7 @@ export default function MainLayout() {
 
     const forceRsvpGuestId = sessionStorage.getItem('wedding.forceRsvpGuestId');
     if (forceRsvpGuestId === guest.id) {
-      setActiveTab(TABS.length - 1);
+      setActiveTab(RSVP_TAB_INDEX);
       sessionStorage.removeItem('wedding.forceRsvpGuestId');
     }
   }, [guest]);
@@ -334,9 +376,11 @@ export default function MainLayout() {
         <OrnamentalHeader
           guest={guest}
           couple={info?.bride_name ? `${info?.bride_name} & ${info?.groom_name}` : "החתונה שלנו"}
-          activeTab={activeTab}
+          activeTab={visibleActiveTab}
           onTabChange={setActiveTab}
           onLogout={() => dispatch(logout())}
+          showEventMap={showEventMap}
+          isTablesPublished={!!info?.is_tables_published}
         />
       </motion.div>
 
@@ -349,13 +393,13 @@ export default function MainLayout() {
       >
         <AnimatePresence mode="wait">
           <motion.div
-            key={activeTab}
+            key={visibleActiveTab}
             variants={panelVariants}
             initial="enter"
             animate="center"
             exit="exit"
           >
-            {activeTab === TABS.length - 1
+            {TABS[visibleActiveTab].id === 'rsvp'
               ? <AttendanceStatusTab
                 onSaved={(nextStatus) => {
                   if (nextStatus === 'COMING') {
@@ -363,7 +407,7 @@ export default function MainLayout() {
                   }
                 }}
               />
-              : TABS[activeTab].component}
+              : TABS[visibleActiveTab].component}
           </motion.div>
         </AnimatePresence>
       </Box>

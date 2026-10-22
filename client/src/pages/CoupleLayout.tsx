@@ -30,6 +30,8 @@ import WeddingRequestsAdminPage from './couple/WeddingRequestsAdminPage';
 import { useWeddingInfo } from '../hooks/useWeddingInfo';
 import CoupleOnboardingTour from '../tour/CoupleOnboardingTour';
 import { markToured } from '../services/auth.service';
+import MapOutlinedIcon from '@mui/icons-material/MapOutlined';
+import EventMapEditor, { type EventMapEditorHandle } from './couple/EventMapEditor';
 
 function getFirstName(fullName: string): string {
   return fullName.trim().split(/\s+/)[0] || '';
@@ -43,9 +45,12 @@ const BASE_TABS = [
   { label: 'מעקב משימות', anchorId: 'tab-tasks', icon: <AssignmentOutlinedIcon sx={{ fontSize: 22 }} /> },
   { label: 'אורחים והזמנות', anchorId: 'tab-guests', icon: <Groups2Icon sx={{ fontSize: 22 }} /> },
   { label: 'הושבה', anchorId: 'tab-seating', icon: <TableBarIcon sx={{ fontSize: 22 }} /> },
+  { label: 'מפת האירוע', anchorId: 'tab-event-map', icon: <MapOutlinedIcon sx={{ fontSize: 22 }} /> },
   { label: 'גלריה', anchorId: 'tab-gallery', icon: <PhotoLibraryOutlinedIcon sx={{ fontSize: 22 }} /> },
   { label: 'ברכות', anchorId: 'tab-blessings', icon: <MailOutlineIcon sx={{ fontSize: 22 }} /> },
 ] as const;
+
+const TOUR_TAB_IDS = ['tab-event-info', 'tab-message', 'tab-tasks', 'tab-guests', 'tab-seating', 'tab-gallery'];
 
 // ─── Panel animation ─────────────────────────────────────────
 
@@ -170,7 +175,7 @@ function OrnamentalHeader({
   activeTab: number;
   onTabChange: (v: number) => void;
   onLogout: () => void;
-  tabs: Array<{ label: string; icon: ReactElement; anchorId?: string }>;
+  tabs: ReadonlyArray<{ label: string; icon: ReactElement; anchorId?: string }>;
 }) {
   return (
     <Box sx={{ position: 'sticky', top: 0, zIndex: 100 }}>
@@ -277,7 +282,7 @@ function OrnamentalHeader({
           >
             {tabs.map((tab, i) => (
               <Tab
-                key={i}
+                key={tab.anchorId ?? i}
                 data-tour-anchor={tab.anchorId}
                 icon={tab.icon}
                 iconPosition="top"
@@ -392,21 +397,23 @@ export default function CoupleLayout() {
   const guest = useAppSelector((s) => s.auth.guest);
   const isDanHavivAdmin = guest?.role === 'couple' && guest?.full_name?.trim() === 'דן חביב';
   const tabs = isDanHavivAdmin
-    ? [...BASE_TABS, { label: 'בקשות הרשמה', icon: <ManageAccountsOutlinedIcon sx={{ fontSize: 22 }} /> }]
+    ? [...BASE_TABS, { label: 'בקשות הרשמה', anchorId: 'tab-requests' as const, icon: <ManageAccountsOutlinedIcon sx={{ fontSize: 22 }} /> }]
     : BASE_TABS;
   const weddingInfoRef = useRef<WeddingInfoEditorHandle>(null);
   const messageEditorRef = useRef<MessageEditorHandle>(null);
+  const eventMapRef = useRef<EventMapEditorHandle>(null);
 
-  const basePanels = [
-    <WeddingInfoEditor ref={weddingInfoRef} />,
-    <MessageEditor ref={messageEditorRef} />,
-    <TaskManagementPage />,
-    <GuestListEditor />,
-    <SeatingEditor />,
-    <PhotosTab />,
-    <BlessingsTab />,
-  ];
-  const panels = isDanHavivAdmin ? [...basePanels, <WeddingRequestsAdminPage />] : basePanels;
+  const panels: Record<(typeof BASE_TABS)[number]['anchorId'] | 'tab-requests', ReactElement> = {
+    'tab-event-info': <WeddingInfoEditor ref={weddingInfoRef} />,
+    'tab-message': <MessageEditor ref={messageEditorRef} />,
+    'tab-tasks': <TaskManagementPage />,
+    'tab-guests': <GuestListEditor />,
+    'tab-seating': <SeatingEditor />,
+    'tab-event-map': <EventMapEditor ref={eventMapRef} />,
+    'tab-gallery': <PhotosTab />,
+    'tab-blessings': <BlessingsTab />,
+    'tab-requests': <WeddingRequestsAdminPage />,
+  };
 
   const [searchParams, setSearchParams] = useSearchParams();
   const initialTab = Math.max(0, Number(searchParams.get('t') ?? 0) || 0);
@@ -419,8 +426,10 @@ export default function CoupleLayout() {
   const shouldRunTour = Boolean(guest?.role === 'couple' && guest.is_toured !== true && info?.id != null);
 
   function getActiveEditorRef(): EditorHandle | null {
-    if (activeTab === 0) return weddingInfoRef.current;
-    if (activeTab === 1) return messageEditorRef.current;
+    const anchorId = tabs[activeTab]?.anchorId;
+    if (anchorId === 'tab-event-info') return weddingInfoRef.current;
+    if (anchorId === 'tab-message') return messageEditorRef.current;
+    if (anchorId === 'tab-event-map') return eventMapRef.current;
     return null;
   }
 
@@ -484,7 +493,9 @@ export default function CoupleLayout() {
   }
 
   function handleTourTabChange(nextTab: number) {
-    setActiveTab(nextTab);
+    const nextTabIndex = tabs.findIndex(tab => tab.anchorId === TOUR_TAB_IDS[nextTab]);
+    if (nextTabIndex < 0) return;
+    setActiveTab(nextTabIndex);
     if (searchParams.has('t')) {
       setSearchParams((prev) => {
         prev.delete('t');
@@ -516,7 +527,7 @@ export default function CoupleLayout() {
           activeTab={activeTab}
           onTabChange={handleTabChange}
           onLogout={() => dispatch(logout())}
-          tabs={tabs as Array<{ label: string; icon: ReactElement }>}
+          tabs={tabs}
         />
       </motion.div>
 
@@ -535,7 +546,7 @@ export default function CoupleLayout() {
             exit="exit"
           >
             <Fade in timeout={200}>
-              <Box>{panels[activeTab]}</Box>
+              <Box>{tabs[activeTab] && panels[tabs[activeTab].anchorId]}</Box>
             </Fade>
           </motion.div>
         </AnimatePresence>
@@ -577,7 +588,7 @@ export default function CoupleLayout() {
           open={isTourOpen}
           guestId={guest.id}
           weddingId={info.id}
-          activeTab={activeTab}
+          activeTab={TOUR_TAB_IDS.indexOf(tabs[activeTab]?.anchorId ?? '')}
           onTabChange={handleTourTabChange}
           onComplete={handleTourCompleted}
           onSkip={() => setIsTourOpen(false)}

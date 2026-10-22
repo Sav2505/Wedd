@@ -36,7 +36,7 @@ api.interceptors.response.use(
       error.response?.data?.message ||
       error.message ||
       'שגיאה בלתי צפויה';
-    return Promise.reject(new Error(message));
+    return Promise.reject(Object.assign(new Error(message), { status: error.response?.status }));
   },
 );
 

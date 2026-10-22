@@ -15,6 +15,27 @@ export interface Guest {
   wedding_id: number;
 }
 
+export type RideKind = 'offer' | 'request';
+export type RideStatus = 'active' | 'full' | 'closed' | 'expired';
+
+export interface RidePost {
+  id: string;
+  kind: RideKind;
+  display_name: string;
+  contact_phone: string | null;
+  origin_text: string;
+  time_from: string;
+  time_to: string | null;
+  seats_available: number | null;
+  passenger_count: number | null;
+  notes: string | null;
+  status: RideStatus;
+  created_at: string;
+  expires_at: string;
+  is_mine: boolean;
+  whatsapp_url: string | null;
+}
+
 export interface Photo {
   id: string;
   uploader_id: string;

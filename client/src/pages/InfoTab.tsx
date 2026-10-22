@@ -18,6 +18,7 @@ import GoldCard from '../components/GoldCard';
 import GuestBlessing from '../components/GuestBlessing';
 import CountdownTimer from '../components/CountdownTimer';
 import WeddingRegisterCTA from '../components/WeddingRegisterCTA';
+import RideCoordinationModal from '../components/RideCoordinationModal';
 import { useWeddingInfo } from '../hooks/useWeddingInfo';
 import { downloadWeddingCalendar } from '../services/info.service';
 import { palette } from '../shared/animations';
@@ -343,6 +344,7 @@ export default function InfoTab({ demoInfo, hideRegisterCta = false }: Props) {
   const groomBitUrl = toSafeExternalUrl(resolvedInfo?.groom_bit_url);
   const [isBitDemoModalOpen, setIsBitDemoModalOpen] = useState(false);
   const [isFoodBlessingOpen, setIsFoodBlessingOpen] = useState(false);
+  const [isRideCoordinationOpen, setIsRideCoordinationOpen] = useState(false);
   const [calendarErrorOpen, setCalendarErrorOpen] = useState(false);
 
   const handleAddToCalendar = async () => {
@@ -433,7 +435,69 @@ export default function InfoTab({ demoInfo, hideRegisterCta = false }: Props) {
       {/* Map buttons */}
       <GoldCard delay={0.2} sx={{ mb: 2 }}>
         <MapButtons info={resolvedInfo} />
+        {!compactDemo && (
+          <Box component="section" aria-labelledby="ride-coordination-title" sx={{ mt: 1.75, pt: 1.5, borderTop: '1px solid rgba(201,168,76,0.2)' }}>
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1.25,
+                flexWrap: 'wrap',
+                p: 1.25,
+                borderRadius: 2,
+                border: '1px solid rgba(201,168,76,0.24)',
+                background: 'linear-gradient(110deg, rgba(255,255,255,0.88), rgba(248,241,222,0.82))',
+              }}
+            >
+              <Box
+                aria-hidden="true"
+                sx={{
+                  width: 42,
+                  height: 42,
+                  flexShrink: 0,
+                  display: 'grid',
+                  placeItems: 'center',
+                  borderRadius: '50%',
+                  color: '#9A7833',
+                  background: 'rgba(201,168,76,0.14)',
+                }}
+              >
+                <DirectionsCarIcon sx={{ fontSize: 22 }} />
+              </Box>
+              <Box sx={{ flex: '1 1 120px', minWidth: 0 }}>
+                <Typography id="ride-coordination-title" fontWeight={700} color="#73552B" sx={{ lineHeight: 1.25 }}>
+                  מגיעים יחד
+                </Typography>
+                <Typography variant="caption" color="#806D61">
+                  מחפשים טרמפ ? רוצים להציע טרמפ ? נסו כאן              </Typography>
+              </Box>
+              <Button
+                variant="contained"
+                onClick={() => setIsRideCoordinationOpen(true)}
+                sx={{
+                  flexShrink: 0,
+                  minWidth: 0,
+                  px: 1.85,
+                  py: 0.75,
+                  color: '#fff',
+                  background: '#9A7833',
+                  boxShadow: 'none',
+                  '&:hover': { background: '#806327', boxShadow: 'none' },
+                }}
+              >
+                לתיאום נסיעה
+              </Button>
+            </Box>
+          </Box>
+        )}
       </GoldCard>
+      {!compactDemo && (
+        <RideCoordinationModal
+          open={isRideCoordinationOpen}
+          onClose={() => setIsRideCoordinationOpen(false)}
+          receptionTime={resolvedInfo.wedding_time}
+        />
+      )}
 
       {(brideBitUrl || groomBitUrl) && (
         <GoldCard delay={0.25} sx={{ mb: 2 }}>

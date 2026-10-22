@@ -505,7 +505,7 @@ export default function AttendanceStatusTab({ onSaved, initialRsvp }: Props) {
               sx={{
                 mt: 1.6,
                 '& .MuiOutlinedInput-root': {
-                  borderRadius: 2.5,
+                  borderRadius: 2,
                   fontSize: '0.9rem',
                   '& fieldset': { borderColor: 'rgba(201,168,76,0.35)' },
                   '&:hover fieldset': { borderColor: '#C9A84C' },

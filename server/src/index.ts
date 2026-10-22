@@ -9,6 +9,7 @@ import photosRoutes from './routes/photos.routes';
 import faceRecognitionRoutes from './routes/faceRecognition.routes';
 import tablesRoutes from './routes/tables.routes';
 import guestsRoutes from './routes/guests.routes';
+import ridesRoutes from './routes/rides.routes';
 import tasksRoutes from './routes/tasks.routes';
 import requestRoutes from './routes/weddingRequest.routes';
 import whatsappRoutes from './routes/whatsapp.routes';
@@ -20,6 +21,7 @@ import { errorHandler, notFound } from './middleware/errorHandler';
 import mailerRoutes from './routes/mailer.routes';
 import { initWhatsappSchedulePreviewJob } from './jobs/whatsapp-schedule-preview-job';
 import { initWhatsappScheduleNotificationJob } from './jobs/whatsapp-schedule-notification.job';
+import { initRideExpirationJob } from './jobs/ride-expiration.job';
 
 dotenv.config();
 
@@ -89,6 +91,7 @@ app.use('/photos', photosRoutes);
 app.use('/photos/faces', faceRecognitionRoutes);
 app.use('/tables', tablesRoutes);
 app.use('/guests', guestsRoutes);
+app.use('/rides', ridesRoutes);
 app.use('/tasks', tasksRoutes);
 app.use('/wedding-requests', requestRoutes);
 app.use('/weddings', weddingMessageScheduleRoutes);
@@ -127,6 +130,7 @@ app.listen(PORT, () => {
   initWhatsappReconciliationJob();
   initWhatsappSchedulePreviewJob();
   initWhatsappScheduleNotificationJob();
+  initRideExpirationJob();
 
   // Tests
   // runWhatsappSchedulerOnce().catch(console.error);

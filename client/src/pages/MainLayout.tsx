@@ -209,7 +209,7 @@ function OrnamentalHeader({
           </Typography>
           {guest && (
             <Typography sx={{ fontSize: '0.82rem', color: '#A08070', mt: 0.4, fontWeight: 500, letterSpacing: 0.3 }}>
-              שלום, {guest.full_name}!
+              שלום, {guest.full_name} !
               {guest.table_number && (
                 <Box
                   component="span"

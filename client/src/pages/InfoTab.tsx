@@ -9,8 +9,11 @@ import NoteIcon from '@mui/icons-material/Note';
 import DirectionsCarIcon from '@mui/icons-material/DirectionsCar';
 import MapIcon from '@mui/icons-material/Map';
 import QrCode2OutlinedIcon from '@mui/icons-material/QrCode2Outlined';
+import MenuBookOutlinedIcon from '@mui/icons-material/MenuBookOutlined';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import { motion } from 'framer-motion';
 import { WeddingInfo } from '../types/domain';
+import { foodBlessing } from '../data/data';
 import GoldCard from '../components/GoldCard';
 import GuestBlessing from '../components/GuestBlessing';
 import CountdownTimer from '../components/CountdownTimer';
@@ -339,6 +342,7 @@ export default function InfoTab({ demoInfo, hideRegisterCta = false }: Props) {
   const brideBitUrl = toSafeExternalUrl(resolvedInfo?.bride_bit_url);
   const groomBitUrl = toSafeExternalUrl(resolvedInfo?.groom_bit_url);
   const [isBitDemoModalOpen, setIsBitDemoModalOpen] = useState(false);
+  const [isFoodBlessingOpen, setIsFoodBlessingOpen] = useState(false);
   const [calendarErrorOpen, setCalendarErrorOpen] = useState(false);
 
   const handleAddToCalendar = async () => {
@@ -444,6 +448,49 @@ export default function InfoTab({ demoInfo, hideRegisterCta = false }: Props) {
 
       <GuestBlessing recipient={`${resolvedInfo.bride_name} ו${resolvedInfo.groom_name}`} demo={compactDemo} />
 
+      <GoldCard delay={0.28} sx={{ mb: 2, background: 'rgba(255,255,255,0.94)' }}>
+        <Box component="section" aria-label="ברכת המזון">
+          <ButtonBase
+            aria-haspopup="dialog"
+            aria-controls={isFoodBlessingOpen ? 'food-blessing-dialog' : undefined}
+            onClick={() => setIsFoodBlessingOpen(true)}
+            sx={{
+              width: '100%',
+              minHeight: 58,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 1.25,
+              borderRadius: 1.5,
+              color: '#73552B',
+              '&:hover .food-blessing-icon': { background: 'rgba(201,168,76,0.2)' },
+              '&:focus-visible': { outline: '2px solid #9A7833', outlineOffset: 3 },
+            }}
+          >
+            <Box
+              className="food-blessing-icon"
+              sx={{
+                width: 38,
+                height: 38,
+                borderRadius: '50%',
+                display: 'grid',
+                placeItems: 'center',
+                color: '#9A7833',
+                background: 'rgba(201,168,76,0.11)',
+                border: '1px solid rgba(201,168,76,0.28)',
+                transition: 'background 0.2s ease',
+              }}
+            >
+              <MenuBookOutlinedIcon sx={{ fontSize: 21 }} />
+            </Box>
+            <Typography component="span" sx={{ fontFamily: "'Frank Ruhl Libre', serif", fontSize: '1.2rem', fontWeight: 600 }}>
+              ברכת המזון
+            </Typography>
+            <Box sx={{ width: 22, height: 1, bgcolor: 'rgba(201,168,76,0.45)' }} />
+          </ButtonBase>
+        </Box>
+      </GoldCard>
+
       {/* Countdown timer */}
       <GoldCard delay={0.3}>
         <CountdownTimer weddingDate={resolvedInfo.wedding_date} weddingTime={resolvedInfo.wedding_time} compact={compactDemo} />
@@ -474,6 +521,88 @@ export default function InfoTab({ demoInfo, hideRegisterCta = false }: Props) {
             }}
           >
             הבנתי
+          </Button>
+        </DialogActions>
+      </Dialog>
+      <Dialog
+        open={isFoodBlessingOpen}
+        onClose={() => setIsFoodBlessingOpen(false)}
+        fullWidth
+        maxWidth="sm"
+        scroll="paper"
+        dir="rtl"
+        aria-labelledby="food-blessing-title"
+        aria-describedby="food-blessing-content"
+        PaperProps={{
+          id: 'food-blessing-dialog',
+          dir: 'rtl',
+          sx: {
+            maxHeight: 'calc(100dvh - 32px)',
+            borderRadius: 2,
+            border: '1px solid rgba(201,168,76,0.3)',
+            background: 'linear-gradient(180deg, #FFFEFC 0%, #FCFAF7 100%)',
+            boxShadow: '0 18px 60px rgba(44,24,16,0.2)',
+          },
+        }}
+      >
+        <DialogTitle
+          id="food-blessing-title"
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 1,
+            px: { xs: 2, sm: 3 },
+            pt: { xs: 2, sm: 2.5 },
+            pb: 1.5,
+            color: '#73552B',
+          }}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
+            <MenuBookOutlinedIcon sx={{ color: '#9A7833', fontSize: 24 }} />
+            <Typography component="span" sx={{ fontFamily: "'Frank Ruhl Libre', serif", fontSize: '1.6rem', fontWeight: 600 }}>
+              ברכת המזון
+            </Typography>
+          </Box>
+          <IconButton aria-label="סגירה" onClick={() => setIsFoodBlessingOpen(false)} size="small" sx={{ color: '#806D61' }}>
+            <CloseRoundedIcon />
+          </IconButton>
+        </DialogTitle>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, px: { xs: 2, sm: 3 } }} aria-hidden="true">
+          <Box sx={{ flex: 1, height: '1px', background: 'rgba(201,168,76,0.28)' }} />
+          <Typography sx={{ color: '#C9A84C', fontSize: '0.8rem', lineHeight: 1 }}>✦</Typography>
+          <Box sx={{ flex: 1, height: '1px', background: 'rgba(201,168,76,0.28)' }} />
+        </Box>
+        <DialogContent id="food-blessing-content" dir="rtl" sx={{ px: { xs: 2.5, sm: 3.5 }, py: { xs: 2, sm: 2.5 } }}>
+          <Typography
+            component="p"
+            sx={{
+              m: 0,
+              color: '#3C3430',
+              fontFamily: "'Frank Ruhl Libre', serif",
+              fontSize: { xs: '1.08rem', sm: '1.2rem' },
+              lineHeight: { xs: 2, sm: 2.1 },
+              textAlign: 'left',
+              whiteSpace: 'pre-wrap',
+              overflowWrap: 'anywhere',
+            }}
+          >
+            {foodBlessing}
+          </Typography>
+        </DialogContent>
+        <DialogActions dir="rtl" sx={{ px: { xs: 2, sm: 3 }, pb: 2.5, pt: 0.5 }}>
+          <Button
+            onClick={() => setIsFoodBlessingOpen(false)}
+            variant="contained"
+            sx={{
+              minWidth: 96,
+              borderRadius: 1,
+              background: 'linear-gradient(135deg, #C9A84C, #9A7833)',
+              color: '#FFFEFC',
+              '&:hover': { background: 'linear-gradient(135deg, #B8953F, #826326)' },
+            }}
+          >
+            סגירה
           </Button>
         </DialogActions>
       </Dialog>

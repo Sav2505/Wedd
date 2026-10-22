@@ -632,12 +632,12 @@ export default function InfoTab({ demoInfo, hideRegisterCta = false }: Props) {
             component="p"
             sx={{
               m: 0,
+              p: 0,
               color: '#3C3430',
               fontFamily: "'Frank Ruhl Libre', serif",
               fontSize: { xs: '1.08rem', sm: '1.2rem' },
               lineHeight: { xs: 2, sm: 2.1 },
               textAlign: 'left',
-              whiteSpace: 'pre-wrap',
               overflowWrap: 'anywhere',
             }}
           >

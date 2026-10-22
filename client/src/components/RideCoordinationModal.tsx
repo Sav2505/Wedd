@@ -123,8 +123,8 @@ function RidePostCard({
         >
             <Stack direction="row" justifyContent="space-between" alignItems="flex-start" gap={1}>
                 <Box sx={{ minWidth: 0 }}>
-                    <Typography fontWeight={700} color="#503E32">{post.display_name}</Typography>
-                    <Typography variant="body2" color="text.secondary">{post.origin_text}</Typography>
+                    <Typography fontWeight={700} color="#503E32">יציאה מ{post.origin_text}</Typography>
+                    <Typography variant="body2" color="text.secondary">{post.display_name}</Typography>
                 </Box>
                 <Chip size="small" label={statusLabels[post.status]} color={post.status === 'active' ? 'success' : 'default'} />
             </Stack>
@@ -305,9 +305,9 @@ export default function RideCoordinationModal({ open, onClose, receptionTime }: 
             <DialogTitle id="ride-dialog-title" sx={{ pb: 1, pr: 3, pl: 2 }}>
                 <Stack direction="row" alignItems="flex-start" justifyContent="space-between" gap={1}>
                     <Box>
-                        <Typography variant="h6" fontWeight={700} color="#73552B">מתארגנים יחד לדרך</Typography>
+                        <Typography variant="h6" fontWeight={700} color="#73552B">מתארגנים יחד לנסיעה</Typography>
                         <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-                            מצאו הצעת נסיעה או שתפו נסיעה משלכם. התיאום הסופי נעשה ישירות בין האורחים.
+                            מצאו הצעת נסיעה או שתפו נסיעה משלכם :)
                         </Typography>
                     </Box>
                     <IconButton aria-label="סגירה" onClick={handleClose} size="small"><CloseRoundedIcon /></IconButton>
@@ -430,7 +430,7 @@ export default function RideCoordinationModal({ open, onClose, receptionTime }: 
                             </Button>
                         </Stack>
                         <Typography variant="caption" color="text.secondary">
-                            WhatsApp ייפתח באפליקציה או בדפדפן, לפי המכשיר. השיחה מתחילה כטיוטה בלבד, ומקום ברכב מאושר ישירות מול המציע.
+                            התיאום הסופי נעשה ישירות בין האורחים :)
                         </Typography>
                         <Tabs value={filter} onChange={(_event, value: ListFilter) => setFilter(value)} variant="fullWidth" aria-label="סינון פרסומי נסיעות">
                             <Tab value="all" label="הכול" />

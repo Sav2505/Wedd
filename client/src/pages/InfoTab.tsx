@@ -444,27 +444,14 @@ export default function InfoTab({ demoInfo, hideRegisterCta = false }: Props) {
                 gap: 1.25,
                 flexWrap: 'wrap',
                 p: 1.25,
+                justifyContent: 'center',
                 borderRadius: 2,
                 border: '1px solid rgba(201,168,76,0.24)',
                 background: 'linear-gradient(110deg, rgba(255,255,255,0.88), rgba(248,241,222,0.82))',
               }}
             >
-              <Box
-                aria-hidden="true"
-                sx={{
-                  width: 42,
-                  height: 42,
-                  flexShrink: 0,
-                  display: 'grid',
-                  placeItems: 'center',
-                  borderRadius: '50%',
-                  color: '#9A7833',
-                  background: 'rgba(201,168,76,0.14)',
-                }}
-              >
-                <DirectionsCarIcon sx={{ fontSize: 22 }} />
-              </Box>
-              <Box sx={{ flex: '1 1 120px', minWidth: 0 }}>
+              <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", minWidth: 0, justifyContent: 'center' }}>
+
                 <Typography id="ride-coordination-title" fontWeight={700} color="#73552B" sx={{ lineHeight: 1.25 }}>
                   מגיעים יחד
                 </Typography>
@@ -484,6 +471,7 @@ export default function InfoTab({ demoInfo, hideRegisterCta = false }: Props) {
                   boxShadow: 'none',
                   '&:hover': { background: '#806327', boxShadow: 'none' },
                 }}
+                startIcon={<DirectionsCarIcon sx={{ fontSize: 22 }} />}
               >
                 לתיאום נסיעה
               </Button>

@@ -27,6 +27,7 @@ import DirectionsCarOutlinedIcon from '@mui/icons-material/DirectionsCarOutlined
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import WhatsAppIcon from '@mui/icons-material/WhatsApp';
 import {
     changeRidePostStatus,
     createRidePost,
@@ -55,7 +56,7 @@ interface RideFormState {
     consent: boolean;
 }
 
-type ListFilter = 'all' | RideKind;
+type ListFilter = RideKind;
 
 const emptyForm: RideFormState = {
     display_name: '',
@@ -116,17 +117,41 @@ function RidePostCard({
             component="article"
             sx={{
                 p: 2,
-                border: '1px solid rgba(154,120,51,0.18)',
+                border: `1px solid ${isOffer ? 'rgba(71,117,83,0.25)' : 'rgba(154,120,51,0.24)'}`,
+                borderRight: `4px solid ${isOffer ? '#477553' : '#B38B3D'}`,
                 borderRadius: 1.5,
-                bgcolor: '#fff',
+                bgcolor: isOffer ? '#F5FAF6' : '#FFFBF2',
             }}
         >
             <Stack direction="row" justifyContent="space-between" alignItems="flex-start" gap={1}>
-                <Box sx={{ minWidth: 0 }}>
-                    <Typography fontWeight={700} color="#503E32">יציאה מ{post.origin_text}</Typography>
-                    <Typography variant="body2" color="text.secondary">{post.display_name}</Typography>
-                </Box>
-                <Chip size="small" label={statusLabels[post.status]} color={post.status === 'active' ? 'success' : 'default'} />
+                <Stack direction="row" alignItems="center" spacing={1} sx={{ minWidth: 0 }}>
+                    <Box
+                        aria-hidden="true"
+                        sx={{
+                            width: 36,
+                            height: 36,
+                            flexShrink: 0,
+                            display: 'grid',
+                            placeItems: 'center',
+                            borderRadius: 1,
+                            color: isOffer ? '#477553' : '#9A7833',
+                            bgcolor: isOffer ? 'rgba(71,117,83,0.12)' : 'rgba(179,139,61,0.14)',
+                        }}
+                    >
+                        {isOffer ? <DirectionsCarOutlinedIcon fontSize="small" /> : <SearchRoundedIcon fontSize="small" />}
+                    </Box>
+                    <Box sx={{ minWidth: 0 }}>
+                        <Typography fontWeight={700} color={isOffer ? '#396344' : '#73552B'}>
+                            {isOffer ? 'יש מקום ברכב' : 'מחפש/ת טרמפ'}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                            {post.display_name} · {isOffer ? `יוצא/ת מ${post.origin_text}` : `איסוף מ${post.origin_text}`}
+                        </Typography>
+                    </Box>
+                </Stack>
+                <Stack alignItems="flex-end" spacing={0.5} flexShrink={0}>
+                    <Chip size="small" label={statusLabels[post.status]} color={post.status === 'active' ? 'success' : 'default'} />
+                </Stack>
             </Stack>
             <Stack direction="row" spacing={2} useFlexGap flexWrap="wrap" sx={{ mt: 1.25, color: '#66564A' }}>
                 <Typography variant="body2">יציאה: {time}</Typography>
@@ -158,11 +183,12 @@ function RidePostCard({
                     href={post.whatsapp_url}
                     target="_blank"
                     rel="noopener noreferrer"
+                    startIcon={<WhatsAppIcon />}
                     variant="outlined"
                     size="small"
                     sx={{ mt: 1.5, borderColor: '#5B8C62', color: '#3F7047' }}
                 >
-                    {isOffer ? 'בקשת הצטרפות ב־WhatsApp' : 'הצעת נסיעה ב־WhatsApp'}
+                    {isOffer ? 'בקש/י להצטרף' : 'הצע/י נסיעה'}
                 </Button>
             ) : post.status === 'active' ? (
                 <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1.5 }}>
@@ -180,7 +206,7 @@ export default function RideCoordinationModal({ open, onClose, receptionTime }: 
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
-    const [filter, setFilter] = useState<ListFilter>('all');
+    const [filter, setFilter] = useState<ListFilter>('offer');
     const [formOpen, setFormOpen] = useState(false);
     const [editing, setEditing] = useState<RidePost | null>(null);
     const [formKind, setFormKind] = useState<RideKind>('offer');
@@ -282,7 +308,7 @@ export default function RideCoordinationModal({ open, onClose, receptionTime }: 
         }
     };
 
-    const filtered = posts.filter((post) => filter === 'all' || post.kind === filter);
+    const filtered = posts.filter((post) => post.kind === filter);
     const otherPosts = filtered.filter((post) => !post.is_mine && (post.status === 'active' || post.status === 'full'));
     const myPosts = filtered.filter((post) => post.is_mine);
 
@@ -305,9 +331,9 @@ export default function RideCoordinationModal({ open, onClose, receptionTime }: 
             <DialogTitle id="ride-dialog-title" sx={{ pb: 1, pr: 3, pl: 2 }}>
                 <Stack direction="row" alignItems="flex-start" justifyContent="space-between" gap={1}>
                     <Box>
-                        <Typography variant="h6" fontWeight={700} color="#73552B">מתארגנים יחד לנסיעה</Typography>
+                        <Typography variant="h6" fontWeight={700} color="#73552B">מסתדרים יחד לנסיעה</Typography>
                         <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-                            מצאו הצעת נסיעה או שתפו נסיעה משלכם :)
+                            מצאו טרמפ או הציעו בעצמכם :)
                         </Typography>
                     </Box>
                     <IconButton aria-label="סגירה" onClick={handleClose} size="small"><CloseRoundedIcon /></IconButton>
@@ -430,10 +456,9 @@ export default function RideCoordinationModal({ open, onClose, receptionTime }: 
                             </Button>
                         </Stack>
                         <Typography variant="caption" color="text.secondary">
-                            התיאום הסופי נעשה ישירות בין האורחים :)
+                            התיאום הסופי נעשה ישירות בין האורחים
                         </Typography>
-                        <Tabs value={filter} onChange={(_event, value: ListFilter) => setFilter(value)} variant="fullWidth" aria-label="סינון פרסומי נסיעות">
-                            <Tab value="all" label="הכול" />
+                        <Tabs value={filter} onChange={(_event, value: ListFilter) => setFilter(value)} variant="fullWidth" aria-label="סוג פרסומי נסיעות">
                             <Tab value="offer" label="הצעות" />
                             <Tab value="request" label="בקשות" />
                         </Tabs>
@@ -442,14 +467,18 @@ export default function RideCoordinationModal({ open, onClose, receptionTime }: 
                         ) : (
                             <>
                                 <Box>
-                                    <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 1.25 }}>פרסומים של אורחים</Typography>
+                                    <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 1.25 }}>
+                                        {filter === 'offer' ? 'הצעות נסיעה' : 'בקשות לטרמפ'}
+                                    </Typography>
                                     {otherPosts.length ? (
                                         <Stack spacing={1.25}>
                                             {otherPosts.map((post) => <RidePostCard key={post.id} post={post} onEdit={(item) => openForm(item.kind, item)} onStatus={updateStatus} onDelete={deletePost} />)}
                                         </Stack>
                                     ) : error ? null : (
                                         <Typography variant="body2" color="text.secondary" sx={{ py: 1 }}>
-                                            {posts.length === 0 ? 'עדיין אין פרסומים. אפשר להתחיל בהצעה או בבקשה.' : 'אין כרגע תוצאות בסינון הזה.'}
+                                            {filter === 'offer'
+                                                ? 'עדיין אין הצעות נסיעה. אולי יש לך מקום פנוי?'
+                                                : 'עדיין אין בקשות לטרמפ. אפשר לפרסם בקשה משלך.'}
                                         </Typography>
                                     )}
                                 </Box>

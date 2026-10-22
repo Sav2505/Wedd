@@ -146,7 +146,7 @@ function MapButtons({ info }: { info: WeddingInfo }) {
             color: '#fff',
             fontFamily: "'Heebo', sans-serif",
             fontWeight: 600,
-            fontSize: '0.9rem',
+            fontSize: '0.87rem',
             textDecoration: 'none',
             boxShadow: '0 4px 14px rgba(201,168,76,0.35)',
             transition: 'all 0.22s ease',
@@ -154,7 +154,7 @@ function MapButtons({ info }: { info: WeddingInfo }) {
           }}
         >
           <DirectionsCarIcon sx={{ fontSize: 18 }} />
-          ניווט ב-Waze
+          ניווט בWaze
         </Box>
         <Box
           component="a"
@@ -175,7 +175,7 @@ function MapButtons({ info }: { info: WeddingInfo }) {
             color: '#9A7833',
             fontFamily: "'Heebo', sans-serif",
             fontWeight: 600,
-            fontSize: '0.9rem',
+            fontSize: '0.87rem',
             textDecoration: 'none',
             background: 'rgba(255,255,255,0.7)',
             transition: 'all 0.22s ease',
@@ -444,6 +444,8 @@ export default function InfoTab({ demoInfo, hideRegisterCta = false }: Props) {
                 gap: 1.25,
                 flexWrap: 'wrap',
                 p: 1.25,
+                pt: 1.5,
+                pb: 1.5,
                 justifyContent: 'center',
                 borderRadius: 2,
                 border: '1px solid rgba(201,168,76,0.24)',

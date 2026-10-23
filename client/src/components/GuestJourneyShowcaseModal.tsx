@@ -779,7 +779,7 @@ export default function GuestJourneyShowcaseModal({ open, onClose }: Props) {
                                                         fontSize: '1.05rem',
                                                     }}
                                                 >
-                                                    האם תגיעו לחתונה שלנו?
+                                                    האם תגיעו לחתונה שלנו ?
                                                 </Typography>
                                                 <Typography sx={{ textAlign: 'center', color: '#9A7833', mb: 1.6, fontSize: '0.82rem' }}>
                                                     נשמח לדעת כדי שנוכל להיערך בצורה מושלמת

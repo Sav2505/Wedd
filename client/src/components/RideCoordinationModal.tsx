@@ -477,7 +477,7 @@ export default function RideCoordinationModal({ open, onClose, receptionTime }: 
                                     ) : error ? null : (
                                         <Typography variant="body2" color="text.secondary" sx={{ py: 1 }}>
                                             {filter === 'offer'
-                                                ? 'עדיין אין הצעות נסיעה. אולי יש לך מקום פנוי?'
+                                                ? 'עדיין אין הצעות נסיעה. רוצה לפרסם הצעה משלך ?'
                                                 : 'עדיין אין בקשות לטרמפ. אפשר לפרסם בקשה משלך.'}
                                         </Typography>
                                     )}

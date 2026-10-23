@@ -68,7 +68,7 @@ export default function GuestBlessing({ recipient, demo = false }: { recipient: 
                     </Typography>
                 </Box>
                 <Typography sx={{ color: '#806D61', fontSize: '0.85rem', textAlign: 'center', mb: 2 }}>
-                    ברכה אישית לחתן ולכלה, אותה יקראו בהתרגשות אחרי שיתאוששו מהחגיגה
+                    ברכה אישית לחתן ולכלה, אותה יקראו בהתרגשות אחרי שיתאוששו מהאירוע
                 </Typography>
                 {loading ? <Box aria-label="טעינת הברכה" sx={{ py: 1 }}>
                     <Skeleton width="45%" />

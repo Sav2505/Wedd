@@ -86,14 +86,14 @@ export default function DramaticWelcomeScreen({ firstName, ready = true, onCompl
         >
           <Typography
             sx={{
-              mb: { xs: 2, sm: 2.5 },
+              mb: { xs: 2.5, sm: 3 },
               color: 'var(--color-gold-dark)',
               fontSize: { xs: '0.7rem', sm: '0.78rem' },
               fontWeight: 500,
               letterSpacing: '0.18em',
             }}
           >
-            ✦ &nbsp;ערב של אהבה&nbsp; ✦
+            ✦ &nbsp;אירוע של אהבה&nbsp; ✦
           </Typography>
 
           <motion.div
@@ -122,7 +122,7 @@ export default function DramaticWelcomeScreen({ firstName, ready = true, onCompl
                 color: 'var(--color-gold-dark)',
               }}
             >
-              ברוך/ה הבא/ה לחתונה שלנו
+              ברוך/ה הבא/ה לחתונה שלנו !
             </Typography>
           </motion.div>
 
@@ -142,21 +142,20 @@ export default function DramaticWelcomeScreen({ firstName, ready = true, onCompl
                 transform: 'translate(-50%, -50%)',
                 px: 1,
                 color: 'var(--color-gold-dark)',
-                backgroundColor: '#F5EDD9',
                 fontSize: '0.8rem',
               },
             }}
           />
 
           <Typography sx={{ color: 'var(--color-brown-mid)', fontSize: { xs: '0.98rem', sm: '1.08rem' }, fontWeight: 500 }}>
-            אנחנו שמחים ונרגשים לחגוג איתך את היום המיוחד בחיינו
+            אנחנו נרגשים לחגוג איתך את היום המיוחד בחיינו
           </Typography>
 
-          <Box sx={{ mt: { xs: 4, sm: 5 }, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1.2 }}>
+          <Box sx={{ mt: { xs: 3, sm: 4 }, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1.2 }}>
             <Box
               sx={{
                 width: 5,
-                height: 5,
+                height: 4,
                 borderRadius: '50%',
                 bgcolor: 'var(--color-gold-dark)',
                 animation: 'welcomePulse 1.4s ease-in-out infinite',
@@ -166,8 +165,8 @@ export default function DramaticWelcomeScreen({ firstName, ready = true, onCompl
                 },
               }}
             />
-            <Typography sx={{ color: 'var(--color-brown-mid)', fontSize: { xs: '0.78rem', sm: '0.86rem' }, fontWeight: 500 }}>
-              מיד תועבר/י לאפליקציה
+            <Typography sx={{ color: 'var(--color-brown-mid)', fontSize: { xs: '0.86rem', sm: '0.92rem' }, fontWeight: 500 }}>
+              מיד תועבר/י לאפליקציה..
             </Typography>
           </Box>
         </Box>

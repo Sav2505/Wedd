@@ -45,9 +45,9 @@ export default function DramaticWelcomeScreen({ firstName, ready = true, onCompl
         px: 2,
         color: 'var(--color-brown)',
         background:
-          'radial-gradient(ellipse at center, rgba(224,201,122,0.14) 0%, transparent 68%),' +
+          'radial-gradient(ellipse at 78% 22%, rgba(224,201,122,0.17) 0%, transparent 56%),' +
           'repeating-linear-gradient(115deg, rgba(92,61,46,0.025) 0px, rgba(92,61,46,0.025) 1px, transparent 1px, transparent 5px),' +
-          'linear-gradient(145deg, #FAF7F2 0%, #F5EDD9 52%, #FBF8F3 100%)',
+          'linear-gradient(130deg, #FAF7F2 0%, #F5EDD9 38%, #EDE0BF 68%, #FBF8F3 100%)',
       }}
     >
       <FallingPetals />

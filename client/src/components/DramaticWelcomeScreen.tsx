@@ -45,9 +45,9 @@ export default function DramaticWelcomeScreen({ firstName, ready = true, onCompl
         px: 2,
         color: 'var(--color-brown)',
         background:
-          'radial-gradient(ellipse at center, rgba(201,168,76,0.22) 0%, transparent 68%),' +
+          'radial-gradient(ellipse at center, rgba(224,201,122,0.14) 0%, transparent 68%),' +
           'repeating-linear-gradient(115deg, rgba(92,61,46,0.025) 0px, rgba(92,61,46,0.025) 1px, transparent 1px, transparent 5px),' +
-          'linear-gradient(145deg, #F5EDD9 0%, #E8D49A 52%, #FAF7F2 100%)',
+          'linear-gradient(145deg, #FAF7F2 0%, #F5EDD9 52%, #FBF8F3 100%)',
       }}
     >
       <FallingPetals />
@@ -148,7 +148,7 @@ export default function DramaticWelcomeScreen({ firstName, ready = true, onCompl
           />
 
           <Typography sx={{ color: 'var(--color-brown-mid)', fontSize: { xs: '0.98rem', sm: '1.08rem' }, fontWeight: 500 }}>
-            אנחנו נרגשים לחגוג איתך את היום המיוחד בחיינו
+            אנו נרגשים לחגוג איתך את היום המיוחד בחיינו
           </Typography>
 
           <Box sx={{ mt: { xs: 3, sm: 4 }, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1.2 }}>

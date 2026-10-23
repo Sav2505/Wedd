@@ -29,12 +29,14 @@ import LockOpenOutlinedIcon from '@mui/icons-material/LockOpenOutlined';
 import DraftsOutlinedIcon from '@mui/icons-material/DraftsOutlined';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import BlockOutlinedIcon from '@mui/icons-material/BlockOutlined';
+import WhatsAppIcon from '@mui/icons-material/WhatsApp';
 import {
     listWeddingRequests,
     openWedding,
     sendFirstContactMail,
 } from '../../services/weddingRequestsAdmin.service';
-import { WeddingRequest } from '../../types/domain';
+import { listAdminGuestCustomMessages, reviewGuestCustomMessage } from '../../services/guestCustomMessages.service';
+import { GuestCustomMessageRequest, WeddingRequest } from '../../types/domain';
 
 function formatDate(value: string): string {
     const date = new Date(value.includes('T') ? value : `${value}T12:00:00`);
@@ -56,8 +58,25 @@ function formatOptionalDate(value?: string | null): string {
     return formatDate(value);
 }
 
+function guestMessageStatus(status: GuestCustomMessageRequest['status']): { label: string; color: 'default' | 'warning' | 'success' | 'error' } {
+    if (status === 'pending_approval') return { label: 'ממתינה לאישור', color: 'warning' };
+    if (status === 'approved') return { label: 'אושרה', color: 'success' };
+    if (status === 'rejected') return { label: 'נדחתה', color: 'error' };
+    if (status === 'sending') return { label: 'נשלחת', color: 'warning' };
+    if (status === 'sent') return { label: 'נשלחה', color: 'success' };
+    if (status === 'sent_with_errors') return { label: 'נשלחה חלקית', color: 'error' };
+    return { label: 'פג תוקף', color: 'default' };
+}
+
+function guestMessageAudience(audience: GuestCustomMessageRequest['audience']): string {
+    if (audience === 'COMING') return 'אישרו הגעה';
+    if (audience === 'PENDING') return 'טרם אישרו';
+    return 'כולם';
+}
+
 export default function WeddingRequestsAdminPage() {
     const [items, setItems] = useState<WeddingRequest[]>([]);
+    const [guestMessages, setGuestMessages] = useState<GuestCustomMessageRequest[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [message, setMessage] = useState<string | null>(null);
@@ -65,6 +84,9 @@ export default function WeddingRequestsAdminPage() {
     const [openingId, setOpeningId] = useState<number | null>(null);
     const [openDialog, setOpenDialog] = useState<{ requestId: number; title: string } | null>(null);
     const [note, setNote] = useState('');
+    const [reviewDialog, setReviewDialog] = useState<{ id: string; decision: 'approved' | 'rejected' } | null>(null);
+    const [reviewNote, setReviewNote] = useState('');
+    const [reviewingId, setReviewingId] = useState<string | null>(null);
 
     const sortedItems = useMemo(() => items, [items]);
 
@@ -72,8 +94,12 @@ export default function WeddingRequestsAdminPage() {
         try {
             setLoading(true);
             setError(null);
-            const rows = await listWeddingRequests();
+            const [rows, messageRows] = await Promise.all([
+                listWeddingRequests(),
+                listAdminGuestCustomMessages(),
+            ]);
             setItems(rows);
+            setGuestMessages(messageRows);
         } catch (err: any) {
             setError(err.message ?? 'שגיאה בטעינת הבקשות');
         } finally {
@@ -122,6 +148,31 @@ export default function WeddingRequestsAdminPage() {
         }
     }
 
+    async function onReviewGuestMessage() {
+        if (!reviewDialog) return;
+        try {
+            setError(null);
+            setReviewingId(reviewDialog.id);
+            const result = await reviewGuestCustomMessage(
+                reviewDialog.id,
+                reviewDialog.decision,
+                reviewNote.trim() || undefined,
+            );
+            setGuestMessages((current) => current.map((item) => (
+                item.id === reviewDialog.id ? { ...item, ...result.request } : item
+            )));
+            setMessage(reviewDialog.decision === 'approved'
+                ? result.couple_notification_sent ? 'הבקשה אושרה ונשלח מייל לזוג.' : 'הבקשה אושרה, אך מייל לזוג לא נשלח.'
+                : 'הבקשה נדחתה וההערה נשמרה.');
+            setReviewDialog(null);
+            setReviewNote('');
+        } catch (err: any) {
+            setError(err.message ?? 'עדכון בקשת ההודעה נכשל');
+        } finally {
+            setReviewingId(null);
+        }
+    }
+
     return (
         <Box sx={{ pb: 6, px: { xs: 1, sm: 2 }, pt: 1, maxWidth: 1400, mx: 'auto', width: '100%', direction: 'ltr' }}>
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1.5, mb: 2.5, mt: 1, flexWrap: 'wrap' }}>
@@ -151,6 +202,82 @@ export default function WeddingRequestsAdminPage() {
                 <Alert severity="success" sx={{ mb: 1.5 }} onClose={() => setMessage(null)}>
                     {message}
                 </Alert>
+            )}
+
+            {!loading && (
+                <Box sx={{ mb: 2.5 }}>
+                    <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1 }}>
+                        <WhatsAppIcon sx={{ color: '#168A43' }} />
+                        <Typography variant="h6" sx={{ fontFamily: "'Frank Ruhl Libre', serif", fontWeight: 700 }}>
+                            בקשות הודעות לאורחים
+                        </Typography>
+                        <Chip size="small" label={guestMessages.filter((item) => item.status === 'pending_approval').length} color="warning" />
+                    </Stack>
+                    {guestMessages.length === 0 ? (
+                        <Paper sx={{ p: 2, borderRadius: 1.5, border: '1px solid rgba(201,168,76,0.25)' }}>
+                            <Typography variant="body2" color="text.secondary">אין בקשות הודעות לאורחים.</Typography>
+                        </Paper>
+                    ) : (
+                        <TableContainer component={Paper} sx={{ borderRadius: 1.5, overflowX: 'auto', border: '1px solid rgba(201,168,76,0.25)' }}>
+                            <Table size="small" sx={{ minWidth: 1150 }}>
+                                <TableHead>
+                                    <TableRow>
+                                        <TableCell sx={{ fontWeight: 700, whiteSpace: 'nowrap' }}>הזוג</TableCell>
+                                        <TableCell sx={{ fontWeight: 700, whiteSpace: 'nowrap' }}>קהל</TableCell>
+                                        <TableCell sx={{ fontWeight: 700, minWidth: 280 }}>תוכן ההודעה</TableCell>
+                                        <TableCell sx={{ fontWeight: 700, whiteSpace: 'nowrap' }}>מועד שליחה</TableCell>
+                                        <TableCell sx={{ fontWeight: 700, whiteSpace: 'nowrap' }}>סטטוס</TableCell>
+                                        <TableCell sx={{ fontWeight: 700, whiteSpace: 'nowrap' }}>מסירה</TableCell>
+                                        <TableCell sx={{ fontWeight: 700, whiteSpace: 'nowrap' }}>הערת אדמין</TableCell>
+                                        <TableCell sx={{ fontWeight: 700, whiteSpace: 'nowrap' }}>פעולות</TableCell>
+                                    </TableRow>
+                                </TableHead>
+                                <TableBody>
+                                    {guestMessages.map((item) => {
+                                        const status = guestMessageStatus(item.status);
+                                        const busy = reviewingId === item.id;
+                                        return (
+                                            <TableRow key={item.id} hover>
+                                                <TableCell sx={{ whiteSpace: 'nowrap' }}>{item.bride_name} ו{item.groom_name}</TableCell>
+                                                <TableCell sx={{ whiteSpace: 'nowrap' }}>{guestMessageAudience(item.audience)}</TableCell>
+                                                <TableCell>
+                                                    <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap', maxHeight: 120, overflowY: 'auto' }}>
+                                                        {item.message_body}
+                                                    </Typography>
+                                                </TableCell>
+                                                <TableCell sx={{ whiteSpace: 'nowrap' }}>{formatDate(item.scheduled_at)}</TableCell>
+                                                <TableCell><Chip size="small" label={status.label} color={status.color} /></TableCell>
+                                                <TableCell sx={{ whiteSpace: 'nowrap' }}>
+                                                    {item.sent_count ?? 0}/{item.recipient_count ?? 0}
+                                                    {(item.failed_count ?? 0) > 0 ? ` · נכשלו ${item.failed_count}` : ''}
+                                                </TableCell>
+                                                <TableCell sx={{ maxWidth: 180, whiteSpace: 'pre-wrap' }}>{item.admin_note || '—'}</TableCell>
+                                                <TableCell>
+                                                    {item.status === 'pending_approval' ? (
+                                                        <Stack direction="row" spacing={0.5}>
+                                                            <Tooltip title="אישור הבקשה">
+                                                                <span><IconButton size="small" color="success" disabled={busy} onClick={() => {
+                                                                    setReviewNote('');
+                                                                    setReviewDialog({ id: item.id, decision: 'approved' });
+                                                                }}><CheckCircleOutlineIcon fontSize="small" /></IconButton></span>
+                                                            </Tooltip>
+                                                            <Tooltip title="דחייה והוספת הערה">
+                                                                <span><IconButton size="small" color="error" disabled={busy} onClick={() => {
+                                                                    setReviewNote('');
+                                                                    setReviewDialog({ id: item.id, decision: 'rejected' });
+                                                                }}><BlockOutlinedIcon fontSize="small" /></IconButton></span>
+                                                            </Tooltip>
+                                                        </Stack>
+                                                    ) : '—'}
+                                                </TableCell>
+                                            </TableRow>
+                                        );
+                                    })}
+                                </TableBody>
+                            </Table>
+                        </TableContainer>
+                    )}
+                </Box>
             )}
 
             {loading ? (
@@ -314,6 +441,36 @@ export default function WeddingRequestsAdminPage() {
                     <Button onClick={() => setOpenDialog(null)}>ביטול</Button>
                     <Button variant="contained" onClick={onConfirmOpenWedding} disabled={openingId !== null}>
                         פתח חתונה
+                    </Button>
+                </DialogActions>
+            </Dialog>
+            <Dialog open={Boolean(reviewDialog)} onClose={() => reviewingId ? undefined : setReviewDialog(null)} fullWidth maxWidth="sm">
+                <DialogTitle>{reviewDialog?.decision === 'approved' ? 'אישור הודעה לאורחים' : 'דחיית בקשה והערה לזוג'}</DialogTitle>
+                <DialogContent>
+                    {reviewDialog?.decision === 'rejected' ? (
+                        <TextField
+                            autoFocus
+                            fullWidth
+                            multiline
+                            minRows={3}
+                            label="הערה שתוצג לזוג"
+                            value={reviewNote}
+                            onChange={(event) => setReviewNote(event.target.value)}
+                            sx={{ mt: 1 }}
+                        />
+                    ) : (
+                        <Typography sx={{ mt: 1 }}>ההודעה תישלח במועד שנבחר, כל עוד הסכמת WhatsApp של הזוג בתוקף.</Typography>
+                    )}
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setReviewDialog(null)} disabled={reviewingId !== null}>ביטול</Button>
+                    <Button
+                        variant="contained"
+                        color={reviewDialog?.decision === 'approved' ? 'success' : 'error'}
+                        onClick={onReviewGuestMessage}
+                        disabled={reviewingId !== null}
+                    >
+                        {reviewingId ? <CircularProgress size={18} color="inherit" /> : reviewDialog?.decision === 'approved' ? 'אישור' : 'דחיית בקשה'}
                     </Button>
                 </DialogActions>
             </Dialog>

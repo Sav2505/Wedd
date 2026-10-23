@@ -15,6 +15,7 @@ import tasksRoutes from './routes/tasks.routes';
 import requestRoutes from './routes/weddingRequest.routes';
 import whatsappRoutes from './routes/whatsapp.routes';
 import weddingMessageScheduleRoutes from './routes/weddingMessageSchedule.routes';
+import guestCustomMessageRoutes from './routes/guestCustomMessage.routes';
 import { pool } from './db/pool';
 import { initWhatsappScheduler } from './jobs/whatsapp-scheduler.job';
 import { initWhatsappReconciliationJob } from './jobs/whatsapp-reconciliation.job';
@@ -23,6 +24,7 @@ import mailerRoutes from './routes/mailer.routes';
 import { initWhatsappSchedulePreviewJob } from './jobs/whatsapp-schedule-preview-job';
 import { initWhatsappScheduleNotificationJob } from './jobs/whatsapp-schedule-notification.job';
 import { initRideExpirationJob } from './jobs/ride-expiration.job';
+import { initGuestCustomMessageScheduler } from './jobs/guest-custom-message.job';
 
 dotenv.config();
 
@@ -97,6 +99,7 @@ app.use('/event-map', eventMapRoutes);
 app.use('/tasks', tasksRoutes);
 app.use('/wedding-requests', requestRoutes);
 app.use('/weddings', weddingMessageScheduleRoutes);
+app.use('/weddings', guestCustomMessageRoutes);
 
 // API
 app.use('/whatsapp', whatsappRoutes);
@@ -133,6 +136,7 @@ app.listen(PORT, () => {
   initWhatsappSchedulePreviewJob();
   initWhatsappScheduleNotificationJob();
   initRideExpirationJob();
+  initGuestCustomMessageScheduler();
 
   // Tests
   // runWhatsappSchedulerOnce().catch(console.error);

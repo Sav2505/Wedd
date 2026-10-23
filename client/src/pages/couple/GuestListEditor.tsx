@@ -36,7 +36,7 @@ import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import RemoveCircleOutlineIcon from '@mui/icons-material/RemoveCircleOutline';
 import PeopleAltIcon from '@mui/icons-material/PeopleAlt';
 import LinkIcon from '@mui/icons-material/Link';
-// import WhatsAppIcon from '@mui/icons-material/WhatsApp';
+import WhatsAppIcon from '@mui/icons-material/WhatsApp';
 import DownloadIcon from '@mui/icons-material/Download';
 import UploadFileIcon from '@mui/icons-material/UploadFile';
 import CloseIcon from '@mui/icons-material/Close';
@@ -44,6 +44,7 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import { exportGuestsToExcel } from '../../utils/exportGuestsToExcel';
 import { buildGuestUrl } from '../../utils/guestUrl';
 import WhatsAppScheduleModal from '../../components/WhatsAppScheduleModal';
+import GuestCustomMessageModal from '../../components/GuestCustomMessageModal';
 import ExcelImportModal from '../../components/ExcelImportModal';
 import ScheduleSendIcon from '@mui/icons-material/ScheduleSend';
 import { getEffectivePartySize, getEffectivePlusCount, getInvitedPartySize } from '../../utils/effectiveAttendance';
@@ -225,7 +226,9 @@ export default function GuestListEditor() {
   const [saving, setSaving] = useState(false);
   const { info, refetch: refetchWeddingInfo } = useWeddingInfo();
   const [whatsappScheduleOpen, setWhatsappScheduleOpen] = useState(false);
+  const [guestCustomMessageOpen, setGuestCustomMessageOpen] = useState(false);
   const [whatsappDeclarationOpen, setWhatsappDeclarationOpen] = useState(false);
+  const [pendingWhatsappAction, setPendingWhatsappAction] = useState<'schedule' | 'custom' | null>(null);
   const [whatsappDeclarationChecked, setWhatsappDeclarationChecked] = useState(false);
   const [savingWhatsappDeclaration, setSavingWhatsappDeclaration] = useState(false);
   const [importModalOpen, setImportModalOpen] = useState(false);
@@ -665,7 +668,12 @@ export default function GuestListEditor() {
       refetchWeddingInfo();
       setWhatsappDeclarationOpen(false);
       setWhatsappDeclarationChecked(false);
-      setWhatsappScheduleOpen(true);
+      if (pendingWhatsappAction === 'custom') {
+        setGuestCustomMessageOpen(true);
+      } else {
+        setWhatsappScheduleOpen(true);
+      }
+      setPendingWhatsappAction(null);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'שמירת אישור WhatsApp נכשלה');
     } finally {
@@ -820,30 +828,55 @@ export default function GuestListEditor() {
         </Stack>
 
         {/* שורה 5: תזמון הודעות לאורחים - שורה שלמה בפני עצמו */}
-        <Button
-          data-tour-anchor="guests-whatsapp-button"
-          fullWidth
-          variant="contained"
-          startIcon={<ScheduleSendIcon />}
-          onClick={() => {
-            if (isWhatsappDeclarationConfirmed) {
-              setWhatsappScheduleOpen(true);
-              return;
-            }
-            setWhatsappDeclarationOpen(true);
-          }}
-          sx={{
-            mt: 1.25,
-            background: 'linear-gradient(135deg, #25D366, #1f9f51)',
-            color: '#fff',
-            fontWeight: 700,
-            fontSize: { xs: '12px', sm: '14px' },
-            boxShadow: '0 4px 12px rgba(37,211,102,0.35)',
-            '&:hover': { background: 'linear-gradient(135deg, #22c05f, #1a8a46)' },
-          }}
-        >
-          תזמון הודעות לאורחים
-        </Button>
+        <Stack direction="row" spacing={0.75} mt={1.25}>
+          <Button
+            data-tour-anchor="guests-whatsapp-button"
+            fullWidth
+            variant="contained"
+            startIcon={<ScheduleSendIcon />}
+            onClick={() => {
+              if (isWhatsappDeclarationConfirmed) {
+                setWhatsappScheduleOpen(true);
+                return;
+              }
+              setPendingWhatsappAction('schedule');
+              setWhatsappDeclarationOpen(true);
+            }}
+            sx={{
+              background: 'linear-gradient(135deg, #25D366, #1f9f51)',
+              color: '#fff',
+              fontWeight: 700,
+              fontSize: { xs: '12px', sm: '14px' },
+              boxShadow: '0 4px 12px rgba(37,211,102,0.35)',
+              '&:hover': { background: 'linear-gradient(135deg, #22c05f, #1a8a46)' },
+            }}
+          >
+            תזמון הודעות לאורחים
+          </Button>
+          <Tooltip title="בקשת הודעת WhatsApp יזומה">
+            <IconButton
+              aria-label="בקשת הודעת WhatsApp יזומה"
+              onClick={() => {
+                if (isWhatsappDeclarationConfirmed) {
+                  setGuestCustomMessageOpen(true);
+                  return;
+                }
+                setPendingWhatsappAction('custom');
+                setWhatsappDeclarationOpen(true);
+              }}
+              sx={{
+                width: 44,
+                minWidth: 44,
+                border: '1px solid rgba(37,211,102,0.55)',
+                borderRadius: 1,
+                color: '#168A43',
+                '&:hover': { bgcolor: 'rgba(37,211,102,0.1)' },
+              }}
+            >
+              <WhatsAppIcon />
+            </IconButton>
+          </Tooltip>
+        </Stack>
         {!isWhatsappDeclarationConfirmed && (
           <Typography variant="caption" sx={{ display: 'block', mt: 0.75, color: '#8A7565' }}>
             לפני השימוש במנגנון הודעות אישורי ההגעה, יש לתת את הסכמתכם על השימוש.
@@ -1316,6 +1349,12 @@ export default function GuestListEditor() {
             setError(e instanceof Error ? e.message : 'שמירת הגדרות WhatsApp נכשלה');
           }
         }}
+      />
+      <GuestCustomMessageModal
+        open={guestCustomMessageOpen}
+        weddingId={info?.id ?? -1}
+        isDeclarationConfirmed={isWhatsappDeclarationConfirmed}
+        onClose={() => setGuestCustomMessageOpen(false)}
       />
       <ExcelImportModal
         open={importModalOpen}

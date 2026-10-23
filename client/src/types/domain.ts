@@ -89,6 +89,34 @@ export interface WeddingMessageSchedule {
   updated_at: string;
 }
 
+export type GuestCustomMessageAudience = 'COMING' | 'PENDING' | 'ALL';
+export type GuestCustomMessageStatus =
+  | 'pending_approval'
+  | 'approved'
+  | 'rejected'
+  | 'sending'
+  | 'sent'
+  | 'sent_with_errors'
+  | 'expired';
+
+export interface GuestCustomMessageRequest {
+  id: string;
+  wedding_id: number;
+  audience: GuestCustomMessageAudience;
+  message_body: string;
+  scheduled_at: string;
+  status: GuestCustomMessageStatus;
+  admin_note: string | null;
+  submitted_at: string;
+  decided_at: string | null;
+  sent_at: string | null;
+  bride_name?: string;
+  groom_name?: string;
+  recipient_count?: number;
+  sent_count?: number;
+  failed_count?: number;
+}
+
 export interface ApiResponse<T = undefined> {
   success: boolean;
   data?: T;

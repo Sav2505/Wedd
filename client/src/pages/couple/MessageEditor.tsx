@@ -169,13 +169,13 @@ const MessageEditor = forwardRef<MessageEditorHandle>(function MessageEditor(_, 
             מאיתנו אליכם
           </Typography>
           <Typography variant="body2" sx={{ color: '#A08070', mt: 0.5 }}>
-            כתבו הודעה אישית לאורחים שלכם
+            כתבו הקדשה אישית לאורחים שלכם
           </Typography>
         </Box>
 
         <TextField
           data-tour-anchor="message-textarea"
-          label="הודעה לאורחים"
+          label="הקדשה לאורחים"
           fullWidth
           multiline
           rows={7}

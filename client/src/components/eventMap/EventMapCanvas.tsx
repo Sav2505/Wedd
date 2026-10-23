@@ -4,7 +4,7 @@ import { Box, IconButton, Stack, Tooltip } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
 import FitScreenIcon from '@mui/icons-material/FitScreen';
-import { MapContainer, ImageOverlay, Marker, Polyline, Rectangle, Tooltip as MapTooltip, useMap, useMapEvents } from 'react-leaflet';
+import { MapContainer, ImageOverlay, Marker, Polyline, Rectangle, useMap, useMapEvents } from 'react-leaflet';
 import { CRS, divIcon, type LatLngBoundsExpression, type LeafletKeyboardEvent } from 'leaflet';
 import type { EventMapDocument, MapElement, MapPoint } from '../../types/eventMap';
 import { elementCenter, fromMapPosition, moveMapElement, toMapPosition } from '../../utils/eventMap';
@@ -65,7 +65,7 @@ function MapLayers({ document, background, selectedId, editable, placing, onSele
       key={element.id} bounds={element.corners.map(point => toMapPosition(point, document)) as [[number, number], [number, number]]}
       bubblingMouseEvents={false} pathOptions={{ color: element.color, weight: selectedId === element.id ? 5 : 3, dashArray: '4 4', fillColor: `url(#${patternId})`, fillOpacity: 0.65 }}
       eventHandlers={{ click: () => { if (!placing) onSelect(element.id); } }}
-    ><MapTooltip permanent direction="center" className="event-map-label">{element.label} · אזור</MapTooltip></Rectangle>)}
+    />)}
     {document.elements.filter(element => element.kind === 'path').map(element => element.kind === 'path' && <Polyline
       key={element.id} positions={element.points.map(point => toMapPosition(point, document))} bubblingMouseEvents={false}
       pathOptions={{ color: element.color, weight: selectedId === element.id ? 8 : 6, dashArray: element.dashed ? '12 8' : undefined, lineCap: 'round' }}

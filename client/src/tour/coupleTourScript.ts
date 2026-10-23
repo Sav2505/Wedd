@@ -48,7 +48,7 @@ export const COUPLE_TOUR_STEPS: CoupleTourStep[] = [
     id: 'message-main',
     tabIndex: 1,
     anchorId: 'message-textarea',
-    title: 'הודעה לאורחים',
+    title: 'הקדשה לאורחים',
     body: 'כאן כותבים הודעה שכל האורחים יראו דרך הלינק האישי שלהם. מומלץ טקסט קצר, חם וברור.',
   },
   {

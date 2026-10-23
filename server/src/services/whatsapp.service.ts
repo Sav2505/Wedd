@@ -8,7 +8,8 @@ export type SupportedWeddingTemplate =
     | 'wedding_confirmation'
     | 'wedding_reminder'
     | 'wedding_day_before'
-    | 'wedding_post_thanks';
+    | 'wedding_post_thanks'
+    | 'wedding_custom_message';
 
 /**
  * Tab index mapping for guest UI:
@@ -23,6 +24,7 @@ export const TEMPLATE_TO_TAB_INDEX: Record<SupportedWeddingTemplate, number> = {
     'wedding_reminder': 4,           // סטטוס הגעה
     'wedding_day_before': 0,         // פרטי האירוע
     'wedding_post_thanks': 2,        // גלריה
+    'wedding_custom_message': 3,     // מאיתנו אליכם
 };
 
 export interface SendTemplatePayload {
@@ -232,6 +234,7 @@ export interface BuildTemplateComponentsInput {
     venueAddress: string;
     guestUrl: string;
     invitationImageMediaId?: string;
+    customMessage?: string;
     /** Hebrew label for {{2}} in wedding_day_before, e.g. 'מחר', 'מחרתיים', 'בעוד שלושה ימים' */
     whenLabel?: string;
 }
@@ -264,6 +267,21 @@ export function buildTemplateComponents(input: BuildTemplateComponentsInput): un
     };
 
     switch (input.templateName) {
+        case 'wedding_custom_message':
+            if (!input.customMessage?.trim()) {
+                throw new Error('Custom WhatsApp template requires a message body');
+            }
+            return [
+                {
+                    type: 'body',
+                    parameters: [
+                        { type: 'text', text: input.guestFirstName },
+                        { type: 'text', text: input.weddingDisplayName },
+                        { type: 'text', text: input.customMessage.trim() },
+                    ],
+                },
+            ];
+
         case 'wedding_confirmation':
             return [
                 {

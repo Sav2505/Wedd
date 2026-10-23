@@ -33,6 +33,16 @@ ALTER TABLE guests ADD COLUMN IF NOT EXISTS blessing_updated_at TIMESTAMPTZ;
 
 Each guest has one editable blessing (up to 2,000 characters). The couple can read blessings only from their own wedding. Do not rerun the full migration or seed just to add these columns.
 
+## Guest Custom WhatsApp Messages (Existing Database)
+
+Before deploying custom, admin-approved WhatsApp messages, run the standalone migration:
+
+```bash
+psql -U <user> -d <database> -f database/migration_021_guest_custom_messages.sql
+```
+
+The server sends administrator notifications to `WEDFLOW_ADMIN_MAIL`, falling back to `EMAIL_ADMIN`. The minute-level scheduler can be disabled with `GUEST_CUSTOM_MESSAGE_SCHEDULER_ENABLED=false`.
+
 ## Guest Meal Counts (Existing Database)
 
 Before deploying the per-meal RSVP counts, run the standalone migration against your existing database:

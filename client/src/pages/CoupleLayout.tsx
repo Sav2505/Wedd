@@ -41,7 +41,7 @@ function getFirstName(fullName: string): string {
 
 const BASE_TABS = [
   { label: 'פרטי האירוע', anchorId: 'tab-event-info', icon: <EditCalendarOutlinedIcon sx={{ fontSize: 22 }} /> },
-  { label: 'הודעה לאורחים', anchorId: 'tab-message', icon: <FavoriteBorderIcon sx={{ fontSize: 22 }} /> },
+  { label: 'הקדשה לאורחים', anchorId: 'tab-message', icon: <FavoriteBorderIcon sx={{ fontSize: 22 }} /> },
   { label: 'מעקב משימות', anchorId: 'tab-tasks', icon: <AssignmentOutlinedIcon sx={{ fontSize: 22 }} /> },
   { label: 'אורחים והזמנות', anchorId: 'tab-guests', icon: <Groups2Icon sx={{ fontSize: 22 }} /> },
   { label: 'הושבה', anchorId: 'tab-seating', icon: <TableBarIcon sx={{ fontSize: 22 }} /> },

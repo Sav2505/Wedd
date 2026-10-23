@@ -162,7 +162,7 @@ const EventMapEditor = forwardRef<EventMapEditorHandle>(function EventMapEditor(
         <Box component="fieldset" disabled={busy} sx={{ m: 0, p: 0, border: 0, minWidth: 0, '&:disabled': { opacity: 0.65 } }}>
             <Stack direction="row" gap={1} flexWrap="wrap" sx={{ mb: 2 }}>
                 <Button component="label" startIcon={<UploadIcon />} variant="outlined">{document.hasBackground ? 'החלפת רקע' : 'העלאת רקע'}<input hidden type="file" accept="image/jpeg,image/png,image/webp" disabled={busy} onChange={event => void chooseBackground(event.currentTarget)} /></Button>
-                {document.hasBackground && <Tooltip title="מחיקת רקע"><IconButton aria-label="מחיקת רקע" onClick={() => setConfirmation({ title: 'למחוק את הרקע מהטיוטה? האלמנטים יישארו', action: () => { setDocument(current => ({ ...current, hasBackground: false })); setBackground(null); setBackgroundFailed(false); setFile(null); setBackgroundAction('remove'); } })}><DeleteIcon /></IconButton></Tooltip>}
+                {document.hasBackground && <Button startIcon={<DeleteIcon />} variant="outlined" color="error" onClick={() => setConfirmation({ title: 'למחוק את הרקע מהטיוטה? האלמנטים יישארו', action: () => { setDocument(current => ({ ...current, hasBackground: false })); setBackground(null); setBackgroundFailed(false); setFile(null); setBackgroundAction('remove'); } })}>מחיקת רקע</Button>}
                 <Button startIcon={<SaveIcon />} variant="contained" disabled={!isDirty || busy || conflict} onClick={() => void persist()}>שמירה</Button>
                 <Button startIcon={<PreviewIcon />} onClick={() => setPreview(true)}>תצוגה מקדימה</Button>
                 {saved.publishedRevision === null
@@ -176,7 +176,7 @@ const EventMapEditor = forwardRef<EventMapEditorHandle>(function EventMapEditor(
                     <ToggleButton value="path" aria-label="הוספת מסלול" disabled={document.elements.length >= 200}><RouteIcon sx={{ mr: 0.5 }} />מסלול</ToggleButton>
                     <ToggleButton value="area" aria-label="הוספת אזור" disabled={document.elements.length >= 200}><CropSquareIcon sx={{ mr: 0.5 }} />אזור</ToggleButton>
                 </ToggleButtonGroup>
-                <TextField select size="small" label="סוג אלמנט חדש" value={category} onChange={event => setCategory(event.target.value as MapCategory)} sx={{ minWidth: 155 }}>
+                <TextField select size="small" label="סוג אלמנט חדש" value={category} onChange={event => setCategory(event.target.value as MapCategory)} sx={{ minWidth: 155, mt: 2 }}>
                     {Object.entries(mapCategoryLabels).map(([value, label]) => <MenuItem key={value} value={value}>{label}</MenuItem>)}
                 </TextField>
             </Stack>

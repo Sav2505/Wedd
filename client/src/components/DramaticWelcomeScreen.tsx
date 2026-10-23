@@ -43,11 +43,11 @@ export default function DramaticWelcomeScreen({ firstName, ready = true, onCompl
         alignItems: 'center',
         justifyContent: 'center',
         px: 2,
-        color: 'var(--color-ivory)',
+        color: 'var(--color-brown)',
         background:
-          'radial-gradient(ellipse at center, rgba(201,168,76,0.16) 0%, transparent 68%),' +
-          'repeating-linear-gradient(115deg, rgba(255,255,255,0.012) 0px, rgba(255,255,255,0.012) 1px, transparent 1px, transparent 5px),' +
-          'linear-gradient(145deg, #332D1B 0%, #5A4D2C 52%, #302A1A 100%)',
+          'radial-gradient(ellipse at center, rgba(201,168,76,0.22) 0%, transparent 68%),' +
+          'repeating-linear-gradient(115deg, rgba(92,61,46,0.025) 0px, rgba(92,61,46,0.025) 1px, transparent 1px, transparent 5px),' +
+          'linear-gradient(145deg, #F5EDD9 0%, #E8D49A 52%, #FAF7F2 100%)',
       }}
     >
       <FallingPetals />
@@ -56,13 +56,13 @@ export default function DramaticWelcomeScreen({ firstName, ready = true, onCompl
         sx={{
           position: 'absolute',
           inset: { xs: 12, sm: 22 },
-          border: '1px solid rgba(201,168,76,0.3)',
+          border: '1px solid rgba(154,120,51,0.45)',
           pointerEvents: 'none',
           '&::before': {
             content: '""',
             position: 'absolute',
             inset: 7,
-            border: '1px solid rgba(201,168,76,0.14)',
+            border: '1px solid rgba(154,120,51,0.2)',
           },
         }}
       />
@@ -87,7 +87,7 @@ export default function DramaticWelcomeScreen({ firstName, ready = true, onCompl
           <Typography
             sx={{
               mb: { xs: 2, sm: 2.5 },
-              color: 'var(--color-gold-light)',
+              color: 'var(--color-gold-dark)',
               fontSize: { xs: '0.7rem', sm: '0.78rem' },
               fontWeight: 500,
               letterSpacing: '0.18em',
@@ -106,7 +106,7 @@ export default function DramaticWelcomeScreen({ firstName, ready = true, onCompl
                 fontFamily: "'Frank Ruhl Libre', serif",
                 fontSize: { xs: '2.6rem', sm: '4rem' },
                 fontWeight: 500,
-                color: 'var(--color-ivory)',
+                color: 'var(--color-brown)',
                 lineHeight: 1.12,
               }}
             >
@@ -119,7 +119,7 @@ export default function DramaticWelcomeScreen({ firstName, ready = true, onCompl
                 mt: { xs: 1, sm: 1.5 },
                 fontSize: { xs: '1.35rem', sm: '1.8rem' },
                 fontWeight: 400,
-                color: 'var(--color-gold-light)',
+                color: 'var(--color-gold-dark)',
               }}
             >
               ברוך/ה הבא/ה לחתונה שלנו
@@ -132,7 +132,7 @@ export default function DramaticWelcomeScreen({ firstName, ready = true, onCompl
               height: '1px',
               mx: 'auto',
               my: { xs: 2.5, sm: 3 },
-              background: 'linear-gradient(90deg, transparent, var(--color-gold), transparent)',
+              background: 'linear-gradient(90deg, transparent, var(--color-gold-dark), transparent)',
               position: 'relative',
               '&::after': {
                 content: '"✦"',
@@ -141,14 +141,14 @@ export default function DramaticWelcomeScreen({ firstName, ready = true, onCompl
                 left: '50%',
                 transform: 'translate(-50%, -50%)',
                 px: 1,
-                color: 'var(--color-gold-light)',
-                backgroundColor: '#453B23',
+                color: 'var(--color-gold-dark)',
+                backgroundColor: '#F5EDD9',
                 fontSize: '0.8rem',
               },
             }}
           />
 
-          <Typography sx={{ color: 'rgba(250,247,242,0.84)', fontSize: { xs: '0.98rem', sm: '1.08rem' }, fontWeight: 400 }}>
+          <Typography sx={{ color: 'var(--color-brown-mid)', fontSize: { xs: '0.98rem', sm: '1.08rem' }, fontWeight: 500 }}>
             אנחנו שמחים ונרגשים לחגוג איתך את היום המיוחד בחיינו
           </Typography>
 
@@ -158,7 +158,7 @@ export default function DramaticWelcomeScreen({ firstName, ready = true, onCompl
                 width: 5,
                 height: 5,
                 borderRadius: '50%',
-                bgcolor: 'var(--color-gold-light)',
+                bgcolor: 'var(--color-gold-dark)',
                 animation: 'welcomePulse 1.4s ease-in-out infinite',
                 '@keyframes welcomePulse': {
                   '0%, 100%': { opacity: 0.45, transform: 'scale(0.8)' },
@@ -166,7 +166,7 @@ export default function DramaticWelcomeScreen({ firstName, ready = true, onCompl
                 },
               }}
             />
-            <Typography sx={{ color: 'rgba(224,201,122,0.82)', fontSize: { xs: '0.78rem', sm: '0.86rem' }, fontWeight: 400 }}>
+            <Typography sx={{ color: 'var(--color-brown-mid)', fontSize: { xs: '0.78rem', sm: '0.86rem' }, fontWeight: 500 }}>
               מיד תועבר/י לאפליקציה
             </Typography>
           </Box>

@@ -83,8 +83,8 @@ export default function DramaticWelcomeScreen({ firstName, ready = true, onCompl
             px: { xs: 2.5, sm: 5 },
             textAlign: 'center',
             borderRadius: 2,
-            background: 'linear-gradient(145deg, rgba(255,255,255,0.68) 0%, rgba(245,237,217,0.54) 100%)',
-            boxShadow: '0 14px 38px rgba(92,61,46,0.09), inset 0 1px 0 rgba(255,255,255,0.82)',
+            background: 'rgba(245,237,217,0.08)',
+            boxShadow: '0 18px 48px rgba(92,61,46,0.13), 0 3px 12px rgba(92,61,46,0.06)',
           }}
         >
           <Typography

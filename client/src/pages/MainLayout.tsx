@@ -214,7 +214,7 @@ function OrnamentalHeader({
               lineHeight: 1.2,
             }}
           >
-           💍 {couple} 💍
+           {couple}  💍
           </Typography>
           {guest && (
             <Typography sx={{ fontSize: '0.82rem', color: '#A08070', mt: 0.4, fontWeight: 500, letterSpacing: 0.3 }}>

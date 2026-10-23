@@ -81,6 +81,7 @@ export default function DramaticWelcomeScreen({ firstName, ready = true, onCompl
           sx={{
             py: { xs: 5, sm: 6.5 },
             px: { xs: 2.5, sm: 5 },
+            width: '92%',
             textAlign: 'center',
             borderRadius: 2,
             background: 'rgba(245,237,217,0.08)',

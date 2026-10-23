@@ -75,13 +75,13 @@ export default function DramaticWelcomeScreen({ firstName, ready = true, onCompl
             : { opacity: 1, y: 0, filter: 'blur(0px)' }
         }
         transition={{ duration: phase === 'exit' ? 0.6 : 1.35, ease: 'easeOut' }}
-        style={{ width: '100%', maxWidth: 760, position: 'relative', zIndex: 1 }}
+        style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', width: '100%', maxWidth: 760, position: 'relative', zIndex: 1 }}
       >
         <Box
           sx={{
             py: { xs: 5, sm: 6.5 },
             px: { xs: 2.5, sm: 5 },
-            width: '92%',
+            width: '96%',
             textAlign: 'center',
             borderRadius: 2,
             background: 'rgba(245,237,217,0.08)',

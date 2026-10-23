@@ -92,7 +92,7 @@ export default function DramaticWelcomeScreen({ firstName, ready = true, onCompl
             sx={{
               mb: { xs: 2.5, sm: 3 },
               color: 'var(--color-gold-dark)',
-              fontSize: { xs: '0.7rem', sm: '0.78rem' },
+              fontSize: { xs: '0.8rem', sm: '0.88rem' },
               fontWeight: 500,
               letterSpacing: '0.18em',
             }}

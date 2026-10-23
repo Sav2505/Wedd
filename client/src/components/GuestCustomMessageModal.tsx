@@ -79,7 +79,7 @@ export default function GuestCustomMessageModal({ open, weddingId, isDeclaration
   const [messageBody, setMessageBody] = useState('');
   const [scheduledAt, setScheduledAt] = useState(getIsraelDateTimeLocal);
   const [requests, setRequests] = useState<GuestCustomMessageRequest[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -87,8 +87,6 @@ export default function GuestCustomMessageModal({ open, weddingId, isDeclaration
   useEffect(() => {
     if (!open || weddingId <= 0) return;
     let active = true;
-    setLoading(true);
-    setError(null);
     listMyGuestCustomMessages(weddingId)
       .then((items) => { if (active) setRequests(items); })
       .catch((err: unknown) => {
@@ -99,6 +97,10 @@ export default function GuestCustomMessageModal({ open, weddingId, isDeclaration
   }, [open, weddingId]);
 
   async function submitRequest() {
+    if (!scheduledAt || new Date(israelLocalToIso(scheduledAt)).getTime() <= Date.now()) {
+      setError('יש לבחור מועד עתידי לפי שעון ישראל.');
+      return;
+    }
     try {
       setSubmitting(true);
       setError(null);
@@ -201,7 +203,7 @@ export default function GuestCustomMessageModal({ open, weddingId, isDeclaration
         <Button
           variant="contained"
           onClick={submitRequest}
-          disabled={submitting || !isDeclarationConfirmed || !messageBody.trim() || !scheduledAt || new Date(israelLocalToIso(scheduledAt)).getTime() <= Date.now()}
+          disabled={submitting || !isDeclarationConfirmed || !messageBody.trim() || !scheduledAt}
           startIcon={submitting ? <CircularProgress size={16} color="inherit" /> : undefined}
         >
           שליחת בקשה לאישור

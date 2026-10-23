@@ -166,8 +166,8 @@ export default function WeddingRequestsAdminPage() {
                 : 'הבקשה נדחתה וההערה נשמרה.');
             setReviewDialog(null);
             setReviewNote('');
-        } catch (err: any) {
-            setError(err.message ?? 'עדכון בקשת ההודעה נכשל');
+        } catch (err: unknown) {
+            setError(err instanceof Error ? err.message : 'עדכון בקשת ההודעה נכשל');
         } finally {
             setReviewingId(null);
         }

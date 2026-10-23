@@ -473,7 +473,7 @@ export default function AttendanceStatusTab({ onSaved, initialRsvp }: Props) {
             האם תגיעו לחתונה שלנו ?
           </Typography>
           <Typography sx={{ textAlign: 'center', color: '#9A7833', mb: 2.2 }}>
-            נשמח לדעת כדי שנוכל להיערך בצורה מושלמת
+            נשמח לדעת כדי שנוכל להיערך בהתאם :)
           </Typography>
 
           <Stack spacing={1.2}>

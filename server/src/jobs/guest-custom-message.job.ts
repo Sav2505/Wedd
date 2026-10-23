@@ -7,6 +7,7 @@ import {
 
 const ENABLED = String(process.env.GUEST_CUSTOM_MESSAGE_SCHEDULER_ENABLED ?? 'true').toLowerCase() === 'true';
 const LOCK_KEY = 724019233;
+const RATE_PER_MINUTE = Math.max(1, Number(process.env.WHATSAPP_SEND_RATE_PER_MINUTE ?? 80));
 
 interface CampaignRow {
   id: string;
@@ -118,7 +119,12 @@ async function sendCampaign(campaign: CampaignRow): Promise<void> {
     [campaign.id],
   );
 
+  let previousAttemptAt = 0;
   for (const delivery of deliveries) {
+    const minimumIntervalMs = 60_000 / RATE_PER_MINUTE;
+    const waitMs = Math.max(0, minimumIntervalMs - (Date.now() - previousAttemptAt));
+    if (waitMs > 0) await new Promise((resolve) => setTimeout(resolve, waitMs));
+    previousAttemptAt = Date.now();
     try {
       const components = buildTemplateComponents({
         templateName: 'wedding_custom_message',

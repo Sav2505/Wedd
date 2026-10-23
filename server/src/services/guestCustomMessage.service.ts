@@ -52,6 +52,7 @@ export async function createGuestMessageRequest(
 
   let adminNotificationSent = false;
   const adminEmail = process.env.WEDFLOW_ADMIN_MAIL ?? process.env.EMAIL_ADMIN;
+  const scheduledAtLabel = new Date(input.scheduled_at).toLocaleString('he-IL', { timeZone: 'Asia/Jerusalem' });
   if (adminEmail) {
     try {
       const { rows: weddingRows } = await pool.query<{ bride_name: string; groom_name: string }>(
@@ -62,8 +63,8 @@ export async function createGuestMessageRequest(
       await sendMail({
         to: adminEmail,
         subject: `בקשת הודעת WhatsApp לאורחים: ${wedding?.bride_name ?? ''} ו${wedding?.groom_name ?? ''}`,
-        text: `התקבלה בקשה חדשה לשליחת הודעת WhatsApp.\nקהל: ${audienceLabel(input.audience)}\nמועד: ${input.scheduled_at}\n\n${input.message_body}`,
-        html: `<div dir="rtl" style="font-family:Arial,sans-serif;line-height:1.7"><h2>בקשה חדשה להודעת WhatsApp</h2><p><b>החתונה:</b> ${escapeHtml(`${wedding?.bride_name ?? ''} ו${wedding?.groom_name ?? ''}`)}</p><p><b>קהל:</b> ${audienceLabel(input.audience)}</p><p><b>מועד מתוכנן:</b> ${escapeHtml(input.scheduled_at)}</p><p><b>תוכן ההודעה:</b></p><div style="white-space:pre-wrap">${escapeHtml(input.message_body)}</div><p>יש לאשר או לדחות דרך טאב בקשות ההרשמה במערכת.</p></div>`,
+        text: `התקבלה בקשה חדשה לשליחת הודעת WhatsApp.\nקהל: ${audienceLabel(input.audience)}\nמועד: ${scheduledAtLabel}\n\n${input.message_body}`,
+        html: `<div dir="rtl" style="font-family:Arial,sans-serif;line-height:1.7"><h2>בקשה חדשה להודעת WhatsApp</h2><p><b>החתונה:</b> ${escapeHtml(`${wedding?.bride_name ?? ''} ו${wedding?.groom_name ?? ''}`)}</p><p><b>קהל:</b> ${audienceLabel(input.audience)}</p><p><b>מועד מתוכנן:</b> ${escapeHtml(scheduledAtLabel)}</p><p><b>תוכן ההודעה:</b></p><div style="white-space:pre-wrap">${escapeHtml(input.message_body)}</div><p>יש לאשר או לדחות דרך טאב בקשות ההרשמה במערכת.</p></div>`,
       });
       adminNotificationSent = true;
     } catch (error) {

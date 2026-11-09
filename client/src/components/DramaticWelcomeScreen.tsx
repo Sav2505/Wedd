@@ -21,10 +21,10 @@ export default function DramaticWelcomeScreen({ firstName, ready = true, minimum
   useEffect(() => {
     if (!ready) return;
     const elapsed = Date.now() - mountTimeRef.current;
-    const delay = Math.max(0, minimumDisplayMs - elapsed);
+    const delay = Math.max(1000, minimumDisplayMs - elapsed);
 
     const exitTimer = window.setTimeout(() => setPhase('exit'), delay);
-    const doneTimer = window.setTimeout(() => onComplete(), delay + 700);
+    const doneTimer = window.setTimeout(() => onComplete(), delay + 1000);
 
     return () => {
       window.clearTimeout(exitTimer);

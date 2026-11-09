@@ -8,21 +8,20 @@ interface Props {
   /** Set to true when the app data is ready — triggers the exit animation.
    *  Defaults to true (immediately ready) for backwards-compatible usage. */
   ready?: boolean;
+  minimumDisplayMs?: number;
   onComplete: () => void;
 }
 
 type Phase = 'enter' | 'exit';
 
-export default function DramaticWelcomeScreen({ firstName, ready = true, onComplete }: Props) {
+export default function DramaticWelcomeScreen({ firstName, ready = true, minimumDisplayMs = 2400, onComplete }: Props) {
   const [phase, setPhase] = useState<Phase>('enter');
   const mountTimeRef = useRef(Date.now());
 
   useEffect(() => {
     if (!ready) return;
-    // Ensure the enter animation (~1.35s) has had time to complete before exiting.
-    // If data loads slower than 1.4s, we exit immediately (no extra wait).
     const elapsed = Date.now() - mountTimeRef.current;
-    const delay = Math.max(0, 2400 - elapsed);
+    const delay = Math.max(0, minimumDisplayMs - elapsed);
 
     const exitTimer = window.setTimeout(() => setPhase('exit'), delay);
     const doneTimer = window.setTimeout(() => onComplete(), delay + 700);
@@ -31,7 +30,7 @@ export default function DramaticWelcomeScreen({ firstName, ready = true, onCompl
       window.clearTimeout(exitTimer);
       window.clearTimeout(doneTimer);
     };
-  }, [ready, onComplete]);
+  }, [ready, minimumDisplayMs, onComplete]);
 
   return (
     <Box

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Box,
   TextField,
@@ -15,6 +15,8 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAppDispatch } from '../store';
 import { setGuest, logout } from '../store/authSlice';
 import { login } from '../services/auth.service';
+import { getMyRsvp } from '../services/guests.service';
+import type { GuestRsvpDetails, LoginResponse } from '../types/domain';
 import FallingPetals from '../components/FallingPetals';
 import DramaticWelcomeScreen from '../components/DramaticWelcomeScreen';
 import { parseGuestParams } from '../utils/guestUrl';
@@ -108,6 +110,7 @@ export default function LoginPage() {
   const [searchParams] = useSearchParams();
   const autoCreds = useMemo(() => parseGuestParams(searchParams), [searchParams]);
   const hasAutoParams = Boolean(autoCreds);
+  const isRsvpCandidate = Boolean(autoCreds && (autoCreds.tabIndex === undefined || autoCreds.tabIndex === 5));
   const greetingName = useMemo(() => autoCreds?.fullName.trim().split(/\s+/)[0] ?? '', [autoCreds]);
 
   const [fullName, setFullName] = useState('');
@@ -115,17 +118,35 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(hasAutoParams);
   const [showWelcomeScreen, setShowWelcomeScreen] = useState(false);
+  const [initialRsvp, setInitialRsvp] = useState<GuestRsvpDetails | null>(null);
+  const autoLoginRef = useRef<{ key: string; request: Promise<LoginResponse> } | null>(null);
 
   // ─── Auto-login from URL params (?n=<name>&p=<last4>) ──────
   useEffect(() => {
     if (!autoCreds) return;
 
-    dispatch(logout());
+    let cancelled = false;
     setLoading(true);
     setError(null);
+    setShowWelcomeScreen(false);
+    setInitialRsvp(null);
+    const key = JSON.stringify(autoCreds);
+    if (autoLoginRef.current?.key !== key) {
+      dispatch(logout());
+      autoLoginRef.current = {
+        key,
+        request: login({
+          fullName: autoCreds.fullName,
+          lastFourDigits: autoCreds.lastFourDigits,
+          weddingId: autoCreds.weddingId,
+          ...(isRsvpCandidate ? { includeRsvp: true } : {}),
+        }),
+      };
+    }
 
-    login({ fullName: autoCreds.fullName, lastFourDigits: autoCreds.lastFourDigits, weddingId: autoCreds.weddingId })
-      .then(({ guest }) => {
+    autoLoginRef.current.request
+      .then(async ({ guest, initialRsvp: rsvp }) => {
+        if (cancelled) return;
         dispatch(setGuest(guest));
         if (autoCreds.tabIndex !== undefined) {
           sessionStorage.setItem('wedding.tabIndex', String(autoCreds.tabIndex));
@@ -133,14 +154,29 @@ export default function LoginPage() {
         if (guest.role === 'guest' && guest.rsvp_status === 'PENDING') {
           sessionStorage.setItem('wedding.forceRsvpGuestId', guest.id);
         }
+        const opensRsvp = guest.role === 'guest' && (
+          autoCreds.tabIndex === 5 || (autoCreds.tabIndex === undefined && guest.rsvp_status === 'PENDING')
+        );
+        if (opensRsvp) {
+          const details = rsvp ?? await getMyRsvp();
+          if (cancelled) return;
+          setInitialRsvp(details);
+        }
         setShowWelcomeScreen(true);
       })
       .catch((err) => {
+        if (cancelled) return;
         navigate('/login', { replace: true });
         setError(err instanceof Error ? err.message : 'שגיאה בהתחברות אוטומטית');
       })
-      .finally(() => setLoading(false));
-  }, [autoCreds, dispatch, navigate]);
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, [autoCreds, dispatch, navigate, isRsvpCandidate]);
+
+  const handleWelcomeComplete = useCallback(() => {
+    sessionStorage.setItem('wedding.welcomeShown', '1');
+    navigate('/', { replace: true, state: initialRsvp ? { initialRsvp } : null });
+  }, [navigate, initialRsvp]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -168,14 +204,13 @@ export default function LoginPage() {
     }
   };
 
-  if (hasAutoParams && showWelcomeScreen) {
+  if (hasAutoParams && (showWelcomeScreen || (isRsvpCandidate && loading))) {
     return (
       <DramaticWelcomeScreen
         firstName={greetingName || 'אורח יקר'}
-        onComplete={() => {
-          sessionStorage.setItem('wedding.welcomeShown', '1');
-          navigate('/', { replace: true });
-        }}
+        ready={showWelcomeScreen && !loading}
+        minimumDisplayMs={isRsvpCandidate ? 1400 : 2400}
+        onComplete={handleWelcomeComplete}
       />
     );
   }

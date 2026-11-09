@@ -128,10 +128,24 @@ export interface LoginRequest {
   fullName: string;
   lastFourDigits: string;
   weddingId?: string;
+  includeRsvp?: boolean;
 }
 
 export interface LoginResponse {
   guest: Guest;
+  initialRsvp?: GuestRsvpDetails;
+}
+
+export interface GuestRsvpDetails {
+  id: string;
+  rsvp_status: RsvpStatus;
+  number_of_guests: number;
+  rsvp_updated_at: string | null;
+  vegetarian_count: number;
+  vegan_count: number;
+  regular_count: number;
+  requested_dish_type: string | null;
+  dish_notes: string | null;
 }
 
 export interface WeddingRequest {

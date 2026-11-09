@@ -28,13 +28,13 @@ import { setGuest } from '../store/authSlice';
 import { useAppDispatch, useAppSelector } from '../store';
 import GoldCard from '../components/GoldCard';
 import { getMyRsvp, updateMyRsvp } from '../services/guests.service';
-import { RsvpStatus } from '../types/domain';
+import { GuestRsvpDetails, RsvpStatus } from '../types/domain';
 
 const RSVP_MAX_GUESTS = Number(import.meta.env.VITE_RSVP_MAX_GUESTS ?? 12);
 
 type Props = {
   onSaved?: (status: RsvpStatus) => void;
-  initialRsvp?: { status: RsvpStatus; count: number } | null;
+  initialRsvp?: GuestRsvpDetails | null;
 };
 
 type SaveOutcome = 'COMING' | 'NOT_COMING' | null;
@@ -210,12 +210,15 @@ export default function AttendanceStatusTab({ onSaved, initialRsvp }: Props) {
   const dispatch = useAppDispatch();
   const guest = useAppSelector((s) => s.auth.guest);
 
-  const [status, setStatus] = useState<RsvpStatus>(initialRsvp?.status ?? 'PENDING');
-  const [count, setCount] = useState(initialRsvp?.count ?? 1);
-  const [vegetarianCount, setVegetarianCount] = useState(0);
-  const [veganCount, setVeganCount] = useState(0);
-  const [dishNotes, setDishNotes] = useState('');
-  const [fetching, setFetching] = useState(!initialRsvp);
+  const [initialData] = useState(initialRsvp ?? null);
+  const [status, setStatus] = useState<RsvpStatus>(initialData?.rsvp_status ?? 'PENDING');
+  const [count, setCount] = useState(Math.max(1, Math.min(RSVP_MAX_GUESTS, initialData?.number_of_guests || 1)));
+  const [vegetarianCount, setVegetarianCount] = useState(initialData?.vegetarian_count
+    ?? (initialData?.requested_dish_type === 'vegetarian' ? initialData.number_of_guests : 0));
+  const [veganCount, setVeganCount] = useState(initialData?.vegan_count
+    ?? (initialData?.requested_dish_type === 'vegan' ? initialData.number_of_guests : 0));
+  const [dishNotes, setDishNotes] = useState(initialData?.dish_notes ?? '');
+  const [fetching, setFetching] = useState(!initialData);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -250,7 +253,7 @@ export default function AttendanceStatusTab({ onSaved, initialRsvp }: Props) {
   }, [saveOutcome]);
 
   useEffect(() => {
-    if (initialRsvp) return; // Skip if we already got initial data
+    if (initialData) return;
     getMyRsvp()
       .then((data) => {
         setStatus(data.rsvp_status);
@@ -261,7 +264,7 @@ export default function AttendanceStatusTab({ onSaved, initialRsvp }: Props) {
       })
       .catch((e) => setError(e instanceof Error ? e.message : 'שגיאה בטעינת סטטוס נוכחות'))
       .finally(() => setFetching(false));
-  }, [initialRsvp]);
+  }, [initialData]);
 
   const cardPalettes = useMemo(() => ({
     COMING: {

@@ -1,5 +1,6 @@
 import { pool } from '../db/pool';
 import { Guest } from '../types';
+import type { GuestRsvpDetails } from './guests.service';
 import { createError } from '../middleware/errorHandler';
 
 function normalizeCoupleCodeSegment(segment: string): string {
@@ -21,7 +22,7 @@ export function generateCoupleLoginCodeFromGuestId(guestId: string): string {
 type LoginResult = Pick<
   Guest,
   'id' | 'full_name' | 'table_number' | 'side' | 'role' | 'rsvp_status' | 'number_of_guests' | 'rsvp_updated_at' | 'is_toured' | `wedding_id`
->;
+> & { initial_rsvp?: GuestRsvpDetails };
 
 const SELECT_FIELDS = `id, full_name, table_number, side, role, rsvp_status, number_of_guests, rsvp_updated_at, is_toured, wedding_id`;
 
@@ -47,13 +48,25 @@ export async function loginGuest(
   fullName: string,
   lastFourDigits: string,
   weddingId: number,
+  includeRsvp = false,
 ): Promise<LoginResult> {
   const code = lastFourDigits.trim();
   const name = fullName.trim();
+  const rsvpFields = includeRsvp ? `, json_build_object(
+    'id', id,
+    'rsvp_status', rsvp_status,
+    'number_of_guests', number_of_guests,
+    'rsvp_updated_at', rsvp_updated_at,
+    'vegetarian_count', vegetarian_count,
+    'vegan_count', vegan_count,
+    'regular_count', GREATEST(number_of_guests - vegetarian_count - vegan_count, 0)::int,
+    'requested_dish_type', requested_dish_type,
+    'dish_notes', dish_notes
+  ) AS initial_rsvp` : '';
 
   // Try guest first (password = last 4 digits of phone)
-  const guestResult = await pool.query<Guest>(
-    `SELECT ${SELECT_FIELDS}
+  const guestResult = await pool.query<LoginResult>(
+    `SELECT ${SELECT_FIELDS}${rsvpFields}
        FROM guests
       WHERE wedding_id = $3 AND full_name = $1
         AND role = 'guest'

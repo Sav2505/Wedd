@@ -10,6 +10,7 @@ const loginSchema = z.object({
     .length(4, '4 ספרות בלבד')
     .regex(/^\d{4}$/, 'יש להזין 4 ספרות בלבד'),
   weddingId: z.string().optional(),
+  includeRsvp: z.boolean().optional(),
 });
 
 export async function login(req: Request, res: Response, next: NextFunction): Promise<void> {
@@ -21,14 +22,14 @@ export async function login(req: Request, res: Response, next: NextFunction): Pr
       return next(createError(message, 400));
     }
 
-    const { fullName, lastFourDigits, weddingId } = parsed.data;
+    const { fullName, lastFourDigits, weddingId, includeRsvp } = parsed.data;
     const numericWeddingId = weddingId ? Number(weddingId) : undefined;
 
     let guest;
 
     if (numericWeddingId != null) {
       // Wedding-scoped login: try guest first, then couple - both filtered by weddingId.
-      guest = await authService.loginGuest(fullName, lastFourDigits, numericWeddingId);
+      guest = await authService.loginGuest(fullName, lastFourDigits, numericWeddingId, includeRsvp);
     } else {
       // No weddingId available (manual entry on the generic /login page).
       // This path is effectively couple-only in practice, but we still
@@ -36,7 +37,11 @@ export async function login(req: Request, res: Response, next: NextFunction): Pr
       guest = await authService.loginGroomOrBride(fullName, lastFourDigits);
     }
 
-    res.status(200).json({ success: true, data: { guest } });
+    const { initial_rsvp: initialRsvp, ...authenticatedGuest } = guest;
+    res.status(200).json({
+      success: true,
+      data: { guest: authenticatedGuest, ...(initialRsvp ? { initialRsvp } : {}) },
+    });
   } catch (err) {
     next(err);
   }

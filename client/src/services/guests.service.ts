@@ -1,17 +1,6 @@
 import api from './api';
-import { ApiResponse, GuestGroup, ManagedGuest, RsvpStatus } from '../types/domain';
-
-export interface GuestRsvpDetails {
-  id: string;
-  rsvp_status: RsvpStatus;
-  number_of_guests: number;
-  rsvp_updated_at: string | null;
-  vegetarian_count: number;
-  vegan_count: number;
-  regular_count: number;
-  requested_dish_type: string | null;
-  dish_notes: string | null;
-}
+import { ApiResponse, GuestGroup, ManagedGuest, RsvpStatus, GuestRsvpDetails } from '../types/domain';
+export type { GuestRsvpDetails } from '../types/domain';
 
 export interface GuestBlessing {
   id: string;

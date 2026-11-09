@@ -7,6 +7,8 @@ import FavoriteIcon from '@mui/icons-material/Favorite';
 import HowToRegIcon from '@mui/icons-material/HowToReg';
 import LogoutIcon from '@mui/icons-material/LogoutOutlined';
 import { AnimatePresence, motion } from 'framer-motion';
+import { useLocation, useNavigate } from 'react-router-dom';
+import type { GuestRsvpDetails } from '../types/domain';
 import { useAppDispatch, useAppSelector } from '../store';
 import { logout } from '../store/authSlice';
 import InfoTab from './InfoTab';
@@ -280,8 +282,16 @@ export default function MainLayout() {
   const { info, loading: infoLoading } = useWeddingInfo();
   const guest = useAppSelector((s) => s.auth.guest);
   const guestId = guest?.id;
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [entryRsvp] = useState(() => {
+    const state = location.state as { initialRsvp?: GuestRsvpDetails } | null;
+    const details = state?.initialRsvp;
+    return details && details.id === guestId ? details : null;
+  });
+  const [useEntryRsvp, setUseEntryRsvp] = useState(Boolean(entryRsvp));
   const [mapPublication, setMapPublication] = useState<{ guestId: string; published: boolean } | null>(null);
-  const [activeTab, setActiveTab] = useState(0);
+  const [activeTab, setActiveTab] = useState(() => entryRsvp ? RSVP_TAB_INDEX : 0);
   const showEventMap = mapPublication?.guestId === guestId && mapPublication?.published === true;
   const visibleActiveTab = activeTab === EVENT_MAP_TAB_INDEX && !showEventMap ? 0 : activeTab;
   const [showWelcome, setShowWelcome] = useState(
@@ -293,6 +303,11 @@ export default function MainLayout() {
     sessionStorage.setItem('wedding.welcomeShown', '1');
     setShowWelcome(false);
   }, []);
+
+  useEffect(() => {
+    if (!entryRsvp || !location.state) return;
+    navigate(`${location.pathname}${location.search}${location.hash}`, { replace: true, state: null });
+  }, [entryRsvp, location, navigate]);
 
   useEffect(() => {
     if (!guestId) return;
@@ -377,7 +392,10 @@ export default function MainLayout() {
           guest={guest}
           couple={info?.bride_name ? `${info?.bride_name} & ${info?.groom_name}` : "החתונה שלנו"}
           activeTab={visibleActiveTab}
-          onTabChange={setActiveTab}
+          onTabChange={(tabIndex) => {
+            if (tabIndex !== RSVP_TAB_INDEX) setUseEntryRsvp(false);
+            setActiveTab(tabIndex);
+          }}
           onLogout={() => dispatch(logout())}
           showEventMap={showEventMap}
           isTablesPublished={!!info?.is_tables_published}
@@ -401,8 +419,10 @@ export default function MainLayout() {
           >
             {TABS[visibleActiveTab].id === 'rsvp'
               ? <AttendanceStatusTab
+                initialRsvp={useEntryRsvp && entryRsvp?.id === guestId ? entryRsvp : null}
                 onSaved={(nextStatus) => {
                   if (nextStatus === 'COMING') {
+                    setUseEntryRsvp(false);
                     setActiveTab(0);
                   }
                 }}

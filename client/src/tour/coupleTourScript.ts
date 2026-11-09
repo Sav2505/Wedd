@@ -62,7 +62,7 @@ export const COUPLE_TOUR_STEPS: CoupleTourStep[] = [
     id: 'tasks-overview',
     tabIndex: 2,
     anchorId: 'tasks-summary',
-    title: 'מעקב משימות ותקציב',
+    title: 'משימות, ספקים ותקציב',
     body: 'כאן תקבלו תמונת מצב ברורה של משימות, הוצאות, הכנסות ומתנות במקום אחד.',
   },
   {

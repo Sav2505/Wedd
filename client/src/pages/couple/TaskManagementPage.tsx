@@ -176,7 +176,7 @@ export default function TaskManagementPage() {
               variant="h5"
               sx={{ fontFamily: "'Frank Ruhl Libre', serif", fontWeight: 700, lineHeight: 1.15 }}
             >
-              מעקב משימות
+              משימות וספקים
             </Typography>
             <Typography variant="caption" color="text.secondary">
               ניהול תקציב וכל המשימות לחתונה

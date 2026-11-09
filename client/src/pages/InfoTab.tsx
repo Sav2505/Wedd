@@ -137,9 +137,15 @@ function GiftButtons({
             מתנה לחתן/כלה
           </Typography>
         </Box>
-        <Typography variant="caption" sx={{ color: '#A08070', display: 'block', mb: 1.5 }}>
+        <Typography variant="caption" sx={{ color: '#A08070', display: 'block', mb: isPayBox ? 0.75 : 1.5 }}>
           {isPayBox ? 'ניתן לשלוח מתנה ב-PayBox באמצעות לחיצה על הקישור' : 'ניתן לשלוח מתנה ב-Bit באמצעות לחיצה על הקישור'}
         </Typography>
+        {isPayBox && (
+          <Typography variant="caption" sx={{ color: '#A08070', display: 'block', mb: 1.5, fontWeight: "bold" }}>
+            פרטיך ופרטי ההעברה יישארו חסויים ולא ייחשפו לאף אחד פרט לחתן/כלה.
+          </Typography>
+        )}
+
 
         <Box sx={{ display: 'flex', gap: 1.1, flexDirection: 'column' }}>
           {firstUrl && (

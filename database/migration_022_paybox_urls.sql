@@ -1,0 +1,2 @@
+ALTER TABLE wedding_info
+  ADD COLUMN IF NOT EXISTS paybox_url TEXT DEFAULT NULL;

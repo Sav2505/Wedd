@@ -16,6 +16,16 @@
 
 ---
 
+## PayBox Gift Links (Existing Database)
+
+Before deploying PayBox gift links, manually run only the standalone migration:
+
+```bash
+psql -U <user> -d <database> -f database/migration_022_paybox_urls.sql
+```
+
+It adds one nullable `paybox_url` group link to `wedding_info` and is safe to run again, including if an earlier version added separate recipient columns. Existing columns and data are not removed. Do not rerun the full migration or seed for this feature.
+
 ## Guest Blessings (Existing Database)
 
 Before deploying the blessings feature, run only the new migration against your existing database:

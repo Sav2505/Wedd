@@ -23,6 +23,7 @@ import { useWeddingInfo } from '../hooks/useWeddingInfo';
 import { downloadWeddingCalendar } from '../services/info.service';
 import { palette } from '../shared/animations';
 import { useState } from 'react';
+import { toSafeExternalUrl } from '../utils/externalUrl';
 
 // ─── helpers ────────────────────────────────────────────────
 
@@ -32,25 +33,6 @@ function formatHebrewDate(iso: string): string {
   const weekday = d.toLocaleDateString('he-IL', { weekday: 'long' });
   const date = d.toLocaleDateString('he-IL', { day: 'numeric', month: 'long', year: 'numeric' });
   return `${weekday}, ${date}`;
-}
-
-function toSafeExternalUrl(raw: string | null | undefined): string | null {
-  const trimmed = raw?.trim();
-  if (!trimmed) return null;
-
-  try {
-    const direct = new URL(trimmed);
-    if (direct.protocol === 'http:' || direct.protocol === 'https:') return direct.toString();
-    return null;
-  } catch {
-    try {
-      const withProtocol = new URL(`https://${trimmed}`);
-      if (withProtocol.protocol === 'https:') return withProtocol.toString();
-      return null;
-    } catch {
-      return null;
-    }
-  }
 }
 
 // ─── Info row ───────────────────────────────────────────────
@@ -110,52 +92,61 @@ function InfoRow({
 }
 
 function GiftButtons({
-  brideUrl,
-  groomUrl,
+  provider = 'Bit',
+  brideUrl = null,
+  groomUrl = null,
+  groupUrl = null,
   isDemo,
   onDemoClick,
 }: {
-  brideUrl: string | null;
-  groomUrl: string | null;
+  provider?: 'Bit' | 'PayBox';
+  brideUrl?: string | null;
+  groomUrl?: string | null;
+  groupUrl?: string | null;
   isDemo: boolean;
   onDemoClick: () => void;
 }) {
-  if (!brideUrl && !groomUrl) return null;
+  const isPayBox = provider === 'PayBox';
+  const firstUrl = isPayBox ? groupUrl : brideUrl;
+  if (!firstUrl && (isPayBox || !groomUrl)) return null;
+  const accent = isPayBox ? '#0070BA' : '#9A7833';
+  const border = isPayBox ? 'rgba(0,112,186,0.35)' : 'rgba(201,168,76,0.55)';
+  const hoverBackground = isPayBox ? 'rgba(0,112,186,0.06)' : 'rgba(201,168,76,0.08)';
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 16 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay: 0.48, ease: 'easeOut' }}
+    <GoldCard
+      delay={isPayBox ? 0.27 : 0.25}
+      sx={{ mb: 2, ...(isPayBox ? { background: '#FFFFFF', border: '1px solid rgba(0,112,186,0.2)' } : {}) }}
     >
       <Box
-        sx={{
-          borderRadius: 2,
-          p: 2,
-          background: 'linear-gradient(180deg, rgba(255,255,255,0.86) 0%, rgba(250,247,242,0.95) 100%)',
-          border: '1px solid rgba(201,168,76,0.25)',
-        }}
+        component="section"
+        aria-label={`מתנות ב-${provider}`}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.75 }}>
-          <Box
-            component="img"
-            src="/bit-logo.png"
-            alt="BIT"
-            sx={{ width: 20, height: 20, objectFit: 'contain', borderRadius: '4px' }}
-          />
+          {isPayBox ? (
+            <Box component="img" src="/paybox-logo.png" alt="PayBox" sx={{ width: 28, height: 28, objectFit: 'contain', borderRadius: 1, flexShrink: 0 }} />
+          ) : (
+            <Box
+              component="img"
+              src="/bit-logo.png"
+              alt="BIT"
+              sx={{ width: 20, height: 20, objectFit: 'contain', borderRadius: '4px' }}
+            />
+          )}
           <Typography sx={{ color: palette.textMuted, fontWeight: 700, fontSize: '0.95rem' }}>
             מתנה לחתן/כלה
           </Typography>
         </Box>
         <Typography variant="caption" sx={{ color: '#A08070', display: 'block', mb: 1.5 }}>
-          ניתן לשלוח מתנה ב-Bit באמצעות לחיצה על הקישור
+          {isPayBox ? 'ניתן לשלוח מתנה ב-PayBox באמצעות לחיצה על הקישור' : 'ניתן לשלוח מתנה ב-Bit באמצעות לחיצה על הקישור'}
         </Typography>
 
         <Box sx={{ display: 'flex', gap: 1.1, flexDirection: 'column' }}>
-          {brideUrl && (
+          {firstUrl && (
             <Box
               component={isDemo ? 'button' : 'a'}
-              href={isDemo ? undefined : brideUrl}
+              type={isDemo ? 'button' : undefined}
+              href={isDemo ? undefined : firstUrl}
               target={isDemo ? undefined : '_blank'}
               rel={isDemo ? undefined : 'noopener noreferrer'}
               onClick={isDemo ? onDemoClick : undefined}
@@ -166,9 +157,9 @@ function GiftButtons({
                 gap: 1,
                 py: 1.15,
                 px: 1.5,
-                borderRadius: 50,
-                border: '1.5px solid rgba(201,168,76,0.55)',
-                color: '#9A7833',
+                borderRadius: isPayBox ? 1 : 50,
+                border: `1.5px solid ${border}`,
+                color: accent,
                 fontFamily: "'Heebo', sans-serif",
                 fontWeight: 700,
                 fontSize: '0.88rem',
@@ -178,17 +169,19 @@ function GiftButtons({
                 cursor: 'pointer',
                 width: '100%',
                 outline: 'none',
-                '&:hover': { transform: 'translateY(-2px)', background: 'rgba(201,168,76,0.08)' },
+                '&:hover': { transform: 'translateY(-2px)', background: hoverBackground },
+                '&:focus-visible': { outline: `2px solid ${accent}`, outlineOffset: 3 },
               }}
             >
-              <QrCode2OutlinedIcon sx={{ fontSize: 18 }} />
-              מתנה לכלה ב-Bit
+              {isPayBox ? <Box component="img" src="/paybox-logo.png" alt="" sx={{ width: 20, height: 20, borderRadius: 0.5, flexShrink: 0 }} /> : <QrCode2OutlinedIcon sx={{ fontSize: 18 }} />}
+              {isPayBox ? 'מתנה לחתן ולכלה ב-PayBox' : 'מתנה לכלה ב-Bit'}
             </Box>
           )}
 
-          {groomUrl && (
+          {!isPayBox && groomUrl && (
             <Box
               component={isDemo ? 'button' : 'a'}
+              type={isDemo ? 'button' : undefined}
               href={isDemo ? undefined : groomUrl}
               target={isDemo ? undefined : '_blank'}
               rel={isDemo ? undefined : 'noopener noreferrer'}
@@ -200,9 +193,9 @@ function GiftButtons({
                 gap: 1,
                 py: 1.15,
                 px: 1.5,
-                borderRadius: 50,
-                border: '1.5px solid rgba(201,168,76,0.55)',
-                color: '#9A7833',
+                borderRadius: isPayBox ? 1 : 50,
+                border: `1.5px solid ${border}`,
+                color: accent,
                 fontFamily: "'Heebo', sans-serif",
                 fontWeight: 700,
                 fontSize: '0.88rem',
@@ -212,16 +205,17 @@ function GiftButtons({
                 cursor: 'pointer',
                 width: '100%',
                 outline: 'none',
-                '&:hover': { transform: 'translateY(-2px)', background: 'rgba(201,168,76,0.08)' },
+                '&:hover': { transform: 'translateY(-2px)', background: hoverBackground },
+                '&:focus-visible': { outline: `2px solid ${accent}`, outlineOffset: 3 },
               }}
             >
-              <QrCode2OutlinedIcon sx={{ fontSize: 18 }} />
-              מתנה לחתן ב-Bit
+              {isPayBox ? <Box component="img" src="/paybox-logo.png" alt="" sx={{ width: 20, height: 20, borderRadius: 0.5, flexShrink: 0 }} /> : <QrCode2OutlinedIcon sx={{ fontSize: 18 }} />}
+              מתנה לחתן ב-{provider}
             </Box>
           )}
         </Box>
       </Box>
-    </motion.div>
+    </GoldCard>
   );
 }
 
@@ -261,7 +255,8 @@ export default function InfoTab({ demoInfo, hideRegisterCta = false }: Props) {
   const compactDemo = Boolean(demoInfo);
   const brideBitUrl = toSafeExternalUrl(resolvedInfo?.bride_bit_url);
   const groomBitUrl = toSafeExternalUrl(resolvedInfo?.groom_bit_url);
-  const [isBitDemoModalOpen, setIsBitDemoModalOpen] = useState(false);
+  const payboxUrl = toSafeExternalUrl(resolvedInfo?.paybox_url);
+  const [giftDemoProvider, setGiftDemoProvider] = useState<'Bit' | 'PayBox' | null>(null);
   const [isFoodBlessingOpen, setIsFoodBlessingOpen] = useState(false);
   const [isRideCoordinationOpen, setIsRideCoordinationOpen] = useState(false);
   const [calendarErrorOpen, setCalendarErrorOpen] = useState(false);
@@ -409,14 +404,20 @@ export default function InfoTab({ demoInfo, hideRegisterCta = false }: Props) {
       )}
 
       {(brideBitUrl || groomBitUrl) && (
-        <GoldCard delay={0.25} sx={{ mb: 2 }}>
-          <GiftButtons
-            brideUrl={brideBitUrl}
-            groomUrl={groomBitUrl}
-            isDemo={compactDemo}
-            onDemoClick={() => setIsBitDemoModalOpen(true)}
-          />
-        </GoldCard>
+        <GiftButtons
+          brideUrl={brideBitUrl}
+          groomUrl={groomBitUrl}
+          isDemo={compactDemo}
+          onDemoClick={() => setGiftDemoProvider('Bit')}
+        />
+      )}
+      {payboxUrl && (
+        <GiftButtons
+          provider="PayBox"
+          groupUrl={payboxUrl}
+          isDemo={compactDemo}
+          onDemoClick={() => setGiftDemoProvider('PayBox')}
+        />
       )}
 
       <GuestBlessing recipient={`${resolvedInfo.bride_name} ו${resolvedInfo.groom_name}`} demo={compactDemo} />
@@ -475,16 +476,16 @@ export default function InfoTab({ demoInfo, hideRegisterCta = false }: Props) {
         </GoldCard>
       )}
 
-      <Dialog open={isBitDemoModalOpen} onClose={() => setIsBitDemoModalOpen(false)} maxWidth="xs" fullWidth>
+      <Dialog open={giftDemoProvider !== null} onClose={() => setGiftDemoProvider(null)} maxWidth="xs" fullWidth>
         <DialogTitle sx={{ color: '#9A7833', fontWeight: 700 }}>הדגמה</DialogTitle>
         <DialogContent>
           <Typography sx={{ color: '#6F5547', lineHeight: 1.7 }}>
-            הלחיצה על הקישור תוביל למתן מתנה ישיר בביט.
+            {giftDemoProvider === 'PayBox' ? 'הלחיצה על הקישור תוביל לקבוצת PayBox של האירוע למתן מתנה.' : 'הלחיצה על הקישור תוביל למתן מתנה ישיר בביט.'}
           </Typography>
         </DialogContent>
         <DialogActions>
           <Button
-            onClick={() => setIsBitDemoModalOpen(false)}
+            onClick={() => setGiftDemoProvider(null)}
             variant="contained"
             sx={{
               background: 'linear-gradient(135deg, #C9A84C, #9A7833)',

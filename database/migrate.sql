@@ -53,6 +53,9 @@
 \echo '==> Running migration_021_guest_custom_messages.sql...'
 \i migration_021_guest_custom_messages.sql
 
+\echo '==> Running migration_022_paybox_urls.sql...'
+\i migration_022_paybox_urls.sql
+
 \echo '==> Running seed.sql...'
 \i seed.sql
 

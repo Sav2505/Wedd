@@ -78,6 +78,7 @@ CREATE TABLE IF NOT EXISTS wedding_info (
   email TEXT DEFAULT NULL,
   bride_bit_url TEXT DEFAULT NULL,
   groom_bit_url TEXT DEFAULT NULL,
+  paybox_url TEXT DEFAULT NULL,
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 

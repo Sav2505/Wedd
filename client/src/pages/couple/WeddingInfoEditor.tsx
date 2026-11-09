@@ -18,6 +18,7 @@ import NotesOutlinedIcon from '@mui/icons-material/NotesOutlined';
 import PeopleOutlineIcon from '@mui/icons-material/PeopleOutline';
 import QrCode2OutlinedIcon from '@mui/icons-material/QrCode2Outlined';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
+import OpenInNewRoundedIcon from '@mui/icons-material/OpenInNewRounded';
 import { motion } from 'framer-motion';
 import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
 import * as L from 'leaflet';
@@ -32,6 +33,7 @@ import { useWeddingId } from '../../hooks/useWeddingId';
 import CountdownTimer from '../../components/CountdownTimer';
 import GoldCard from '../../components/GoldCard';
 import LoadingOverlay from '../../components/LoadingOverlay';
+import { toSafeExternalUrl } from '../../utils/externalUrl';
 
 dayjs.locale('he');
 
@@ -142,6 +144,8 @@ const WeddingInfoEditor = forwardRef<WeddingInfoEditorHandle>(function WeddingIn
 
   // local form state
   const [form, setForm] = useState<WeddingInfoUpdate>({});
+  const safePayboxUrl = toSafeExternalUrl(form.paybox_url);
+  const invalidPayboxUrl = Boolean(form.paybox_url?.trim()) && !safePayboxUrl;
 
   useEffect(() => {
     if (!info) return;
@@ -159,6 +163,7 @@ const WeddingInfoEditor = forwardRef<WeddingInfoEditorHandle>(function WeddingIn
       notes: info.notes ?? '',
       bride_bit_url: info.bride_bit_url ?? '',
       groom_bit_url: info.groom_bit_url ?? '',
+      paybox_url: info.paybox_url ?? '',
     });
     setIsDirty(false);
   }, [info]);
@@ -169,6 +174,11 @@ const WeddingInfoEditor = forwardRef<WeddingInfoEditorHandle>(function WeddingIn
   };
 
   async function handleSave(): Promise<boolean> {
+    if (invalidPayboxUrl) {
+      setResult('error');
+      setResultMessage('קישור קבוצת PayBox אינו תקין');
+      return false;
+    }
     if (weddingId == null) {
       setResult('error');
       setResultMessage('לא נמצא מזהה חתונה');
@@ -571,9 +581,54 @@ const WeddingInfoEditor = forwardRef<WeddingInfoEditorHandle>(function WeddingIn
                 },
               }}
             />
+            <Divider sx={{ mt: 1, mb: 2.5, borderColor: 'rgba(201,168,76,0.25)' }} />
+            <Box
+              component="section"
+              data-tour-anchor="event-paybox-links"
+              aria-labelledby="event-paybox-title"
+            >
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1, mb: 2, flexWrap: 'wrap' }}>
+                <Typography id="event-paybox-title" sx={{ color: '#6F5547', fontWeight: 700, fontSize: '0.95rem' }}>
+                  מתנה לכלה והחתן בPayBox
+                </Typography>
+                <Box component="img" src="/paybox-logo.png" alt="PayBox" sx={{ width: 28, height: 28, objectFit: 'contain', borderRadius: 1, flexShrink: 0 }} />
+              </Box>
+              <TextField
+                label="קישור לקבוצת PayBox"
+                fullWidth
+                type="url"
+                value={form.paybox_url ?? ''}
+                onChange={set('paybox_url')}
+                error={invalidPayboxUrl}
+                helperText={invalidPayboxUrl ? 'קישור קבוצת PayBox אינו תקין' : undefined}
+                placeholder="https://links.payboxapp.com/..."
+                sx={fieldSx}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Box component="img" src="/paybox-logo.png" alt="" sx={{ width: 20, height: 20, borderRadius: 0.5 }} />
+                    </InputAdornment>
+                  ),
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        disabled={!safePayboxUrl}
+                        onClick={() => { if (safePayboxUrl) window.open(safePayboxUrl, '_blank', 'noopener,noreferrer'); }}
+                        startIcon={<OpenInNewRoundedIcon sx={{ fontSize: 16 }} />}
+                        sx={{ color: '#9A7833', borderColor: '#C9A84C', fontSize: '0.75rem', whiteSpace: 'nowrap', p: 1.2, minWidth: 0 }}
+                      >
+                        בדיקת קישור
+                      </Button>
+                    </InputAdornment>
+                  ),
+                  inputProps: { dir: 'ltr' },
+                }}
+              />
+            </Box>
           </Box>
 
-          {/* ── קוד לבוש ── */}
           <SectionTitle>פרטים נוספים (לא חובה)</SectionTitle>
           <TextField
             label="קוד לבוש"

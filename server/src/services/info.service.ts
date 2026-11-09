@@ -73,6 +73,7 @@ export type WeddingInfoUpdate = Partial<
     | 'table_scale_factor'
     | 'bride_bit_url'
     | 'groom_bit_url'
+    | 'paybox_url'
   >
 >;
 
@@ -91,6 +92,7 @@ export async function updateWeddingInfo(
     'venue_name', 'venue_address', 'venue_lat', 'venue_lng',
     'dress_code', 'notes', 'message', 'stage_label', 'is_tables_published', 'whatsapp_owner_confirmed', 'table_scale_factor',
     'bride_bit_url', 'groom_bit_url',
+    'paybox_url',
   ] as const;
 
   const sets: string[] = [];
@@ -109,11 +111,23 @@ export async function updateWeddingInfo(
       }
 
       if (
-        (key === 'bride_bit_url' || key === 'groom_bit_url') &&
+        (key === 'bride_bit_url' || key === 'groom_bit_url' || key === 'paybox_url') &&
         typeof value === 'string' &&
         value.trim() === ''
       ) {
         value = null;
+      }
+
+      if (key === 'paybox_url' && value != null) {
+        if (typeof value !== 'string') throw createError('קישור PayBox אינו תקין', 400);
+        const trimmed = value.trim();
+        try {
+          const url = new URL(/^[a-z][a-z\d+.-]*:/i.test(trimmed) ? trimmed : `https://${trimmed}`);
+          if (url.protocol !== 'http:' && url.protocol !== 'https:') throw new Error('Invalid protocol');
+          value = url.toString();
+        } catch {
+          throw createError('קישור PayBox אינו תקין', 400);
+        }
       }
 
       if (key === 'table_scale_factor') {

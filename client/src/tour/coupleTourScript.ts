@@ -38,6 +38,13 @@ export const COUPLE_TOUR_STEPS: CoupleTourStep[] = [
     body: 'אפשר להוסיף כאן קישורי מתנה אישיים של החתן והכלה, שיוצגו לאורחים באופן נקי ונגיש.',
   },
   {
+    id: 'event-info-paybox',
+    tabIndex: 0,
+    anchorId: 'event-paybox-links',
+    title: 'קישור לקבוצת PayBox',
+    body: 'כאן מוסיפים קישור אחד לקבוצת PayBox של האירוע. האורחים יוכלו להעביר מתנה לקבוצה דרך הכפתור באפליקציה.',
+  },
+  {
     id: 'event-info-save',
     tabIndex: 0,
     anchorId: 'event-save-button',

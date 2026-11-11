@@ -153,7 +153,7 @@ export default function DramaticWelcomeScreen({ firstName, ready = true, minimum
               }}
             />
             <Typography sx={{ color: 'var(--color-brown-mid)', fontSize: { xs: '0.86rem', sm: '0.92rem' }, fontWeight: 500 }}>
-              מיד תועבר/י...
+              מיד תועבר/י לאפליקציה...
             </Typography>
           </Box>
         </Box>

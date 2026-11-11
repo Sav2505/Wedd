@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Box, Tab, Tabs, Typography, IconButton, Tooltip } from '@mui/material';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import PhotoLibraryOutlinedIcon from '@mui/icons-material/PhotoLibraryOutlined';
@@ -165,6 +165,24 @@ function OrnamentalHeader({
   showEventMap: boolean;
   isTablesPublished: boolean;
 }) {
+  const tabsRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (activeTab !== RSVP_TAB_INDEX) return;
+
+    const timeout = window.setTimeout(() => {
+      const scroller = tabsRef.current?.querySelector<HTMLElement>('.MuiTabs-scroller');
+      if (!scroller || scroller.scrollWidth <= scroller.clientWidth) return;
+
+      const scrollEnd = getComputedStyle(scroller).direction === 'rtl'
+        ? -scroller.scrollWidth
+        : scroller.scrollWidth;
+      scroller.scrollTo({ left: scrollEnd, behavior: 'smooth' });
+    }, 350);
+
+    return () => window.clearTimeout(timeout);
+  }, [activeTab, showEventMap]);
+
   return (
     <Box sx={{ position: 'sticky', top: 0, zIndex: 100 }}>
       <Box
@@ -243,6 +261,7 @@ function OrnamentalHeader({
         {/* Tabs */}
         <Box sx={{ position: 'relative', zIndex: 2 }}>
           <Tabs
+            ref={tabsRef}
             value={activeTab}
             onChange={(_, v) => onTabChange(v)}
             variant="scrollable"
@@ -266,7 +285,14 @@ function OrnamentalHeader({
             }}
           >
             {TABS.map((tab, index) => (tab.id !== 'event-map' || showEventMap) && (
-              <Tab key={tab.id} value={index} icon={tab.icon} iconPosition="top" label={tab.label} disableRipple={false} />
+              <Tab
+                key={tab.id}
+                value={index}
+                icon={tab.icon}
+                iconPosition="top"
+                label={tab.label}
+                disableRipple={false}
+              />
             ))}
           </Tabs>
         </Box>

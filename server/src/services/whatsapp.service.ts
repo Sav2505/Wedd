@@ -15,16 +15,17 @@ export type SupportedWeddingTemplate =
  * Tab index mapping for guest UI:
  * 0 = פרטי האירוע (InfoTab)
  * 1 = הושבה (SeatingTab)
- * 2 = גלריה (PhotosTab)
- * 3 = מאיתנו אליכם (MessageTab)
- * 4 = סטטוס הגעה (AttendanceStatusTab)
+ * 2 = מפת האירוע (EventMapTab)
+ * 3 = גלריה (PhotosTab)
+ * 4 = מאיתנו אליכם (MessageTab)
+ * 5 = סטטוס הגעה (AttendanceStatusTab)
  */
 export const TEMPLATE_TO_TAB_INDEX: Record<SupportedWeddingTemplate, number> = {
-    'wedding_confirmation': 4,      // סטטוס הגעה
-    'wedding_reminder': 4,           // סטטוס הגעה
+    'wedding_confirmation': 5,      // סטטוס הגעה
+    'wedding_reminder': 5,           // סטטוס הגעה
     'wedding_day_before': 0,         // פרטי האירוע
-    'wedding_post_thanks': 2,        // גלריה
-    'wedding_custom_message': 3,     // מאיתנו אליכם
+    'wedding_post_thanks': 3,        // גלריה
+    'wedding_custom_message': 4,     // מאיתנו אליכם
 };
 
 export interface SendTemplatePayload {

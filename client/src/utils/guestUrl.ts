@@ -7,7 +7,7 @@
  * The base URL is read from VITE_SITE_URL (set in .env.production).
  * Falls back to window.location.origin during development.
  *
- * @param tabIndex Optional tab index to open automatically (0-4)
+ * @param tabIndex Optional tab index to open automatically (0-5)
  */
 export function buildGuestUrl(fullName: string, lastFourDigits: string, weddingid: number, tabIndex?: number): string {
   const base = (import.meta.env.VITE_SITE_URL as string | undefined)?.replace(/\/$/, '')

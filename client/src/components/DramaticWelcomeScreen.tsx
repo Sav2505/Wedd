@@ -87,18 +87,6 @@ export default function DramaticWelcomeScreen({ firstName, ready = true, minimum
             boxShadow: '0 18px 48px rgba(92,61,46,0.13), 0 3px 12px rgba(92,61,46,0.06)',
           }}
         >
-          <Typography
-            sx={{
-              mb: { xs: 2.5, sm: 3 },
-              color: 'var(--color-gold-dark)',
-              fontSize: { xs: '0.8rem', sm: '0.88rem' },
-              fontWeight: 500,
-              letterSpacing: '0.18em',
-            }}
-          >
-            ✦ &nbsp;אירוע של אהבה&nbsp; ✦
-          </Typography>
-
           <motion.div
             initial={{ opacity: 0, y: 14 }}
             animate={{ opacity: 1, y: 0 }}
@@ -125,7 +113,7 @@ export default function DramaticWelcomeScreen({ firstName, ready = true, minimum
                 color: 'var(--color-gold-dark)',
               }}
             >
-              ברוך/ה הבא/ה לחתונה שלנו !
+              איזה כיף שבאת!
             </Typography>
           </motion.div>
 
@@ -150,10 +138,6 @@ export default function DramaticWelcomeScreen({ firstName, ready = true, minimum
             }}
           />
 
-          <Typography sx={{ color: 'var(--color-brown-mid)', fontSize: { xs: '0.98rem', sm: '1.08rem' }, fontWeight: 500 }}>
-            אנו נרגשים לחגוג איתך את היום המיוחד בחיינו
-          </Typography>
-
           <Box sx={{ mt: { xs: 3, sm: 4 }, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1.2 }}>
             <Box
               sx={{
@@ -169,7 +153,7 @@ export default function DramaticWelcomeScreen({ firstName, ready = true, minimum
               }}
             />
             <Typography sx={{ color: 'var(--color-brown-mid)', fontSize: { xs: '0.86rem', sm: '0.92rem' }, fontWeight: 500 }}>
-              מיד תועבר/י לאפליקציה..
+              מיד תועבר/י...
             </Typography>
           </Box>
         </Box>

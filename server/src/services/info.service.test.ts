@@ -6,19 +6,19 @@ import { updateWeddingInfo, WeddingInfoUpdate } from './info.service';
 test('gift link updates are parameterized, wedding-scoped and normalize cleared fields', async () => {
   const cases: Array<{ input: WeddingInfoUpdate; values: unknown[]; fields: string[] }> = [
     {
-      input: { paybox_url: ' links.payboxapp.com/group ' },
-      values: ['https://links.payboxapp.com/group', 12],
-      fields: ['paybox_url'],
+      input: { bride_paybox_url: ' links.payboxapp.com/bride ', groom_paybox_url: 'https://links.payboxapp.com/groom' },
+      values: ['https://links.payboxapp.com/bride', 'https://links.payboxapp.com/groom', 12],
+      fields: ['bride_paybox_url', 'groom_paybox_url'],
     },
     {
-      input: { paybox_url: '   ' },
+      input: { bride_paybox_url: '   ' },
       values: [null, 12],
-      fields: ['paybox_url'],
+      fields: ['bride_paybox_url'],
     },
     {
-      input: { bride_bit_url: 'https://example.com/bit', paybox_url: null },
+      input: { bride_bit_url: 'https://example.com/bit', bride_paybox_url: null },
       values: ['https://example.com/bit', null, 12],
-      fields: ['bride_bit_url', 'paybox_url'],
+      fields: ['bride_bit_url', 'bride_paybox_url'],
     },
   ];
   const originalQuery = pool.query;
@@ -34,8 +34,6 @@ test('gift link updates are parameterized, wedding-scoped and normalize cleared 
         }
         assert.ok(sql.endsWith(`WHERE id = $${values.length} RETURNING *`));
         assert.ok(!sql.includes('groom_bit_url ='));
-        assert.ok(!sql.includes('groom_paybox_url ='));
-        assert.ok(!sql.includes('bride_paybox_url ='));
         return { rows: [saved] };
       }) as unknown as typeof pool.query;
       assert.deepEqual(await updateWeddingInfo(input, 12), saved);
@@ -43,8 +41,10 @@ test('gift link updates are parameterized, wedding-scoped and normalize cleared 
     }
     let queryCount = 0;
     pool.query = (async () => { queryCount += 1; return { rows: [] }; }) as unknown as typeof pool.query;
-    for (const paybox_url of ['javascript:alert(1)', 'https://', 'not a url']) {
-      await assert.rejects(updateWeddingInfo({ paybox_url }, 12), /קישור PayBox אינו תקין/);
+    for (const field of ['bride_paybox_url', 'groom_paybox_url'] as const) {
+      for (const value of ['javascript:alert(1)', 'https://', 'not a url']) {
+        await assert.rejects(updateWeddingInfo({ [field]: value }, 12), /קישור PayBox אינו תקין/);
+      }
     }
     assert.equal(queryCount, 0);
   } finally {

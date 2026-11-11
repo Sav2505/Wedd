@@ -95,29 +95,23 @@ function GiftButtons({
   provider = 'Bit',
   brideUrl = null,
   groomUrl = null,
-  groupUrl = null,
   isDemo,
   onDemoClick,
 }: {
   provider?: 'Bit' | 'PayBox';
   brideUrl?: string | null;
   groomUrl?: string | null;
-  groupUrl?: string | null;
   isDemo: boolean;
   onDemoClick: () => void;
 }) {
   const isPayBox = provider === 'PayBox';
-  const firstUrl = isPayBox ? groupUrl : brideUrl;
-  if (!firstUrl && (isPayBox || !groomUrl)) return null;
-  const accent = isPayBox ? '#0070BA' : '#9A7833';
-  const border = isPayBox ? 'rgba(0,112,186,0.35)' : 'rgba(201,168,76,0.55)';
-  const hoverBackground = isPayBox ? 'rgba(0,112,186,0.06)' : 'rgba(201,168,76,0.08)';
+  if (!brideUrl && !groomUrl) return null;
+  const accent = '#9A7833';
+  const border = 'rgba(201,168,76,0.55)';
+  const hoverBackground = 'rgba(201,168,76,0.08)';
 
   return (
-    <GoldCard
-      delay={isPayBox ? 0.27 : 0.25}
-      sx={{ mb: 2, ...(isPayBox ? { background: '#FFFFFF', border: '1px solid rgba(0,112,186,0.2)' } : {}) }}
-    >
+    <GoldCard delay={isPayBox ? 0.27 : 0.25} sx={{ mb: 2 }}>
       <Box
         component="section"
         aria-label={`מתנות ב-${provider}`}
@@ -137,22 +131,17 @@ function GiftButtons({
             מתנה לחתן/כלה
           </Typography>
         </Box>
-        <Typography variant="caption" sx={{ color: '#A08070', display: 'block', mb: isPayBox ? 0.75 : 1.5 }}>
+        <Typography variant="caption" sx={{ color: '#A08070', display: 'block', mb: 1.5 }}>
           {isPayBox ? 'ניתן לשלוח מתנה ב-PayBox באמצעות לחיצה על הקישור' : 'ניתן לשלוח מתנה ב-Bit באמצעות לחיצה על הקישור'}
         </Typography>
-        {isPayBox && (
-          <Typography variant="caption" sx={{ color: '#A08070', display: 'block', mb: 1.5, fontWeight: "bold" }}>
-            פרטיך ופרטי ההעברה יישארו חסויים ולא ייחשפו לאף אחד פרט לחתן/כלה.
-          </Typography>
-        )}
 
 
         <Box sx={{ display: 'flex', gap: 1.1, flexDirection: 'column' }}>
-          {firstUrl && (
+          {brideUrl && (
             <Box
               component={isDemo ? 'button' : 'a'}
               type={isDemo ? 'button' : undefined}
-              href={isDemo ? undefined : firstUrl}
+              href={isDemo ? undefined : brideUrl}
               target={isDemo ? undefined : '_blank'}
               rel={isDemo ? undefined : 'noopener noreferrer'}
               onClick={isDemo ? onDemoClick : undefined}
@@ -163,7 +152,7 @@ function GiftButtons({
                 gap: 1,
                 py: 1.15,
                 px: 1.5,
-                borderRadius: isPayBox ? 1 : 50,
+                borderRadius: 50,
                 border: `1.5px solid ${border}`,
                 color: accent,
                 fontFamily: "'Heebo', sans-serif",
@@ -180,11 +169,11 @@ function GiftButtons({
               }}
             >
               {isPayBox ? <Box component="img" src="/paybox-logo.png" alt="" sx={{ width: 20, height: 20, borderRadius: 0.5, flexShrink: 0 }} /> : <QrCode2OutlinedIcon sx={{ fontSize: 18 }} />}
-              {isPayBox ? 'מתנה לחתן ולכלה ב-PayBox' : 'מתנה לכלה ב-Bit'}
+              מתנה לכלה ב-{provider}
             </Box>
           )}
 
-          {!isPayBox && groomUrl && (
+          {groomUrl && (
             <Box
               component={isDemo ? 'button' : 'a'}
               type={isDemo ? 'button' : undefined}
@@ -199,7 +188,7 @@ function GiftButtons({
                 gap: 1,
                 py: 1.15,
                 px: 1.5,
-                borderRadius: isPayBox ? 1 : 50,
+                borderRadius: 50,
                 border: `1.5px solid ${border}`,
                 color: accent,
                 fontFamily: "'Heebo', sans-serif",
@@ -261,7 +250,8 @@ export default function InfoTab({ demoInfo, hideRegisterCta = false }: Props) {
   const compactDemo = Boolean(demoInfo);
   const brideBitUrl = toSafeExternalUrl(resolvedInfo?.bride_bit_url);
   const groomBitUrl = toSafeExternalUrl(resolvedInfo?.groom_bit_url);
-  const payboxUrl = toSafeExternalUrl(resolvedInfo?.paybox_url);
+  const bridePayboxUrl = toSafeExternalUrl(resolvedInfo?.bride_paybox_url);
+  const groomPayboxUrl = toSafeExternalUrl(resolvedInfo?.groom_paybox_url);
   const [giftDemoProvider, setGiftDemoProvider] = useState<'Bit' | 'PayBox' | null>(null);
   const [isFoodBlessingOpen, setIsFoodBlessingOpen] = useState(false);
   const [isRideCoordinationOpen, setIsRideCoordinationOpen] = useState(false);
@@ -417,10 +407,11 @@ export default function InfoTab({ demoInfo, hideRegisterCta = false }: Props) {
           onDemoClick={() => setGiftDemoProvider('Bit')}
         />
       )}
-      {payboxUrl && (
+      {(bridePayboxUrl || groomPayboxUrl) && (
         <GiftButtons
           provider="PayBox"
-          groupUrl={payboxUrl}
+          brideUrl={bridePayboxUrl}
+          groomUrl={groomPayboxUrl}
           isDemo={compactDemo}
           onDemoClick={() => setGiftDemoProvider('PayBox')}
         />

@@ -56,6 +56,9 @@
 \echo '==> Running migration_022_paybox_urls.sql...'
 \i migration_022_paybox_urls.sql
 
+\echo '==> Running migration_023_paybox_recipient_urls.sql...'
+\i migration_023_paybox_recipient_urls.sql
+
 \echo '==> Running seed.sql...'
 \i seed.sql
 

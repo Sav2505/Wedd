@@ -104,7 +104,8 @@ const DEMO_WEDDING: WeddingInfo = {
     table_scale_factor: 1,
     bride_bit_url: 'www.example.com',
     groom_bit_url: 'www.example.com',
-    paybox_url: 'https://example.com/paybox/demo-group',
+    bride_paybox_url: 'https://example.com/paybox/bride',
+    groom_paybox_url: 'https://example.com/paybox/groom',
     updated_at: '2026-11-01T12:00:00Z',
 };
 

@@ -50,7 +50,8 @@ export type WeddingInfoUpdate = Partial<
     | 'table_scale_factor'
     | 'bride_bit_url'
     | 'groom_bit_url'
-    | 'paybox_url'
+    | 'bride_paybox_url'
+    | 'groom_paybox_url'
   >
 >;
 

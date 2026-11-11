@@ -134,7 +134,8 @@ export interface WeddingInfo {
   is_tables_published: boolean;
   bride_bit_url: string | null;
   groom_bit_url: string | null;
-  paybox_url: string | null;
+  bride_paybox_url: string | null;
+  groom_paybox_url: string | null;
 }
 
 // ─── API Response Types ───────────────────────────────────────

@@ -66,7 +66,8 @@ export interface WeddingInfo {
   table_scale_factor: number;
   bride_bit_url: string | null;
   groom_bit_url: string | null;
-  paybox_url: string | null;
+  bride_paybox_url: string | null;
+  groom_paybox_url: string | null;
   updated_at: string;
 }
 

@@ -73,7 +73,8 @@ export type WeddingInfoUpdate = Partial<
     | 'table_scale_factor'
     | 'bride_bit_url'
     | 'groom_bit_url'
-    | 'paybox_url'
+    | 'bride_paybox_url'
+    | 'groom_paybox_url'
   >
 >;
 
@@ -92,7 +93,7 @@ export async function updateWeddingInfo(
     'venue_name', 'venue_address', 'venue_lat', 'venue_lng',
     'dress_code', 'notes', 'message', 'stage_label', 'is_tables_published', 'whatsapp_owner_confirmed', 'table_scale_factor',
     'bride_bit_url', 'groom_bit_url',
-    'paybox_url',
+    'bride_paybox_url', 'groom_paybox_url',
   ] as const;
 
   const sets: string[] = [];
@@ -111,14 +112,14 @@ export async function updateWeddingInfo(
       }
 
       if (
-        (key === 'bride_bit_url' || key === 'groom_bit_url' || key === 'paybox_url') &&
+        (key === 'bride_bit_url' || key === 'groom_bit_url' || key === 'bride_paybox_url' || key === 'groom_paybox_url') &&
         typeof value === 'string' &&
         value.trim() === ''
       ) {
         value = null;
       }
 
-      if (key === 'paybox_url' && value != null) {
+      if ((key === 'bride_paybox_url' || key === 'groom_paybox_url') && value != null) {
         if (typeof value !== 'string') throw createError('קישור PayBox אינו תקין', 400);
         const trimmed = value.trim();
         try {

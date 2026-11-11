@@ -144,8 +144,11 @@ const WeddingInfoEditor = forwardRef<WeddingInfoEditorHandle>(function WeddingIn
 
   // local form state
   const [form, setForm] = useState<WeddingInfoUpdate>({});
-  const safePayboxUrl = toSafeExternalUrl(form.paybox_url);
-  const invalidPayboxUrl = Boolean(form.paybox_url?.trim()) && !safePayboxUrl;
+  const safeBridePayboxUrl = toSafeExternalUrl(form.bride_paybox_url);
+  const safeGroomPayboxUrl = toSafeExternalUrl(form.groom_paybox_url);
+  const invalidBridePayboxUrl = Boolean(form.bride_paybox_url?.trim()) && !safeBridePayboxUrl;
+  const invalidGroomPayboxUrl = Boolean(form.groom_paybox_url?.trim()) && !safeGroomPayboxUrl;
+  const invalidPayboxUrl = invalidBridePayboxUrl || invalidGroomPayboxUrl;
 
   useEffect(() => {
     if (!info) return;
@@ -163,7 +166,8 @@ const WeddingInfoEditor = forwardRef<WeddingInfoEditorHandle>(function WeddingIn
       notes: info.notes ?? '',
       bride_bit_url: info.bride_bit_url ?? '',
       groom_bit_url: info.groom_bit_url ?? '',
-      paybox_url: info.paybox_url ?? '',
+      bride_paybox_url: info.bride_paybox_url ?? '',
+      groom_paybox_url: info.groom_paybox_url ?? '',
     });
     setIsDirty(false);
   }, [info]);
@@ -589,18 +593,18 @@ const WeddingInfoEditor = forwardRef<WeddingInfoEditorHandle>(function WeddingIn
             >
               <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1, mb: 2, flexWrap: 'wrap' }}>
                 <Typography id="event-paybox-title" sx={{ color: '#6F5547', fontWeight: 700, fontSize: '0.95rem' }}>
-                  מתנה לכלה והחתן בPayBox
+                  קישורי מתנה ב-PayBox
                 </Typography>
                 <Box component="img" src="/paybox-logo.png" alt="PayBox" sx={{ width: 28, height: 28, objectFit: 'contain', borderRadius: 1, flexShrink: 0 }} />
               </Box>
               <TextField
-                label="קישור לקבוצת PayBox"
+                label="קישור PayBox לכלה"
                 fullWidth
                 type="url"
-                value={form.paybox_url ?? ''}
-                onChange={set('paybox_url')}
-                error={invalidPayboxUrl}
-                helperText={invalidPayboxUrl ? 'קישור קבוצת PayBox אינו תקין' : undefined}
+                value={form.bride_paybox_url ?? ''}
+                onChange={set('bride_paybox_url')}
+                error={invalidBridePayboxUrl}
+                helperText={invalidBridePayboxUrl ? 'קישור PayBox אינו תקין' : undefined}
                 placeholder="https://links.payboxapp.com/..."
                 sx={fieldSx}
                 InputProps={{
@@ -614,8 +618,41 @@ const WeddingInfoEditor = forwardRef<WeddingInfoEditorHandle>(function WeddingIn
                       <Button
                         size="small"
                         variant="outlined"
-                        disabled={!safePayboxUrl}
-                        onClick={() => { if (safePayboxUrl) window.open(safePayboxUrl, '_blank', 'noopener,noreferrer'); }}
+                        disabled={!safeBridePayboxUrl}
+                        onClick={() => { if (safeBridePayboxUrl) window.open(safeBridePayboxUrl, '_blank', 'noopener,noreferrer'); }}
+                        startIcon={<OpenInNewRoundedIcon sx={{ fontSize: 16 }} />}
+                        sx={{ color: '#9A7833', borderColor: '#C9A84C', fontSize: '0.75rem', whiteSpace: 'nowrap', p: 1.2, minWidth: 0 }}
+                      >
+                        בדיקת קישור
+                      </Button>
+                    </InputAdornment>
+                  ),
+                  inputProps: { dir: 'ltr' },
+                }}
+              />
+              <TextField
+                label="קישור PayBox לחתן"
+                fullWidth
+                type="url"
+                value={form.groom_paybox_url ?? ''}
+                onChange={set('groom_paybox_url')}
+                error={invalidGroomPayboxUrl}
+                helperText={invalidGroomPayboxUrl ? 'קישור PayBox אינו תקין' : undefined}
+                placeholder="https://links.payboxapp.com/..."
+                sx={fieldSx}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Box component="img" src="/paybox-logo.png" alt="" sx={{ width: 20, height: 20, borderRadius: 0.5 }} />
+                    </InputAdornment>
+                  ),
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        disabled={!safeGroomPayboxUrl}
+                        onClick={() => { if (safeGroomPayboxUrl) window.open(safeGroomPayboxUrl, '_blank', 'noopener,noreferrer'); }}
                         startIcon={<OpenInNewRoundedIcon sx={{ fontSize: 16 }} />}
                         sx={{ color: '#9A7833', borderColor: '#C9A84C', fontSize: '0.75rem', whiteSpace: 'nowrap', p: 1.2, minWidth: 0 }}
                       >

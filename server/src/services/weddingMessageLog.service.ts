@@ -191,31 +191,45 @@ export async function getReconciliationIssues(staleHours = 2): Promise<Reconcili
 
 export async function listConfirmationAttemptGuestIdsForCouple(coupleId: string): Promise<string[]> {
   const { rows } = await pool.query<{ guest_id: string }>(
-    `WITH attempts AS (
-      SELECT
-        ROW_NUMBER() OVER (ORDER BY l.last_attempt_at, l.id) AS attempt_order,
-        g.id AS guest_id
-      FROM wedding_message_log l
-      JOIN guests g
-        ON g.id = l.guest_id
-       AND g.wedding_id = l.wedding_id
-      JOIN guests couple
-        ON couple.id = $1
-       AND couple.role = 'couple'
-       AND couple.wedding_id = l.wedding_id
-      WHERE l.template_name = 'wedding_confirmation'
-        AND l.last_attempt_at >= TIMESTAMPTZ '2026-11-12 16:20:00+02'
-        AND l.last_attempt_at < TIMESTAMPTZ '2026-11-13 00:00:00+02'
+    `WITH target_wedding AS (
+      SELECT wedding_id, COUNT(*) AS attempts_today
+      FROM wedding_message_log
+      WHERE template_name = 'wedding_confirmation'
+        AND last_attempt_at >= TIMESTAMPTZ '2026-11-12 00:00:00+02'
+        AND last_attempt_at < TIMESTAMPTZ '2026-11-13 00:00:00+02'
+      GROUP BY wedding_id
+      ORDER BY COUNT(*) DESC, wedding_id ASC
+      LIMIT 1
     ),
-    last_attempts AS (
-      SELECT guest_id, attempt_order
-      FROM attempts
-      ORDER BY attempt_order DESC
+    ordered_pending AS (
+      SELECT
+        g.wedding_id,
+        ROW_NUMBER() OVER (ORDER BY g.created_at ASC, g.id ASC) AS send_order,
+        g.id AS guest_id
+      FROM target_wedding tw
+      JOIN guests g
+        ON g.wedding_id = tw.wedding_id
+       AND g.role = 'guest'
+       AND g.rsvp_status = 'PENDING'
+      JOIN wedding_info wi ON wi.id = g.wedding_id
+      LEFT JOIN wedding_message_log l
+        ON l.wedding_id = g.wedding_id
+       AND l.guest_id = g.id
+       AND l.template_name = 'wedding_confirmation'
+    ),
+    selected_pending AS (
+      SELECT wedding_id, guest_id, send_order
+      FROM ordered_pending
+      ORDER BY send_order DESC
       LIMIT 143
     )
-    SELECT guest_id
-    FROM last_attempts
-    ORDER BY attempt_order`,
+    SELECT selected_pending.guest_id
+    FROM selected_pending
+    JOIN guests couple
+      ON couple.id = $1
+     AND couple.role = 'couple'
+     AND couple.wedding_id = selected_pending.wedding_id
+    ORDER BY selected_pending.send_order DESC`,
     [coupleId],
   );
 

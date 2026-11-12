@@ -48,6 +48,7 @@ import WhatsAppScheduleModal from '../../components/WhatsAppScheduleModal';
 import GuestCustomMessageModal from '../../components/GuestCustomMessageModal';
 import ExcelImportModal from '../../components/ExcelImportModal';
 import ScheduleSendIcon from '@mui/icons-material/ScheduleSend';
+import SendIcon from '@mui/icons-material/Send';
 import { getEffectivePartySize, getEffectivePlusCount, getInvitedPartySize } from '../../utils/effectiveAttendance';
 import { GuestGroup, ManagedGuest, RsvpStatus } from '../../types/domain';
 import {
@@ -60,7 +61,7 @@ import {
   getWhatsappConfirmationAttemptGuestIds,
   updateGuest,
   updateGuestGroup,
-  // sendWhatsappInvitation,
+  sendWhatsappInvitation,
 } from '../../services/guests.service';
 import { updateWeddingInfo } from '../../services/info.service';
 import { useWeddingInfo } from '../../hooks/useWeddingInfo';
@@ -282,6 +283,9 @@ export default function GuestListEditor() {
   const [whatsappDeclarationChecked, setWhatsappDeclarationChecked] = useState(false);
   const [savingWhatsappDeclaration, setSavingWhatsappDeclaration] = useState(false);
   const [importModalOpen, setImportModalOpen] = useState(false);
+  const [confirmationGuest, setConfirmationGuest] = useState<ManagedGuest | null>(null);
+  const [sendingConfirmation, setSendingConfirmation] = useState(false);
+  const [confirmationError, setConfirmationError] = useState<string | null>(null);
 
   // --- Post-save feedback: success toast + highlight/scroll to the affected guest ---
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -521,6 +525,26 @@ export default function GuestListEditor() {
       setError(error instanceof Error ? error.message : 'לא ניתן לפתוח את ההזמנה ב-WhatsApp');
     }
   }, [info]);
+
+  const handleOpenConfirmation = useCallback((guest: ManagedGuest) => {
+    setConfirmationError(null);
+    setConfirmationGuest(guest);
+  }, []);
+
+  async function handleSendConfirmation() {
+    if (!confirmationGuest || sendingConfirmation) return;
+    setSendingConfirmation(true);
+    setConfirmationError(null);
+    try {
+      await sendWhatsappInvitation(confirmationGuest.id);
+      setSuccessMessage(`ההודעה ל${confirmationGuest.first_name || confirmationGuest.full_name} התקבלה ב-WhatsApp`);
+      setConfirmationGuest(null);
+    } catch (error) {
+      setConfirmationError(error instanceof Error ? error.message : 'שליחת ההודעה נכשלה');
+    } finally {
+      setSendingConfirmation(false);
+    }
+  }
 
   // const handleSendInvitation = useCallback((guest: ManagedGuest) => {
   //   window.open(buildWhatsAppInviteUrl(info?.id ?? -1, guest, `${info?.bride_name ?? "שחר"} & ${info?.groom_name ?? "שחר"}`, info?.wedding_date ?? "יום שני, 7 בדצמבר 2026"), '_blank', 'noopener,noreferrer');
@@ -1078,6 +1102,7 @@ export default function GuestListEditor() {
               onEditGuest={handleEditGuestOpen}
               onDeleteGuest={handleDeleteGuestOpen}
               onSendInvitation={handleSendInvitation}
+              onSendConfirmation={handleOpenConfirmation}
               registerGuestRef={registerGuestRef}
               highlightedGuestId={highlightedGuestId}
             />
@@ -1095,11 +1120,31 @@ export default function GuestListEditor() {
             onEditGuest={handleEditGuestOpen}
             onDeleteGuest={handleDeleteGuestOpen}
             onSendInvitation={handleSendInvitation}
+            onSendConfirmation={handleOpenConfirmation}
             registerGuestRef={registerGuestRef}
             highlightedGuestId={highlightedGuestId}
           />
         </Box>
       )}
+
+      <Dialog open={confirmationGuest !== null} onClose={sendingConfirmation ? undefined : () => setConfirmationGuest(null)} maxWidth="xs" fullWidth>
+        <DialogTitle sx={{ fontFamily: "'Frank Ruhl Libre', serif", fontWeight: 700 }}>שליחת אישור הגעה</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2">
+            לשלוח את הודעת אישור ההגעה הראשונה ישירות ל{confirmationGuest?.full_name} ({confirmationGuest?.phone})?
+          </Typography>
+          {!isWhatsappDeclarationConfirmed && (
+            <Alert severity="warning" sx={{ mt: 2 }}>יש לאשר שימוש ב-WhatsApp דרך תזמון הודעות לאורחים לפני השליחה.</Alert>
+          )}
+          {confirmationError && <Alert severity="error" sx={{ mt: 2 }}>{confirmationError}</Alert>}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setConfirmationGuest(null)} disabled={sendingConfirmation}>ביטול</Button>
+          <Button onClick={handleSendConfirmation} disabled={sendingConfirmation || !isWhatsappDeclarationConfirmed} sx={{ color: '#1f9f51', fontWeight: 700 }}>
+            {sendingConfirmation ? <CircularProgress size={18} color="inherit" /> : 'שליחה'}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       <Dialog open={groupDialogOpen} onClose={() => setGroupDialogOpen(false)} maxWidth="xs" fullWidth>
         <DialogTitle sx={{ fontFamily: "'Frank Ruhl Libre', serif", fontWeight: 700 }}>
@@ -1504,6 +1549,7 @@ const GroupAccordionItem = memo(function GroupAccordionItem({
   onEditGuest,
   onDeleteGuest,
   onSendInvitation,
+  onSendConfirmation,
   registerGuestRef,
   highlightedGuestId,
 }: {
@@ -1521,6 +1567,7 @@ const GroupAccordionItem = memo(function GroupAccordionItem({
   onEditGuest: (guest: ManagedGuest) => void;
   onDeleteGuest: (id: string) => void;
   onSendInvitation: (guest: ManagedGuest) => void;
+  onSendConfirmation: (guest: ManagedGuest) => void;
   registerGuestRef: (id: string, el: HTMLDivElement | null) => void;
   highlightedGuestId: string | null;
 }) {
@@ -1614,6 +1661,7 @@ const GroupAccordionItem = memo(function GroupAccordionItem({
                 onEdit={onEditGuest}
                 onDelete={onDeleteGuest}
                 onSendInvitation={onSendInvitation}
+                onSendConfirmation={onSendConfirmation}
                 registerRef={registerGuestRef}
                 highlighted={highlightedGuestId === guest.id}
               />
@@ -1631,6 +1679,7 @@ const GuestRow = memo(function GuestRow({
   onEdit,
   onDelete,
   onSendInvitation,
+  onSendConfirmation,
   registerRef,
   highlighted,
 }: {
@@ -1639,6 +1688,7 @@ const GuestRow = memo(function GuestRow({
   onEdit: (guest: ManagedGuest) => void;
   onDelete: (id: string) => void;
   onSendInvitation: (guest: ManagedGuest) => void;
+  onSendConfirmation: (guest: ManagedGuest) => void;
   registerRef: (id: string, el: HTMLDivElement | null) => void;
   highlighted: boolean;
 }) {
@@ -1711,6 +1761,19 @@ const GuestRow = memo(function GuestRow({
         </Box>
 
         <Stack direction="row" spacing={0.32}>
+          <Tooltip title="שליחת הודעת אישור הגעה ב-WhatsApp">
+            <span>
+              <IconButton
+                size="small"
+                aria-label="שליחת הודעת אישור הגעה ב-WhatsApp"
+                disabled={weddingId <= 0 || !guest.phone.trim()}
+                onClick={() => onSendConfirmation(guest)}
+                sx={{ color: '#1f9f51', '&:hover': { bgcolor: 'rgba(37,211,102,0.08)' } }}
+              >
+                <SendIcon sx={{ fontSize: 18 }} />
+              </IconButton>
+            </span>
+          </Tooltip>
           <Tooltip title="פתיחת הזמנה ב-WhatsApp">
             <span>
               <IconButton

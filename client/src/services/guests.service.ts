@@ -142,11 +142,10 @@ export async function updateMyRsvp(payload: {
   return data.data;
 }
 
-export async function sendWhatsappInvitation(guestId: string, weddingId: number): Promise<void> {
+export async function sendWhatsappInvitation(guestId: string): Promise<void> {
   const { data } = await api.post<ApiResponse<void>>('/whatsapp/send', {
     guestId,
-    weddingId,
-  });
+  }, { timeout: 60_000 });
 
   if (!data.success) {
     throw new Error(data.message ?? 'שגיאה בשליחת הודעת WhatsApp');

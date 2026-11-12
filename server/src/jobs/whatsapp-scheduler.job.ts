@@ -14,6 +14,7 @@ import {
   upsertPendingLog,
 } from '../services/weddingMessageLog.service';
 import { computeWeddingMessageScheduleDates, computeWhenLabel, ISRAEL_TIMEZONE } from '../utils/scheduling.util';
+import { sendWeddingConfirmation } from '../services/weddingConfirmation.service';
 
 interface WeddingInfoRow {
   id: number;
@@ -172,7 +173,7 @@ async function getEligibleGuests(
        ${testFilter}
        AND (
          l.id IS NULL
-         OR l.status NOT IN ('sent', 'delivered', 'read')
+         OR (${templateName === 'wedding_confirmation' ? "l.status = 'failed'" : "l.status NOT IN ('sent', 'delivered', 'read')"})
        )
      ORDER BY g.created_at ASC
      ${testLimit}`;
@@ -247,6 +248,14 @@ async function processTemplateForWedding(
     return;
   }
 
+  if (templateName === 'wedding_confirmation' &&
+      (!wedding.invitation_image_media_id || !wedding.bride_name || !wedding.groom_name ||
+       !wedding.wedding_date || !wedding.wedding_time || !wedding.wedding_canpoy_time ||
+       !process.env.WHATSAPP_PHONE_NUMBER_ID || !process.env.WHATSAPP_ACCESS_TOKEN)) {
+    console.error(`[WhatsApp Scheduler] Missing confirmation prerequisites for wedding_id=${wedding.id}`);
+    return;
+  }
+
   if (templateName === 'wedding_day_before') {
     const weddingDay = DateTime.fromISO(wedding.wedding_date, { zone: ISRAEL_TIMEZONE }).startOf('day');
     const today = todayIsrael.startOf('day');
@@ -274,6 +283,16 @@ async function processTemplateForWedding(
   for (let i = 0; i < guests.length; i += BATCH_SIZE) {
     const batch = guests.slice(i, i + BATCH_SIZE);
     for (const guest of batch) {
+
+      if (templateName === 'wedding_confirmation') {
+        try {
+          await sendWeddingConfirmation(wedding, guest);
+        } catch (err: any) {
+          console.error(`[WhatsApp Scheduler] Confirmation failed for guest ${guest.id}:`, err?.message);
+        }
+        await sleep(INTERVAL_MS);
+        continue;
+      }
 
       const pending = await upsertPendingLog(wedding.id, guest.id, templateName);
       try {

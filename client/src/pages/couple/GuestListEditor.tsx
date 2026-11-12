@@ -182,6 +182,36 @@ function formatRsvpUpdatedAt(ts: string | null): string | null {
 //   return `https://wa.me/${normalizedPhone}?text=${encodeURIComponent(message)}`;
 // }
 
+function buildManualWhatsAppInviteUrl(weddingId: number, guest: ManagedGuest, coupleName: string, weddingDate?: string): string {
+  const digits = guest.phone.replace(/\D/g, '').replace(/^00/, '');
+  const phone = digits.startsWith('0') ? `972${digits.slice(1)}` : digits;
+  if (!/^[1-9]\d{7,14}$/.test(phone)) {
+    throw new Error('מספר הטלפון של האורח אינו תקין');
+  }
+
+  const personalLink = buildGuestUrl(guest.full_name, digits.slice(-4), weddingId, 5);
+  const date = weddingDate ? new Date(weddingDate) : null;
+  const formattedDate = date && !Number.isNaN(date.getTime())
+    ? date.toLocaleDateString('he-IL', {
+      timeZone: 'Asia/Jerusalem', weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
+    })
+    : '';
+  const message = [
+    `שלום ${guest.first_name?.trim() || guest.full_name},`,
+    '',
+    'אנו שמחים ונרגשים להזמינך לחתונתנו!',
+    ...(formattedDate ? [`מועד האירוע: ${formattedDate}`] : []),
+    '',
+    'נשמח לאישור הגעתך בקישור האישי:',
+    personalLink,
+    '',
+    'מחכים לחגוג איתך,',
+    coupleName,
+  ].join('\n');
+
+  return `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+}
+
 function computeGroupChipLabel(items: ManagedGuest[]) {
   const total = items.reduce((s, g) => s + getEffectivePartySize(g), 0);
   if (items.length > 0) {
@@ -426,6 +456,17 @@ export default function GuestListEditor() {
   const handleDeleteGuestOpen = useCallback((id: string) => {
     setDeleteGuestId(id);
   }, []);
+
+  const handleSendInvitation = useCallback((guest: ManagedGuest) => {
+    if (!info?.id) return;
+    try {
+      const coupleName = [info.bride_name, info.groom_name].filter(Boolean).join(' ו');
+      const url = buildManualWhatsAppInviteUrl(info.id, guest, coupleName, info.wedding_date);
+      window.open(url, '_blank', 'noopener,noreferrer');
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'לא ניתן לפתוח את ההזמנה ב-WhatsApp');
+    }
+  }, [info]);
 
   // const handleSendInvitation = useCallback((guest: ManagedGuest) => {
   //   window.open(buildWhatsAppInviteUrl(info?.id ?? -1, guest, `${info?.bride_name ?? "שחר"} & ${info?.groom_name ?? "שחר"}`, info?.wedding_date ?? "יום שני, 7 בדצמבר 2026"), '_blank', 'noopener,noreferrer');
@@ -963,6 +1004,7 @@ export default function GuestListEditor() {
               onCreateGuest={openCreateGuest}
               onEditGuest={handleEditGuestOpen}
               onDeleteGuest={handleDeleteGuestOpen}
+              onSendInvitation={handleSendInvitation}
               registerGuestRef={registerGuestRef}
               highlightedGuestId={highlightedGuestId}
             />
@@ -979,6 +1021,7 @@ export default function GuestListEditor() {
             onCreateGuest={openCreateGuest}
             onEditGuest={handleEditGuestOpen}
             onDeleteGuest={handleDeleteGuestOpen}
+            onSendInvitation={handleSendInvitation}
             registerGuestRef={registerGuestRef}
             highlightedGuestId={highlightedGuestId}
           />
@@ -1387,6 +1430,7 @@ const GroupAccordionItem = memo(function GroupAccordionItem({
   onCreateGuest,
   onEditGuest,
   onDeleteGuest,
+  onSendInvitation,
   registerGuestRef,
   highlightedGuestId,
 }: {
@@ -1403,6 +1447,7 @@ const GroupAccordionItem = memo(function GroupAccordionItem({
   onCreateGuest: (groupId: string | null) => void;
   onEditGuest: (guest: ManagedGuest) => void;
   onDeleteGuest: (id: string) => void;
+  onSendInvitation: (guest: ManagedGuest) => void;
   registerGuestRef: (id: string, el: HTMLDivElement | null) => void;
   highlightedGuestId: string | null;
 }) {
@@ -1495,6 +1540,7 @@ const GroupAccordionItem = memo(function GroupAccordionItem({
                 guest={guest}
                 onEdit={onEditGuest}
                 onDelete={onDeleteGuest}
+                onSendInvitation={onSendInvitation}
                 registerRef={registerGuestRef}
                 highlighted={highlightedGuestId === guest.id}
               />
@@ -1511,6 +1557,7 @@ const GuestRow = memo(function GuestRow({
   weddingId,
   onEdit,
   onDelete,
+  onSendInvitation,
   registerRef,
   highlighted,
 }: {
@@ -1518,6 +1565,7 @@ const GuestRow = memo(function GuestRow({
   weddingId: number;
   onEdit: (guest: ManagedGuest) => void;
   onDelete: (id: string) => void;
+  onSendInvitation: (guest: ManagedGuest) => void;
   registerRef: (id: string, el: HTMLDivElement | null) => void;
   highlighted: boolean;
 }) {
@@ -1590,6 +1638,19 @@ const GuestRow = memo(function GuestRow({
         </Box>
 
         <Stack direction="row" spacing={0.32}>
+          <Tooltip title="פתיחת הזמנה ב-WhatsApp">
+            <span>
+              <IconButton
+                size="small"
+                aria-label="פתיחת הזמנה ב-WhatsApp"
+                disabled={weddingId <= 0 || !guest.phone.trim()}
+                onClick={() => onSendInvitation(guest)}
+                sx={{ color: '#1f9f51', '&:hover': { bgcolor: 'rgba(37,211,102,0.08)' } }}
+              >
+                <WhatsAppIcon sx={{ fontSize: 18 }} />
+              </IconButton>
+            </span>
+          </Tooltip>
           {/* <Tooltip title="שליחת הזמנה">
             <Button
               size="small"

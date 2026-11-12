@@ -437,9 +437,7 @@ export default function GuestListEditor() {
 
     setLoadingWhatsappAttempts(true);
     try {
-      const guestIds = whatsappAttemptGuestIds
-        ? Array.from(whatsappAttemptGuestIds)
-        : await getWhatsappConfirmationAttemptGuestIds();
+      const guestIds = await getWhatsappConfirmationAttemptGuestIds();
       setWhatsappAttemptGuestIds(new Set(guestIds));
       setSearch('');
       setRsvpFilter('ALL');
@@ -1033,7 +1031,7 @@ export default function GuestListEditor() {
         >
           {showWhatsappAttemptsOnly
             ? 'הצג את כל האורחים'
-            : `הצג רק את ${whatsappAttemptGuestIds?.size ?? 143} האורחים שנשלחו אליהם`}
+            : 'הצג את 143 האורחים הממתינים האחרונים'}
         </Button>
       </Box>
 

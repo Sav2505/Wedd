@@ -182,7 +182,14 @@ function formatRsvpUpdatedAt(ts: string | null): string | null {
 //   return `https://wa.me/${normalizedPhone}?text=${encodeURIComponent(message)}`;
 // }
 
-function buildManualWhatsAppInviteUrl(weddingId: number, guest: ManagedGuest, coupleName: string, weddingDate?: string): string {
+function buildManualWhatsAppInviteUrl(
+  weddingId: number,
+  guest: ManagedGuest,
+  coupleName: string,
+  weddingDate?: string,
+  weddingTime?: string,
+  weddingCanpoyTime?: string,
+): string {
   const digits = guest.phone.replace(/\D/g, '').replace(/^00/, '');
   const phone = digits.startsWith('0') ? `972${digits.slice(1)}` : digits;
   if (!/^[1-9]\d{7,14}$/.test(phone)) {
@@ -193,19 +200,26 @@ function buildManualWhatsAppInviteUrl(weddingId: number, guest: ManagedGuest, co
   const date = weddingDate ? new Date(weddingDate) : null;
   const formattedDate = date && !Number.isNaN(date.getTime())
     ? date.toLocaleDateString('he-IL', {
-      timeZone: 'Asia/Jerusalem', weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
+      timeZone: 'Asia/Jerusalem', weekday: 'long', day: '2-digit', month: 'long', year: 'numeric',
     })
     : '';
+  const receptionTime = weddingTime?.slice(0, 5) ?? '';
+  const canopyTime = weddingCanpoyTime?.slice(0, 5) ?? '';
   const message = [
-    `שלום ${guest.first_name?.trim() || guest.full_name},`,
+    `שלום ${guest.first_name?.trim() || guest.full_name}! 💌`,
     '',
-    'אנו שמחים ונרגשים להזמינך לחתונתנו!',
-    ...(formattedDate ? [`מועד האירוע: ${formattedDate}`] : []),
+    'בשמחה ובהתרגשות גדולה,',
+    'אנו מזמינים אותך לקחת חלק ביום המאושר בחיינו! 💍✨',
     '',
-    'נשמח לאישור הגעתך בקישור האישי:',
+    ...(formattedDate ? [`📅 מועד האירוע: ${formattedDate}`] : []),
+    ...(receptionTime ? [`🥂 קבלת פנים: ${receptionTime}`] : []),
+    ...(canopyTime ? [`⛪ חופה: ${canopyTime}`] : []),
+    '',
+    'נשמח מאוד אם תאשר/י את הגעתך באמצעות הקישור האישי, כדי שנוכל להיערך בצורה הטובה ביותר. 🙏',
     personalLink,
     '',
-    'מחכים לחגוג איתך,',
+    'מחכים להתרגש, לשמוח ולחגוג איתך 🥂❤️',
+    '',
     coupleName,
   ].join('\n');
 
@@ -460,8 +474,15 @@ export default function GuestListEditor() {
   const handleSendInvitation = useCallback((guest: ManagedGuest) => {
     if (!info?.id) return;
     try {
-      const coupleName = [info.bride_name, info.groom_name].filter(Boolean).join(' ו');
-      const url = buildManualWhatsAppInviteUrl(info.id, guest, coupleName, info.wedding_date);
+      const coupleName = [info.bride_name, info.groom_name].filter(Boolean).join(' & ');
+      const url = buildManualWhatsAppInviteUrl(
+        info.id,
+        guest,
+        coupleName,
+        info.wedding_date,
+        info.wedding_time,
+        info.wedding_canpoy_time,
+      );
       window.open(url, '_blank', 'noopener,noreferrer');
     } catch (error) {
       setError(error instanceof Error ? error.message : 'לא ניתן לפתוח את ההזמנה ב-WhatsApp');

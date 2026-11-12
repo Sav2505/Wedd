@@ -220,7 +220,8 @@ function buildManualWhatsAppInviteUrl(
     '',
     'מחכים להתרגש, לשמוח ולחגוג איתך 🥂❤️',
     '',
-    coupleName,
+    'באהבה,',
+    `${coupleName} 💕`,
   ].join('\n');
 
   return `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;

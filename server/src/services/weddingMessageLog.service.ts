@@ -188,3 +188,36 @@ export async function getReconciliationIssues(staleHours = 2): Promise<Reconcili
 
   return rows;
 }
+
+export async function listConfirmationAttemptGuestIdsForCouple(coupleId: string): Promise<string[]> {
+  const { rows } = await pool.query<{ guest_id: string }>(
+    `WITH attempts AS (
+      SELECT
+        ROW_NUMBER() OVER (ORDER BY l.last_attempt_at, l.id) AS attempt_order,
+        g.id AS guest_id
+      FROM wedding_message_log l
+      JOIN guests g
+        ON g.id = l.guest_id
+       AND g.wedding_id = l.wedding_id
+      JOIN guests couple
+        ON couple.id = $1
+       AND couple.role = 'couple'
+       AND couple.wedding_id = l.wedding_id
+      WHERE l.template_name = 'wedding_confirmation'
+        AND l.last_attempt_at >= TIMESTAMPTZ '2026-11-12 16:20:00+02'
+        AND l.last_attempt_at < TIMESTAMPTZ '2026-11-13 00:00:00+02'
+    ),
+    last_attempts AS (
+      SELECT guest_id, attempt_order
+      FROM attempts
+      ORDER BY attempt_order DESC
+      LIMIT 143
+    )
+    SELECT guest_id
+    FROM last_attempts
+    ORDER BY attempt_order`,
+    [coupleId],
+  );
+
+  return rows.map(({ guest_id }) => guest_id);
+}

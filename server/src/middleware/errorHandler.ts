@@ -6,7 +6,7 @@ export interface AppError extends Error {
 
 export function errorHandler(
   err: AppError,
-  _req: Request,
+  req: Request,
   res: Response,
   _next: NextFunction,
 ): void {
@@ -16,7 +16,8 @@ export function errorHandler(
       ? 'שגיאת שרת פנימית'
       : err.message || 'שגיאה לא צפויה';
 
-  console.error(`[ERROR] ${statusCode} — ${err.message}`);
+  const route = typeof req.route?.path === 'string' ? req.route.path : 'unknown';
+  console.error(`[ERROR] ${statusCode} — ${err.message} (${req.method} ${route})`);
   res.status(statusCode).json({ success: false, message });
 }
 

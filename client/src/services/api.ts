@@ -8,17 +8,15 @@ const api = axios.create({
   timeout: 10_000,
 });
 
-// Request interceptor — attach X-Guest-ID when a guest is stored
+let getGuestId: () => string | undefined = () => undefined;
+
+export function setGuestIdProvider(provider: () => string | undefined): void {
+  getGuestId = provider;
+}
+
 api.interceptors.request.use((config) => {
-  try {
-    const raw = localStorage.getItem('wedding_guest');
-    if (raw) {
-      const guest = JSON.parse(raw) as { id: string };
-      config.headers['X-Guest-ID'] = guest.id;
-    }
-  } catch {
-    // ignore parse errors
-  }
+  const guestId = getGuestId();
+  if (guestId) config.headers['X-Guest-ID'] = guestId;
   return config;
 });
 

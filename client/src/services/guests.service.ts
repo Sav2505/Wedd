@@ -79,6 +79,15 @@ export async function getGuests(q?: string, wedding_id?: number): Promise<Manage
   return data.data;
 }
 
+export async function getWhatsappConfirmationAttemptGuestIds(): Promise<string[]> {
+  const { data } = await api.get<ApiResponse<string[]>>('/guests/whatsapp-confirmation-attempts');
+  if (!data.success || !data.data) {
+    throw new Error(data.message ?? 'שגיאה בטעינת אורחי ההזמנות');
+  }
+
+  return data.data;
+}
+
 export async function createGuest(payload: {
   wedding_id: number;
   first_name: string;

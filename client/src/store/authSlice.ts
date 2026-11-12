@@ -6,9 +6,36 @@ interface AuthState {
   isAuthenticated: boolean;
 }
 
-const stored = localStorage.getItem('wedding_guest');
+function readGuest(getStorage: () => Storage): Guest | null {
+  try {
+    const raw = getStorage().getItem('wedding_guest');
+    if (!raw) return null;
+    const guest = JSON.parse(raw) as Guest;
+    return guest && typeof guest.id === 'string' && guest.id ? guest : null;
+  } catch {
+    return null;
+  }
+}
+
+function loadGuest(): Guest | null {
+  return readGuest(() => sessionStorage) ?? readGuest(() => localStorage);
+}
+
+function persistGuest(guest: Guest | null): void {
+  for (const getStorage of [() => sessionStorage, () => localStorage]) {
+    try {
+      const storage = getStorage();
+      if (guest) storage.setItem('wedding_guest', JSON.stringify(guest));
+      else storage.removeItem('wedding_guest');
+    } catch {
+      continue;
+    }
+  }
+}
+
+const stored = loadGuest();
 const initialState: AuthState = {
-  guest: stored ? (JSON.parse(stored) as Guest) : null,
+  guest: stored,
   isAuthenticated: Boolean(stored),
 };
 
@@ -19,12 +46,12 @@ const authSlice = createSlice({
     setGuest(state, action: PayloadAction<Guest>) {
       state.guest = action.payload;
       state.isAuthenticated = true;
-      localStorage.setItem('wedding_guest', JSON.stringify(action.payload));
+      persistGuest(action.payload);
     },
     logout(state) {
       state.guest = null;
       state.isAuthenticated = false;
-      localStorage.removeItem('wedding_guest');
+      persistGuest(null);
     },
   },
 });

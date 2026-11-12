@@ -41,6 +41,7 @@ import DownloadIcon from '@mui/icons-material/Download';
 import UploadFileIcon from '@mui/icons-material/UploadFile';
 import CloseIcon from '@mui/icons-material/Close';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import FilterAltIcon from '@mui/icons-material/FilterAlt';
 import { exportGuestsToExcel } from '../../utils/exportGuestsToExcel';
 import { buildGuestUrl } from '../../utils/guestUrl';
 import WhatsAppScheduleModal from '../../components/WhatsAppScheduleModal';
@@ -56,6 +57,7 @@ import {
   deleteGuestGroup,
   getGuestGroups,
   getGuests,
+  getWhatsappConfirmationAttemptGuestIds,
   updateGuest,
   updateGuestGroup,
   // sendWhatsappInvitation,
@@ -252,6 +254,9 @@ export default function GuestListEditor() {
 
   const [search, setSearch] = useState('');
   const [rsvpFilter, setRsvpFilter] = useState<RsvpFilter>('ALL');
+  const [whatsappAttemptGuestIds, setWhatsappAttemptGuestIds] = useState<Set<string> | null>(null);
+  const [showWhatsappAttemptsOnly, setShowWhatsappAttemptsOnly] = useState(false);
+  const [loadingWhatsappAttempts, setLoadingWhatsappAttempts] = useState(false);
 
   const [groupDialogOpen, setGroupDialogOpen] = useState(false);
   const [editingGroup, setEditingGroup] = useState<GuestGroup | null>(null);
@@ -361,6 +366,11 @@ export default function GuestListEditor() {
       : bySearch.filter((g) => g.rsvp_status === rsvpFilter);
   }, [allGuests, search, rsvpFilter]);
 
+  const visibleGuests = useMemo(() => {
+    if (!showWhatsappAttemptsOnly || !whatsappAttemptGuestIds) return processedGuests;
+    return processedGuests.filter((guest) => whatsappAttemptGuestIds.has(guest.id));
+  }, [processedGuests, showWhatsappAttemptsOnly, whatsappAttemptGuestIds]);
+
   const rsvpSummary = useMemo(() => {
     let coming = 0, notComing = 0, pending = 0, effectiveTotalPeople = 0;
     for (const g of allGuests) {
@@ -389,7 +399,7 @@ export default function GuestListEditor() {
     }
 
     const ungrouped: ManagedGuest[] = [];
-    for (const guest of processedGuests) {
+    for (const guest of visibleGuests) {
       if (guest.guest_group_id && map.has(guest.guest_group_id)) {
         map.get(guest.guest_group_id)!.push(guest);
       } else {
@@ -398,13 +408,13 @@ export default function GuestListEditor() {
     }
 
     return { map, ungrouped };
-  }, [groups, processedGuests]);
+  }, [groups, visibleGuests]);
 
   const groupedRef = useRef(grouped);
   useEffect(() => { groupedRef.current = grouped; }, [grouped]);
 
   useEffect(() => {
-    const isFiltering = search.trim() !== '' || rsvpFilter !== 'ALL';
+    const isFiltering = showWhatsappAttemptsOnly || search.trim() !== '' || rsvpFilter !== 'ALL';
     if (!isFiltering) {
       // לא מסננים - לא נוגעים ב-expandedGroups בכלל, כדי לא לסגור קבוצות
       // שהמשתמש פתח ידנית (כולל אחרי reload מ-save).
@@ -417,7 +427,29 @@ export default function GuestListEditor() {
     }
     if (current.ungrouped.length > 0) next.add(UNGROUPED_KEY);
     setExpandedGroups(next);
-  }, [search, rsvpFilter]);
+  }, [search, rsvpFilter, showWhatsappAttemptsOnly]);
+
+  async function handleToggleWhatsappAttempts() {
+    if (showWhatsappAttemptsOnly) {
+      setShowWhatsappAttemptsOnly(false);
+      return;
+    }
+
+    setLoadingWhatsappAttempts(true);
+    try {
+      const guestIds = whatsappAttemptGuestIds
+        ? Array.from(whatsappAttemptGuestIds)
+        : await getWhatsappConfirmationAttemptGuestIds();
+      setWhatsappAttemptGuestIds(new Set(guestIds));
+      setSearch('');
+      setRsvpFilter('ALL');
+      setShowWhatsappAttemptsOnly(true);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'שגיאה בטעינת אורחי ההזמנות');
+    } finally {
+      setLoadingWhatsappAttempts(false);
+    }
+  }
 
   const toggleGroup = useCallback((id: string) => {
     setExpandedGroups((prev) => {
@@ -977,13 +1009,32 @@ export default function GuestListEditor() {
             onClick={() => handleOpenRsvpList('PENDING')}
             clickable
           />
-          <Chip size="small" label={`${processedGuests.length} רשומות`} sx={{ bgcolor: 'rgba(201,168,76,0.18)', color: '#8A6A2B' }} />
-          {processedGuests.length !== allGuests.length && (
+          <Chip size="small" label={`${visibleGuests.length} רשומות`} sx={{ bgcolor: 'rgba(201,168,76,0.18)', color: '#8A6A2B' }} />
+          {visibleGuests.length !== allGuests.length && (
             <Chip size="small" label={`מתוך ${allGuests.length} אורחים`} sx={{ bgcolor: 'rgba(201,168,76,0.11)', color: '#9A7833' }} />
           )}
           <Chip size="small" label={`${groups.length} קבוצות`} sx={{ bgcolor: 'rgba(154,120,51,0.13)', color: '#8A6A2B' }} />
 
         </Stack>
+        <Button
+          fullWidth
+          variant={showWhatsappAttemptsOnly ? 'contained' : 'outlined'}
+          startIcon={loadingWhatsappAttempts ? <CircularProgress size={16} color="inherit" /> : <FilterAltIcon />}
+          disabled={loadingWhatsappAttempts}
+          onClick={handleToggleWhatsappAttempts}
+          sx={{
+            mt: 1.25,
+            borderColor: 'rgba(201,168,76,0.5)',
+            color: showWhatsappAttemptsOnly ? '#2C1810' : '#9A7833',
+            bgcolor: showWhatsappAttemptsOnly ? 'rgba(201,168,76,0.35)' : 'transparent',
+            fontWeight: 700,
+            '&:hover': { bgcolor: 'rgba(201,168,76,0.15)', borderColor: '#C9A84C' },
+          }}
+        >
+          {showWhatsappAttemptsOnly
+            ? 'הצג את כל האורחים'
+            : `הצג רק את ${whatsappAttemptGuestIds?.size ?? 143} האורחים שנשלחו אליהם`}
+        </Button>
       </Box>
 
       {searchLoading ? (

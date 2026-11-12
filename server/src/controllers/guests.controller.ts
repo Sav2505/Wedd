@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { createError } from '../middleware/errorHandler';
 import * as guestsService from '../services/guests.service';
+import { listConfirmationAttemptGuestIdsForCouple } from '../services/weddingMessageLog.service';
 import { RsvpStatus } from '../types';
 
 const RSVP_MAX_GUESTS = Number(process.env.RSVP_MAX_GUESTS ?? 12);
@@ -111,6 +112,20 @@ export async function getGuests(
     );
 
     res.json({ success: true, data: guests });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function getWhatsappConfirmationAttempts(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
+  try {
+    const coupleId = (req as Request & { coupleId: string }).coupleId;
+    const guestIds = await listConfirmationAttemptGuestIdsForCouple(coupleId);
+    res.json({ success: true, data: guestIds });
   } catch (err) {
     next(err);
   }

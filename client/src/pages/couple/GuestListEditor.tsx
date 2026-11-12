@@ -368,7 +368,9 @@ export default function GuestListEditor() {
 
   const visibleGuests = useMemo(() => {
     if (!showWhatsappAttemptsOnly || !whatsappAttemptGuestIds) return processedGuests;
-    return processedGuests.filter((guest) => whatsappAttemptGuestIds.has(guest.id));
+    const guestsById = new Map(processedGuests.map((guest) => [guest.id, guest]));
+    return Array.from(whatsappAttemptGuestIds, (id) => guestsById.get(id))
+      .filter((guest): guest is ManagedGuest => guest !== undefined);
   }, [processedGuests, showWhatsappAttemptsOnly, whatsappAttemptGuestIds]);
 
   const rsvpSummary = useMemo(() => {
@@ -1031,7 +1033,7 @@ export default function GuestListEditor() {
         >
           {showWhatsappAttemptsOnly
             ? 'הצג את כל האורחים'
-            : 'הצג את 143 האורחים הממתינים האחרונים'}
+            : 'הצג עד 143 האורחים הממתינים האחרונים'}
         </Button>
       </Box>
 

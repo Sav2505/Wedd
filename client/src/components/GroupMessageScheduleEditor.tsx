@@ -139,7 +139,10 @@ export default function GroupMessageScheduleEditor({ weddingId, onActiveTemplate
   return (
     <Box sx={{ borderTop: '1px solid', borderColor: 'divider', pt: 2, mt: 2 }}>
       <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>תזמון לפי קבוצות</Typography>
-      {!data.enabled && <Alert severity="warning" sx={{ mt: 1 }}>השרת עדיין לא מאפשר שמירת תזמון קבוצות. יש לוודא שהמיגרציות 026–029 הותקנו וש־WHATSAPP_GROUP_SCHEDULER_ENABLED=true, IS_PROD=true ו־WHATSAPP_TEST_ONLY אינו true. מחסום 24 השעות אינו מונע שמירה.</Alert>}
+      {!data.enabled && <Alert severity="warning" sx={{ mt: 1 }}>
+        השרת עדיין לא מאפשר שמירת תזמון קבוצות: {data.disabled_reasons?.length ? data.disabled_reasons.join(' · ') : 'גרסת ה־BE שרצה אינה מחזירה פירוט אבחון; יש לפרוס את גרסת ה־BE העדכנית.'}
+        {' '}מחסום 24 השעות אינו מונע שמירה.
+      </Alert>}
       {data.invitation_locked && <Alert severity="info" sx={{ mt: 1 }}>ההזמנה הראשונית כבר נשלחה ולכן אינה ניתנת לתזמון מחדש. נבחרה לשונית התזכורת.</Alert>}
       {message && <Alert severity={message.type} sx={{ mt: 1 }}>{message.text}</Alert>}
       <Tabs value={template} onChange={(_, value: GroupMessageTemplate) => chooseTemplate(value)} variant="scrollable" scrollButtons="auto" aria-label="סוג הודעה">

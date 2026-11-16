@@ -11,6 +11,26 @@ export function isGroupMessageSchedulerEnabled(): boolean {
     String(process.env.WHATSAPP_TEST_ONLY ?? 'false').toLowerCase() !== 'true';
 }
 
+export function getGroupMessageSchedulerDisabledReasons(
+  schema: { delivery_ready: boolean; legacy_pauses_ready: boolean; cutover_ready: boolean },
+  env: NodeJS.ProcessEnv = process.env,
+): string[] {
+  const reasons: string[] = [];
+  if (String(env.WHATSAPP_GROUP_SCHEDULER_ENABLED ?? 'false').toLowerCase() !== 'true') {
+    reasons.push('WHATSAPP_GROUP_SCHEDULER_ENABLED חייב להיות true');
+  }
+  if (String(env.IS_PROD ?? 'false').toLowerCase() !== 'true') {
+    reasons.push('IS_PROD חייב להיות true בשרת הייצור');
+  }
+  if (String(env.WHATSAPP_TEST_ONLY ?? 'false').toLowerCase() === 'true') {
+    reasons.push('יש לכבות WHATSAPP_TEST_ONLY');
+  }
+  if (!schema.delivery_ready) reasons.push('חסרה מיגרציה 027: טבלת מעקב נמענים');
+  if (!schema.legacy_pauses_ready) reasons.push('חסרה מיגרציה 026: טבלת השהיות legacy');
+  if (!schema.cutover_ready) reasons.push('חסרה מיגרציה 028: סימון מעבר מכסה');
+  return reasons;
+}
+
 const templates: WeddingMessageTemplateName[] = [
   'wedding_confirmation', 'wedding_reminder', 'wedding_day_before', 'wedding_post_thanks',
 ];
@@ -54,14 +74,21 @@ async function getAudience(client: Pick<PoolClient, 'query'>, weddingId: number)
   return result.rows;
 }
 
-async function getSchemaReadiness(client: Pick<PoolClient, 'query'>): Promise<{ delivery_ready: boolean; ready: boolean }> {
-  const result = await client.query<{ delivery_ready: boolean; ready: boolean }>(
+async function getSchemaReadiness(client: Pick<PoolClient, 'query'>): Promise<{
+  delivery_ready: boolean;
+  legacy_pauses_ready: boolean;
+  cutover_ready: boolean;
+}> {
+  const result = await client.query<{
+    delivery_ready: boolean;
+    legacy_pauses_ready: boolean;
+    cutover_ready: boolean;
+  }>(
     `SELECT to_regclass('wedding_whatsapp_group_deliveries') IS NOT NULL AS delivery_ready,
-      to_regclass('wedding_whatsapp_group_deliveries') IS NOT NULL
-      AND to_regclass('wedding_whatsapp_legacy_pauses') IS NOT NULL
-      AND to_regclass('whatsapp_quota_cutover_markers') IS NOT NULL AS ready`,
+      to_regclass('wedding_whatsapp_legacy_pauses') IS NOT NULL AS legacy_pauses_ready,
+      to_regclass('whatsapp_quota_cutover_markers') IS NOT NULL AS cutover_ready`,
   );
-  return result.rows[0] ?? { delivery_ready: false, ready: false };
+  return result.rows[0] ?? { delivery_ready: false, legacy_pauses_ready: false, cutover_ready: false };
 }
 
 export async function getGroupMessageSchedule(coupleId: string, weddingId: number) {
@@ -97,7 +124,8 @@ export async function getGroupMessageSchedule(coupleId: string, weddingId: numbe
     groups,
     schedules: schedules.rows,
     invitation_locked: Boolean(invitationStatus.rows[0]?.sent),
-    enabled: schema.ready && isGroupMessageSchedulerEnabled(),
+    enabled: getGroupMessageSchedulerDisabledReasons(schema).length === 0,
+    disabled_reasons: getGroupMessageSchedulerDisabledReasons(schema),
   };
 }
 
@@ -114,7 +142,11 @@ export async function saveGroupMessageSchedule(
     await client.query('BEGIN');
     await client.query('SELECT pg_advisory_xact_lock($1)', [748921]);
     const weddingDate = await assertWeddingAccess(client, coupleId, weddingId);
-    if (!(await getSchemaReadiness(client)).ready) throw createError('תשתית תזמון הקבוצות עדיין אינה מוכנה', 503);
+    const schema = await getSchemaReadiness(client);
+    const disabledReasons = getGroupMessageSchedulerDisabledReasons(schema);
+    if (disabledReasons.length > 0) {
+      throw createError(`תזמון לפי קבוצות לא זמין: ${disabledReasons.join('; ')}`, 503);
+    }
     const locked = await client.query<{ locked: boolean }>(
       `SELECT CASE $2
          WHEN 'wedding_confirmation' THEN invitation_locked_at IS NOT NULL OR EXISTS (

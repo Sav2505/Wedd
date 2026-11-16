@@ -5,6 +5,7 @@ export type GroupMessageTemplate = 'wedding_confirmation' | 'wedding_reminder' |
 
 export interface GroupScheduleData {
   enabled: boolean;
+  disabled_reasons: string[];
   invitation_locked: boolean;
   groups: Array<{ group_id: string | null; name: string; total: number; pending: number; coming: number }>;
   schedules: Array<{

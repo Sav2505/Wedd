@@ -34,7 +34,7 @@ test('group schedules cannot be read from another wedding', async () => {
       query: async (sql: string) => {
         calls.push(sql);
         if (sql.includes('FROM wedding_info wi JOIN guests couple')) return { rows: [{ wedding_date: '2027-06-14' }] };
-        if (sql.includes('to_regclass')) return { rows: [{ delivery_ready: true, ready: true }] };
+        if (sql.includes('to_regclass')) return { rows: [{ delivery_ready: true, legacy_pauses_ready: true, cutover_ready: true }] };
         if (sql.includes('AS locked')) return { rows: [{ locked: true }] };
         return { rows: [] };
       },
@@ -61,7 +61,7 @@ test('saving future groups retains a completed group and validates the remaining
     query: async (sql: string, values: unknown[] = []) => {
       calls.push({ sql, values });
       if (sql.includes('FROM wedding_info wi JOIN guests couple')) return { rows: [{ wedding_date: future.plus({ days: 10 }).toISODate() }] };
-      if (sql.includes('to_regclass')) return { rows: [{ delivery_ready: true, ready: true }] };
+      if (sql.includes('to_regclass')) return { rows: [{ delivery_ready: true, legacy_pauses_ready: true, cutover_ready: true }] };
       if (sql.includes('AS locked')) return { rows: [{ locked: false }] };
       if (sql.includes('SELECT status, guest_group_id')) return { rows: [{ status: 'completed', guest_group_id: 'friends', scheduled_at: completed.toJSDate() }] };
       if (sql.includes('FROM guest_groups gg')) return { rows: [
@@ -92,7 +92,7 @@ test('group selection remains visible but disabled when delivery migrations are 
   const originalQuery = pool.query;
   pool.query = (async (sql: string) => {
     if (sql.includes('FROM wedding_info wi JOIN guests couple')) return { rows: [{ wedding_date: '2027-06-14' }] };
-    if (sql.includes('to_regclass')) return { rows: [{ delivery_ready: false, ready: false }] };
+    if (sql.includes('to_regclass')) return { rows: [{ delivery_ready: false, legacy_pauses_ready: false, cutover_ready: false }] };
     if (sql.includes('FROM wedding_message_schedule s')) return { rows: [{ sent: false }] };
     if (sql.includes('FROM guest_groups gg')) return { rows: [{ group_id: null, name: 'ללא קבוצה', total: 0, pending: 0, coming: 0 }] };
     if (sql.includes('FROM wedding_whatsapp_group_schedule')) {

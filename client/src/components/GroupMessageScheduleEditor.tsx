@@ -65,7 +65,9 @@ export default function GroupMessageScheduleEditor({ weddingId, onActiveTemplate
       setData(result);
       onActiveTemplatesChange([...new Set(result.schedules.map((row) => row.template_name))]);
       onInvitationStartedChange(result.schedules.some((row) => row.template_name === 'wedding_confirmation' && ['processing', 'completed', 'paused_error'].includes(row.status)));
-      const draft = makeDraft(result, 'wedding_confirmation');
+      const initialTemplate: GroupMessageTemplate = result.invitation_locked ? 'wedding_reminder' : 'wedding_confirmation';
+      setTemplate(initialTemplate);
+      const draft = makeDraft(result, initialTemplate);
       setSlots(draft.slots);
       setExcluded(draft.excluded);
     }).catch(() => {
@@ -94,6 +96,7 @@ export default function GroupMessageScheduleEditor({ weddingId, onActiveTemplate
   const assigned = slots.flatMap((slot) => slot.groupIds);
   const missing = data.groups.filter((group) => !assigned.includes(group.group_id) && !excluded.includes(group.group_id));
   const oversized = data.groups.filter((group) => !lockedIds.includes(group.group_id) && !excluded.includes(group.group_id) && countFor(group) > 250);
+  const slotsMissingDate = slots.some((slot) => slot.groupIds.length > 0 && !slot.localDateTime);
   const otherSends = data.schedules.filter((row) => row.template_name !== template && row.status === 'scheduled' && row.scheduled_at).map((row) => {
     const group = data.groups.find((item) => item.group_id === row.guest_group_id);
     const count = !group ? 0 : row.template_name === 'wedding_confirmation' ? group.total : row.template_name === 'wedding_reminder' ? group.pending : group.coming;
@@ -136,7 +139,8 @@ export default function GroupMessageScheduleEditor({ weddingId, onActiveTemplate
   return (
     <Box sx={{ borderTop: '1px solid', borderColor: 'divider', pt: 2, mt: 2 }}>
       <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>תזמון לפי קבוצות</Typography>
-      {!data.enabled && <Alert severity="warning" sx={{ mt: 1 }}>{data.schedules.length ? 'השליחה לפי קבוצות מושבתת. מועדים קבוצתיים לא יישלחו עד להפעלתה.' : 'השליחה לפי קבוצות עדיין אינה פעילה. התזמון הקיים נשאר בתוקף.'}</Alert>}
+      {!data.enabled && <Alert severity="warning" sx={{ mt: 1 }}>השרת עדיין לא מאפשר שמירת תזמון קבוצות. יש לוודא שהמיגרציות 026–029 הותקנו וש־WHATSAPP_GROUP_SCHEDULER_ENABLED=true, IS_PROD=true ו־WHATSAPP_TEST_ONLY אינו true. מחסום 24 השעות אינו מונע שמירה.</Alert>}
+      {data.invitation_locked && <Alert severity="info" sx={{ mt: 1 }}>ההזמנה הראשונית כבר נשלחה ולכן אינה ניתנת לתזמון מחדש. נבחרה לשונית התזכורת.</Alert>}
       {message && <Alert severity={message.type} sx={{ mt: 1 }}>{message.text}</Alert>}
       <Tabs value={template} onChange={(_, value: GroupMessageTemplate) => chooseTemplate(value)} variant="scrollable" scrollButtons="auto" aria-label="סוג הודעה">
         {templates.map((item) => <Tab key={item.value} value={item.value} label={item.label} />)}
@@ -186,8 +190,9 @@ export default function GroupMessageScheduleEditor({ weddingId, onActiveTemplate
         </Stack>
         {missing.length > 0 && <Alert severity="info">טרם שובצו או הוחרגו: {missing.map((group) => group.name).join(', ')}</Alert>}
         {oversized.length > 0 && <Alert severity="error">יש לחלק קבוצות עם יותר מ־250 רשומות: {oversized.map((group) => group.name).join(', ')}</Alert>}
+        {slotsMissingDate && <Alert severity="info">בחר תאריך ושעה לכל מועד שאליו שויכה קבוצה.</Alert>}
         {projectedOverflow && <Alert severity="warning">לפי מספר הזכאים הנוכחי, מתוכננות יותר מ־250 הודעות בחלון של 24 שעות. המספר עשוי להשתנות לפני השליחה.</Alert>}
-        <Button variant="outlined" startIcon={<SaveIcon />} onClick={save} disabled={!data.enabled || templateLocked || saving || missing.length > 0 || oversized.length > 0 || slots.some((slot) => slot.groupIds.length > 0 && !slot.localDateTime)} sx={{ alignSelf: 'flex-start' }}>שמירת תזמון הקבוצות</Button>
+        <Button variant="outlined" startIcon={<SaveIcon />} onClick={save} disabled={!data.enabled || templateLocked || saving || missing.length > 0 || oversized.length > 0 || slotsMissingDate} sx={{ alignSelf: 'flex-start' }}>שמירת תזמון הקבוצות</Button>
       </Stack>
     </Box>
   );

@@ -152,10 +152,12 @@ export type DirectWeddingMessageTemplate =
 export async function sendWhatsappGuestMessage(
   guestId: string,
   templateName: DirectWeddingMessageTemplate,
+  testMode = false,
 ): Promise<void> {
   const { data } = await api.post<ApiResponse<void>>('/whatsapp/send-template', {
     guestId,
     templateName,
+    testMode,
   }, { timeout: 60_000 });
   if (!data.success) throw new Error(data.message ?? 'שליחת הודעת WhatsApp נכשלה');
 }

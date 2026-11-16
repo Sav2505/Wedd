@@ -96,3 +96,35 @@ test('manual reminder rejects a guest who already responded before calling Whats
     process.env = originalEnv;
   }
 });
+
+test('test-mode direct send targets the selected guest phone and writes no delivery or quota rows', async () => {
+  const originalQuery = pool.query;
+  const originalConnect = pool.connect;
+  const originalFetch = globalThis.fetch;
+  const originalEnv = { ...process.env };
+  let payload: any;
+  process.env.WHATSAPP_PHONE_NUMBER_ID = 'phone-id';
+  process.env.WHATSAPP_ACCESS_TOKEN = 'token';
+  delete process.env.WHATSAPP_TEST_PHONE;
+  process.env.WHATSAPP_TEST_ONLY = 'false';
+  pool.query = (async (sql: string) => {
+    if (sql.includes('FROM guests couple')) return { rows: [{ ...messageRow, rsvp_status: 'COMING' }] };
+    throw new Error(`Test mode must not write delivery logs: ${sql}`);
+  }) as unknown as typeof pool.query;
+  pool.connect = (async () => { throw new Error('Test mode must not reserve quota'); }) as unknown as typeof pool.connect;
+  globalThis.fetch = (async (_url, init) => {
+    payload = JSON.parse(String(init?.body));
+    return new Response(JSON.stringify({ messages: [{ id: 'wamid.test' }] }), { status: 200 });
+  }) as typeof fetch;
+  try {
+    await sendWeddingTemplateForCouple('couple-1', 'guest-1', 'wedding_reminder', true);
+    assert.equal(payload.template.name, 'wedding_reminder');
+    assert.equal(payload.to, '972501234567');
+  } finally {
+    pool.query = originalQuery;
+    pool.connect = originalConnect;
+    globalThis.fetch = originalFetch;
+    process.env = originalEnv;
+  }
+});
+

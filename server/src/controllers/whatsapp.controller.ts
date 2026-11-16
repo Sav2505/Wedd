@@ -16,13 +16,15 @@ export async function sendWhatsappTest(req: Request, res: Response, next: NextFu
 
 export async function sendWhatsappTemplate(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-        const { guestId, templateName } = req.body ?? {};
+        const { guestId, templateName, testMode } = req.body ?? {};
         if (typeof guestId !== 'string' || !guestId.trim()) throw createError('מזהה אורח לא תקין', 400);
         if (typeof templateName !== 'string') throw createError('סוג הודעת WhatsApp אינו תקין', 400);
+        if (testMode !== undefined && typeof testMode !== 'boolean') throw createError('סימון בדיקה לא תקין', 400);
         await sendWeddingTemplateForCouple(
             (req as Request & { coupleId: string }).coupleId,
             guestId,
             templateName,
+            testMode === true,
         );
         res.json({ success: true });
     } catch (err) {

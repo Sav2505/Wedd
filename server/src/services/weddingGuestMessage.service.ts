@@ -36,6 +36,7 @@ export async function sendWeddingTemplateForCouple(
   coupleId: string,
   guestId: string,
   templateName: string,
+  testMode = false,
 ): Promise<void> {
   if (!supportedTemplates.includes(templateName as WeddingMessageTemplateName)) {
     throw createError('סוג הודעת WhatsApp אינו תקין', 400);
@@ -57,23 +58,23 @@ export async function sendWeddingTemplateForCouple(
   if (!row) throw createError('האורח לא נמצא בחתונה שלכם', 404);
   if (!row.whatsapp_owner_confirmed) throw createError('יש לאשר שימוש ב-WhatsApp לפני השליחה', 400);
   if (!row.phone?.trim()) throw createError('לאורח אין מספר טלפון לשליחה', 400);
-  if (String(process.env.WHATSAPP_TEST_ONLY ?? 'false').toLowerCase() === 'true' &&
+  if (!testMode && String(process.env.WHATSAPP_TEST_ONLY ?? 'false').toLowerCase() === 'true' &&
       (!row.phone.endsWith('9899') || row.first_name?.trim() !== 'דן')) {
     throw createError('מצב בדיקה מאפשר שליחה לאורח הבדיקה בלבד', 403);
   }
 
   const todayIsrael = DateTime.now().setZone(ISRAEL_TIMEZONE).startOf('day');
   const weddingDay = DateTime.fromISO(row.wedding_date, { zone: ISRAEL_TIMEZONE }).startOf('day');
-  if (template === 'wedding_reminder' && row.rsvp_status !== 'PENDING') {
+  if (!testMode && template === 'wedding_reminder' && row.rsvp_status !== 'PENDING') {
     throw createError('תזכורת נשלחת רק לאורח שעדיין ממתין לאישור הגעה', 400);
   }
-  if ((template === 'wedding_day_before' || template === 'wedding_post_thanks') && row.rsvp_status !== 'COMING') {
+  if (!testMode && (template === 'wedding_day_before' || template === 'wedding_post_thanks') && row.rsvp_status !== 'COMING') {
     throw createError('הודעה זו נשלחת רק לאורח שאישר הגעה', 400);
   }
-  if (template === 'wedding_day_before' && todayIsrael > weddingDay) {
+  if (!testMode && template === 'wedding_day_before' && todayIsrael > weddingDay) {
     throw createError('לא ניתן לשלוח הודעת יום־לפני אחרי תאריך האירוע', 400);
   }
-  if (template === 'wedding_post_thanks' && todayIsrael <= weddingDay) {
+  if (!testMode && template === 'wedding_post_thanks' && todayIsrael <= weddingDay) {
     throw createError('ניתן לשלוח הודעת תודה רק לאחר תאריך האירוע', 400);
   }
   if (template === 'wedding_confirmation' && !row.invitation_image_media_id) {
@@ -112,8 +113,8 @@ export async function sendWeddingTemplateForCouple(
       : undefined,
   });
 
-  const pending = await claimMessageLog(row.wedding_id, row.guest_id, template, true);
-  if (!pending) throw createError('כבר מתבצעת שליחה של הודעה זו לאורח. נסו שוב בעוד רגע.', 409);
+  const pending = testMode ? null : await claimMessageLog(row.wedding_id, row.guest_id, template, true);
+  if (!testMode && !pending) throw createError('כבר מתבצעת שליחה של הודעה זו לאורח. נסו שוב בעוד רגע.', 409);
 
   try {
     const result = await sendTemplateMessageWithRetry({
@@ -121,11 +122,11 @@ export async function sendWeddingTemplateForCouple(
       templateName: template,
       languageCode: 'he',
       components,
-    });
-    await markLogSent(pending.id, result.messageId);
+    }, 3, undefined, testMode);
+    if (pending) await markLogSent(pending.id, result.messageId);
   } catch (error) {
-    if (error instanceof WhatsAppQuotaError ||
-        (error instanceof WhatsAppApiError && error.statusCode && error.statusCode >= 400 && error.statusCode < 500 && error.statusCode !== 408)) {
+    if (pending && (error instanceof WhatsAppQuotaError ||
+      (error instanceof WhatsAppApiError && error.statusCode && error.statusCode >= 400 && error.statusCode < 500 && error.statusCode !== 408))) {
       await markLogFailed(pending.id, error.message);
     }
     if (error instanceof WhatsAppQuotaError) throw error;

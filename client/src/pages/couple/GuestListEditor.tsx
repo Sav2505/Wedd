@@ -113,9 +113,11 @@ function getDirectMessageUnavailableReason(
   guest: ManagedGuest,
   weddingDate: string | undefined,
   today = getIsraelDateKey(),
+  testMode = false,
 ): string | null {
   const eventDate = weddingDate?.slice(0, 10);
   if (!eventDate) return 'יש להגדיר תאריך אירוע';
+  if (testMode) return null;
   if (template === 'wedding_reminder' && guest.rsvp_status !== 'PENDING') return 'נשלחת רק למי שטרם הגיב';
   if ((template === 'wedding_day_before' || template === 'wedding_post_thanks') && guest.rsvp_status !== 'COMING') {
     return 'נשלחת רק למי שאישר הגעה';
@@ -270,6 +272,7 @@ export default function GuestListEditor() {
   const [importModalOpen, setImportModalOpen] = useState(false);
   const [confirmationGuest, setConfirmationGuest] = useState<ManagedGuest | null>(null);
   const [confirmationTemplate, setConfirmationTemplate] = useState<DirectWeddingMessageTemplate>('wedding_confirmation');
+  const [confirmationTestMode, setConfirmationTestMode] = useState(false);
   const [sendingConfirmation, setSendingConfirmation] = useState(false);
   const [confirmationError, setConfirmationError] = useState<string | null>(null);
 
@@ -472,6 +475,7 @@ export default function GuestListEditor() {
   const handleOpenConfirmation = useCallback((guest: ManagedGuest) => {
     setConfirmationError(null);
     setConfirmationTemplate('wedding_confirmation');
+    setConfirmationTestMode(false);
     setConfirmationGuest(guest);
   }, []);
 
@@ -480,9 +484,9 @@ export default function GuestListEditor() {
     setSendingConfirmation(true);
     setConfirmationError(null);
     try {
-      await sendWhatsappGuestMessage(confirmationGuest.id, confirmationTemplate);
+      await sendWhatsappGuestMessage(confirmationGuest.id, confirmationTemplate, confirmationTestMode);
       const templateLabel = directMessageOptions.find((option) => option.value === confirmationTemplate)?.label ?? 'ההודעה';
-      setSuccessMessage(`${templateLabel} נשלחה ל${confirmationGuest.first_name || confirmationGuest.full_name}`);
+      setSuccessMessage(`${templateLabel} נשלחה ל${confirmationGuest.first_name || confirmationGuest.full_name}${confirmationTestMode ? ' (בדיקה, ללא תיעוד)' : ''}`);
       setConfirmationGuest(null);
     } catch (error) {
       setConfirmationError(error instanceof Error ? error.message : 'שליחת ההודעה נכשלה');
@@ -748,7 +752,7 @@ export default function GuestListEditor() {
   const confirmationTemplateOptions = confirmationGuest
     ? directMessageOptions.map((option) => ({
         ...option,
-        unavailableReason: getDirectMessageUnavailableReason(option.value, confirmationGuest, info?.wedding_date),
+        unavailableReason: getDirectMessageUnavailableReason(option.value, confirmationGuest, info?.wedding_date, undefined, confirmationTestMode),
       }))
     : [];
   const selectedTemplateUnavailableReason = confirmationTemplateOptions
@@ -1092,6 +1096,16 @@ export default function GuestListEditor() {
               </Box>
             ))}
           </RadioGroup>
+          <FormControlLabel
+            sx={{ mt: 1 }}
+            control={<Checkbox checked={confirmationTestMode} onChange={(event) => setConfirmationTestMode(event.target.checked)} disabled={sendingConfirmation} />}
+            label="הודעת בדיקה — ללא רישום וללא בדיקת RSVP או תאריך"
+          />
+          {confirmationTestMode && (
+            <Alert severity="warning" sx={{ mt: 0.5 }}>
+              הודעת בדיקה תישלח למספר של האורח ({confirmationGuest?.phone}), ללא רישום ביומן וללא שימוש במכסת 24 השעות.
+            </Alert>
+          )}
           {!isWhatsappDeclarationConfirmed && (
             <Alert severity="warning" sx={{ mt: 2 }}>יש לאשר שימוש ב-WhatsApp דרך תזמון הודעות לאורחים לפני השליחה.</Alert>
           )}

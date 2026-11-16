@@ -96,7 +96,7 @@ function isRetryableError(err: unknown): boolean {
         err.statusCode !== 408 && (err.statusCode === 429 || err.metaCode === 130429));
 }
 
-function normalizePhone(to: string): string {
+export function normalizeWhatsAppPhone(to: string): string {
     const digits = to.replace(/\D/g, '');
     if (digits.startsWith('0')) {
         return `972${digits.slice(1)}`;
@@ -160,12 +160,16 @@ export async function uploadMediaToWhatsApp(input: UploadMediaInput): Promise<st
     return mediaId;
 }
 
-export async function sendTemplateMessage(payload: SendTemplatePayload, reservedQuotaId?: string): Promise<SendTemplateResult> {
+export async function sendTemplateMessage(
+    payload: SendTemplatePayload,
+    reservedQuotaId?: string,
+    testMode = false,
+): Promise<SendTemplateResult> {
     const { phoneNumberId } = assertWhatsAppEnv();
 
     const body = {
         messaging_product: 'whatsapp',
-        to: normalizePhone(payload.to),
+        to: normalizeWhatsAppPhone(payload.to),
         type: 'template',
         template: {
             name: payload.templateName,
@@ -174,7 +178,7 @@ export async function sendTemplateMessage(payload: SendTemplatePayload, reserved
         },
     };
 
-    const reservationId = reservedQuotaId ?? await reserveWhatsAppQuota(payload.templateName);
+    const reservationId = testMode ? undefined : reservedQuotaId ?? await reserveWhatsAppQuota(payload.templateName);
     let responsePayload: any;
     let messageId: string;
     try {
@@ -192,11 +196,11 @@ export async function sendTemplateMessage(payload: SendTemplatePayload, reserved
     } catch (error) {
         const rejected = error instanceof WhatsAppApiError && error.statusCode !== undefined &&
             error.statusCode >= 400 && error.statusCode < 500 && error.statusCode !== 408;
-        await completeWhatsAppQuotaReservation(reservationId, rejected ? 'rejected' : 'unknown');
+        if (reservationId) await completeWhatsAppQuotaReservation(reservationId, rejected ? 'rejected' : 'unknown');
         throw error;
     }
 
-    await completeWhatsAppQuotaReservation(reservationId, 'accepted', messageId);
+    if (reservationId) await completeWhatsAppQuotaReservation(reservationId, 'accepted', messageId);
     return {
         messageId,
         raw: responsePayload,
@@ -208,6 +212,7 @@ export async function sendTemplateMessageWithRetry(
     payload: SendTemplatePayload,
     maxAttempts = 3,
     reservedQuotaId?: string,
+    testMode = false,
 ): Promise<SendTemplateResult> {
     let attempt = 0;
     let delayMs = 1_200;
@@ -215,7 +220,7 @@ export async function sendTemplateMessageWithRetry(
     while (attempt < maxAttempts) {
         attempt += 1;
         try {
-            const sent = await sendTemplateMessage(payload, attempt === 1 ? reservedQuotaId : undefined);
+            const sent = await sendTemplateMessage(payload, attempt === 1 ? reservedQuotaId : undefined, testMode);
             return {
                 ...sent,
                 attempts: attempt,

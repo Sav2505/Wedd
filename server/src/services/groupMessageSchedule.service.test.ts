@@ -27,6 +27,29 @@ test('group schedules cannot be read from another wedding', async () => {
   }
 });
 
+  test('a previously sent legacy invitation cannot be scheduled again', async () => {
+    const originalConnect = pool.connect;
+    const calls: string[] = [];
+    pool.connect = (async () => ({
+      query: async (sql: string) => {
+        calls.push(sql);
+        if (sql.includes('FROM wedding_info wi JOIN guests couple')) return { rows: [{ wedding_date: '2027-06-14' }] };
+        if (sql.includes('to_regclass')) return { rows: [{ delivery_ready: true, ready: true }] };
+        if (sql.includes('AS locked')) return { rows: [{ locked: true }] };
+        return { rows: [] };
+      },
+      release: () => undefined,
+    })) as unknown as typeof pool.connect;
+    try {
+      await assert.rejects(
+        saveGroupMessageSchedule('couple-1', 12, 'wedding_confirmation', []),
+        (error: unknown) => (error as { statusCode?: number }).statusCode === 409,
+      );
+      assert.equal(calls.some((sql) => sql.includes('DELETE FROM wedding_whatsapp_group_schedule')), false);
+    } finally {
+      pool.connect = originalConnect;
+    }
+  });
 test('saving future groups retains a completed group and validates the remaining groups', async () => {
   const originalConnect = pool.connect;
   const calls: Array<{ sql: string; values: unknown[] }> = [];
@@ -70,6 +93,7 @@ test('group selection remains visible but disabled when delivery migrations are 
   pool.query = (async (sql: string) => {
     if (sql.includes('FROM wedding_info wi JOIN guests couple')) return { rows: [{ wedding_date: '2027-06-14' }] };
     if (sql.includes('to_regclass')) return { rows: [{ delivery_ready: false, ready: false }] };
+    if (sql.includes('FROM wedding_message_schedule s')) return { rows: [{ sent: false }] };
     if (sql.includes('FROM guest_groups gg')) return { rows: [{ group_id: null, name: 'ללא קבוצה', total: 0, pending: 0, coming: 0 }] };
     if (sql.includes('FROM wedding_whatsapp_group_schedule')) {
       assert.doesNotMatch(sql, /wedding_whatsapp_group_deliveries/);

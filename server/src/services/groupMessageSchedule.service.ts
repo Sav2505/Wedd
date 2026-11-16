@@ -67,7 +67,7 @@ async function getSchemaReadiness(client: Pick<PoolClient, 'query'>): Promise<{ 
 export async function getGroupMessageSchedule(coupleId: string, weddingId: number) {
   await assertWeddingAccess(pool, coupleId, weddingId);
   const schema = await getSchemaReadiness(pool);
-  const [groups, schedules] = await Promise.all([
+  const [groups, schedules, invitationStatus] = await Promise.all([
     getAudience(pool, weddingId),
     pool.query(
       schema.delivery_ready ? `SELECT s.id, s.template_name, s.guest_group_id, s.scheduled_at, s.status, s.status_detail,
@@ -82,8 +82,23 @@ export async function getGroupMessageSchedule(coupleId: string, weddingId: numbe
        FROM wedding_whatsapp_group_schedule WHERE wedding_id = $1 ORDER BY template_name, id`,
       [weddingId],
     ),
+    pool.query<{ sent: boolean }>(
+      `SELECT s.invitation_locked_at IS NOT NULL OR EXISTS (
+         SELECT 1 FROM wedding_message_log l
+         WHERE l.wedding_id = s.wedding_id
+           AND l.template_name = 'wedding_confirmation'
+           AND l.status <> 'failed'
+       ) AS sent
+       FROM wedding_message_schedule s WHERE s.wedding_id = $1`,
+      [weddingId],
+    ),
   ]);
-  return { groups, schedules: schedules.rows, enabled: schema.ready && isGroupMessageSchedulerEnabled() };
+  return {
+    groups,
+    schedules: schedules.rows,
+    invitation_locked: Boolean(invitationStatus.rows[0]?.sent),
+    enabled: schema.ready && isGroupMessageSchedulerEnabled(),
+  };
 }
 
 export async function saveGroupMessageSchedule(
@@ -102,7 +117,12 @@ export async function saveGroupMessageSchedule(
     if (!(await getSchemaReadiness(client)).ready) throw createError('תשתית תזמון הקבוצות עדיין אינה מוכנה', 503);
     const locked = await client.query<{ locked: boolean }>(
       `SELECT CASE $2
-         WHEN 'wedding_confirmation' THEN invitation_locked_at IS NOT NULL
+         WHEN 'wedding_confirmation' THEN invitation_locked_at IS NOT NULL OR EXISTS (
+           SELECT 1 FROM wedding_message_log l
+           WHERE l.wedding_id = wedding_message_schedule.wedding_id
+             AND l.template_name = 'wedding_confirmation'
+             AND l.status <> 'failed'
+         )
          WHEN 'wedding_reminder' THEN reminder_locked_at IS NOT NULL
          WHEN 'wedding_day_before' THEN day_before_locked_at IS NOT NULL
          ELSE post_thanks_locked_at IS NOT NULL END AS locked

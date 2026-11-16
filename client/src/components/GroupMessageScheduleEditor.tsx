@@ -87,6 +87,7 @@ export default function GroupMessageScheduleEditor({ weddingId, onActiveTemplate
   if (!data) return <Alert severity="error">לא ניתן לטעון את תזמון הקבוצות</Alert>;
 
   const rows = data.schedules.filter((row) => row.template_name === template);
+  const templateLocked = template === 'wedding_confirmation' && data.invitation_locked;
   const lockedIds = rows.filter((row) => ['processing', 'completed', 'paused_error'].includes(row.status)).map((row) => row.guest_group_id);
   const countFor = (group: GroupScheduleData['groups'][number]) =>
     template === 'wedding_confirmation' ? group.total : template === 'wedding_reminder' ? group.pending : group.coming;
@@ -141,6 +142,7 @@ export default function GroupMessageScheduleEditor({ weddingId, onActiveTemplate
         {templates.map((item) => <Tab key={item.value} value={item.value} label={item.label} />)}
       </Tabs>
       <Stack spacing={2} sx={{ mt: 2 }}>
+        {templateLocked && <Alert severity="warning">ההזמנה כבר נשלחה בעבר. לא ניתן לשנות או לתזמן אותה מחדש, כדי למנוע הודעות כפולות.</Alert>}
         {rows.some((row) => row.status === 'paused_quota') && <Alert severity="warning">השליחה הושהתה משום שמכסת ההודעות מלאה.</Alert>}
         {rows.some((row) => row.status === 'paused_schedule') && <Alert severity="warning">מועד חלף או שפרטי השליחה אינם שלמים. יש לעדכן את התזמון.</Alert>}
         {rows.some((row) => row.status === 'paused_error') && <Alert severity="error">שליחה הושהתה ויש לבדוק את מצב ההודעות לפני חידושה.</Alert>}
@@ -157,10 +159,10 @@ export default function GroupMessageScheduleEditor({ weddingId, onActiveTemplate
             <Box key={slot.key} sx={{ borderBottom: '1px solid', borderColor: 'divider', pb: 2 }}>
               <Stack direction="row" alignItems="center" justifyContent="space-between" gap={1}>
                 <Typography variant="subtitle2">מועד {index + 1} · {recipientCount} רשומות</Typography>
-                <Tooltip title="הסרת מועד"><span><IconButton aria-label="הסרת מועד" disabled={slotLocked || saving || slots.length === 1} onClick={() => setSlots((current) => current.filter((item) => item.key !== slot.key))}><DeleteOutlineIcon /></IconButton></span></Tooltip>
+                <Tooltip title="הסרת מועד"><span><IconButton aria-label="הסרת מועד" disabled={templateLocked || slotLocked || saving || slots.length === 1} onClick={() => setSlots((current) => current.filter((item) => item.key !== slot.key))}><DeleteOutlineIcon /></IconButton></span></Tooltip>
               </Stack>
               <TextField type="datetime-local" label="תאריך ושעה בישראל" value={slot.localDateTime} size="small" fullWidth
-                disabled={slotLocked || saving} InputLabelProps={{ shrink: true }}
+                disabled={templateLocked || slotLocked || saving} InputLabelProps={{ shrink: true }}
                 onChange={(event) => setSlots((current) => current.map((item) => item.key === slot.key ? { ...item, localDateTime: event.target.value } : item))} />
               {recipientCount > 250 && <Alert severity="warning" sx={{ mt: 1 }}>מספר הרשומות במועד זה גדול מ־250. המכסה מחושבת לאורך 24 שעות.</Alert>}
               <Stack direction="row" flexWrap="wrap" sx={{ mt: 1 }}>
@@ -168,7 +170,7 @@ export default function GroupMessageScheduleEditor({ weddingId, onActiveTemplate
                   const checked = slot.groupIds.includes(group.group_id);
                   const unavailable = !checked && (assigned.includes(group.group_id) || excluded.includes(group.group_id));
                   return <FormControlLabel key={group.group_id ?? 'ungrouped'} label={`${group.name} (${countFor(group)})`}
-                    control={<Checkbox checked={checked} disabled={lockedIds.includes(group.group_id) || saving || unavailable} onChange={(event) => setSlots((current) => current.map((item) => item.key !== slot.key ? item : {
+                    control={<Checkbox checked={checked} disabled={templateLocked || lockedIds.includes(group.group_id) || saving || unavailable} onChange={(event) => setSlots((current) => current.map((item) => item.key !== slot.key ? item : {
                       ...item, groupIds: event.target.checked ? [...item.groupIds, group.group_id] : item.groupIds.filter((id) => id !== group.group_id),
                     }))} />} />;
                 })}
@@ -176,16 +178,16 @@ export default function GroupMessageScheduleEditor({ weddingId, onActiveTemplate
             </Box>
           );
         })}
-        <Button startIcon={<AddIcon />} onClick={() => setSlots((current) => [...current, { key: Math.max(-1, ...current.map((slot) => slot.key)) + 1, localDateTime: '', groupIds: [] }])} disabled={saving} sx={{ alignSelf: 'flex-start' }}>הוספת מועד</Button>
+        <Button startIcon={<AddIcon />} onClick={() => setSlots((current) => [...current, { key: Math.max(-1, ...current.map((slot) => slot.key)) + 1, localDateTime: '', groupIds: [] }])} disabled={templateLocked || saving} sx={{ alignSelf: 'flex-start' }}>הוספת מועד</Button>
         <Typography variant="subtitle2">קבוצות מוחרגות</Typography>
         <Stack direction="row" flexWrap="wrap">
           {data.groups.map((group) => <FormControlLabel key={group.group_id ?? 'ungrouped'} label={`${group.name} (${countFor(group)})`}
-            control={<Checkbox checked={excluded.includes(group.group_id)} disabled={lockedIds.includes(group.group_id) || saving || assigned.includes(group.group_id)} onChange={(event) => setExcluded((current) => event.target.checked ? [...current, group.group_id] : current.filter((id) => id !== group.group_id))} />} />)}
+            control={<Checkbox checked={excluded.includes(group.group_id)} disabled={templateLocked || lockedIds.includes(group.group_id) || saving || assigned.includes(group.group_id)} onChange={(event) => setExcluded((current) => event.target.checked ? [...current, group.group_id] : current.filter((id) => id !== group.group_id))} />} />)}
         </Stack>
         {missing.length > 0 && <Alert severity="info">טרם שובצו או הוחרגו: {missing.map((group) => group.name).join(', ')}</Alert>}
         {oversized.length > 0 && <Alert severity="error">יש לחלק קבוצות עם יותר מ־250 רשומות: {oversized.map((group) => group.name).join(', ')}</Alert>}
         {projectedOverflow && <Alert severity="warning">לפי מספר הזכאים הנוכחי, מתוכננות יותר מ־250 הודעות בחלון של 24 שעות. המספר עשוי להשתנות לפני השליחה.</Alert>}
-        <Button variant="outlined" startIcon={<SaveIcon />} onClick={save} disabled={!data.enabled || saving || missing.length > 0 || oversized.length > 0 || slots.some((slot) => slot.groupIds.length > 0 && !slot.localDateTime)} sx={{ alignSelf: 'flex-start' }}>שמירת תזמון הקבוצות</Button>
+        <Button variant="outlined" startIcon={<SaveIcon />} onClick={save} disabled={!data.enabled || templateLocked || saving || missing.length > 0 || oversized.length > 0 || slots.some((slot) => slot.groupIds.length > 0 && !slot.localDateTime)} sx={{ alignSelf: 'flex-start' }}>שמירת תזמון הקבוצות</Button>
       </Stack>
     </Box>
   );

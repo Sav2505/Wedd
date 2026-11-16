@@ -93,6 +93,17 @@ export function getIsraelNow(): DateTime {
   return DateTime.now().setZone(ISRAEL_TIMEZONE);
 }
 
+export function getDaysUntilWedding(weddingDate: string | Date, referenceDate: DateTime = getIsraelNow()): number {
+  const weddingDay = (typeof weddingDate === 'string'
+    ? DateTime.fromISO(weddingDate, { zone: ISRAEL_TIMEZONE })
+    : DateTime.fromJSDate(weddingDate, { zone: ISRAEL_TIMEZONE }))
+    .setZone(ISRAEL_TIMEZONE).startOf('day');
+  if (!weddingDay.isValid || !referenceDate.isValid) {
+    throw new Error('Invalid date for wedding countdown label');
+  }
+  return Math.max(0, Math.round(weddingDay.diff(referenceDate.setZone(ISRAEL_TIMEZONE).startOf('day'), 'days').days));
+}
+
 export function toIsraelDate(dateValue: string | Date): DateTime {
   return normalizeToIsraelNoon(dateValue);
 }

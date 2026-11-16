@@ -16,7 +16,7 @@ import {
   MessageTemplateName,
   upsertPendingLog,
 } from '../services/weddingMessageLog.service';
-import { computeWeddingMessageScheduleDates, computeWhenLabel, ISRAEL_TIMEZONE } from '../utils/scheduling.util';
+import { computeWeddingMessageScheduleDates, computeWhenLabel, getDaysUntilWedding, ISRAEL_TIMEZONE } from '../utils/scheduling.util';
 import { sendWeddingConfirmation } from '../services/weddingConfirmation.service';
 
 interface WeddingInfoRow {
@@ -332,11 +332,6 @@ async function processTemplateForWedding(
         const tabIndex = TEMPLATE_TO_TAB_INDEX[templateName as SupportedWeddingTemplate];
         const guestUrl = buildGuestUrl(wedding.id, guest.full_name, guest.phone, tabIndex);
 
-        const daysUntilWedding = Math.round(
-          DateTime.fromISO(wedding.wedding_date, { zone: ISRAEL_TIMEZONE }).startOf('day')
-            .diff(todayIsrael.startOf('day'), 'days').days
-        );
-
         const components = buildTemplateComponents({
           templateName,
           guestFullName: guest.full_name,
@@ -349,7 +344,9 @@ async function processTemplateForWedding(
           venueAddress: wedding.venue_address,
           guestUrl,
           invitationImageMediaId: invitationMediaId,
-          whenLabel: templateName === 'wedding_day_before' ? computeWhenLabel(Math.max(0, daysUntilWedding)) : undefined,
+          whenLabel: templateName === 'wedding_day_before'
+            ? computeWhenLabel(getDaysUntilWedding(wedding.wedding_date, getNowIsrael()))
+            : undefined,
         });
 
         const sendResult = await sendTemplateMessageWithRetry({
@@ -585,7 +582,6 @@ async function processGroupSchedule(row: GroupScheduleRow, wedding: WeddingInfoR
       } else {
         const pending = await upsertPendingLog(wedding.id, guest.id, row.template_name);
         logId = pending.id;
-        const daysUntilWedding = Math.round(weddingDay.diff(now.startOf('day'), 'days').days);
         const components = buildTemplateComponents({
           templateName: row.template_name,
           guestFullName: guest.full_name,
@@ -597,7 +593,9 @@ async function processGroupSchedule(row: GroupScheduleRow, wedding: WeddingInfoR
           venueName: wedding.venue_name,
           venueAddress: wedding.venue_address,
           guestUrl: buildGuestUrl(wedding.id, guest.full_name, guest.phone, TEMPLATE_TO_TAB_INDEX[row.template_name]),
-          whenLabel: row.template_name === 'wedding_day_before' ? computeWhenLabel(Math.max(0, daysUntilWedding)) : undefined,
+          whenLabel: row.template_name === 'wedding_day_before'
+            ? computeWhenLabel(getDaysUntilWedding(wedding.wedding_date, getNowIsrael()))
+            : undefined,
         });
         attempted = true;
         const result = await sendTemplateMessageWithRetry({ to: guest.phone, templateName: row.template_name, languageCode: 'he', components }, 1, delivery.quota_reservation_id);

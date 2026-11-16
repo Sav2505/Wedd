@@ -7,6 +7,8 @@ import {
   computeInvitationSendAt,
   computePostThanksSendAt,
   computeReminderSendAt,
+  computeWhenLabel,
+  getDaysUntilWedding,
   computeWeddingMessageScheduleDates,
 } from './scheduling.util';
 
@@ -66,4 +68,23 @@ test('all computed dates are fixed at 12:00 in Israel timezone across DST period
   assert.equal(reminder.hour, 12);
   assert.equal(dayBefore.hour, 12);
   assert.equal(postThanks.hour, 12);
+});
+
+test('day-before label follows Israel calendar days at send time, including midnight and DST', () => {
+  const beforeWeddingDay = DateTime.fromISO('2027-06-13T23:59', { zone: ISRAEL_TIMEZONE });
+  const onWeddingDay = DateTime.fromISO('2027-06-14T00:01', { zone: ISRAEL_TIMEZONE });
+  assert.equal(getDaysUntilWedding('2027-06-14', beforeWeddingDay), 1);
+  assert.equal(computeWhenLabel(getDaysUntilWedding('2027-06-14', beforeWeddingDay)), 'מחר');
+  assert.equal(getDaysUntilWedding('2027-06-14', onWeddingDay), 0);
+  assert.equal(computeWhenLabel(getDaysUntilWedding('2027-06-14', onWeddingDay)), 'היום');
+
+  const acrossDst = DateTime.fromISO('2027-03-25T23:59', { zone: ISRAEL_TIMEZONE });
+  assert.equal(getDaysUntilWedding('2027-03-28', acrossDst), 3);
+  assert.equal(computeWhenLabel(getDaysUntilWedding('2027-03-28', acrossDst)), 'בעוד שלושה ימים');
+});
+
+test('day-before label formats the supported day counts and larger offsets', () => {
+  assert.equal(computeWhenLabel(2), 'מחרתיים');
+  assert.equal(computeWhenLabel(7), 'בעוד שבעה ימים');
+  assert.equal(computeWhenLabel(8), 'בעוד 8 ימים');
 });

@@ -36,3 +36,54 @@ test('custom WhatsApp template rejects an empty message body', () => {
     /requires a message body/,
   );
 });
+
+test('day-before WhatsApp template uses the calculated relative-day label as {{2}}', () => {
+  const components = buildTemplateComponents({
+    ...templateInput,
+    templateName: 'wedding_day_before',
+    whenLabel: 'מחרתיים',
+  }) as Array<{ type: string; parameters: Array<{ text: string }> }>;
+
+  assert.equal(components[0].parameters[1].text, 'מחרתיים');
+});
+
+test('reminder template keeps event date, reception, canopy, and couple name in order', () => {
+  const components = buildTemplateComponents({ ...templateInput, templateName: 'wedding_reminder' }) as Array<{
+    type: string;
+    parameters: Array<{ text: string }>;
+  }>;
+
+  const body = components.find((component) => component.type === 'body');
+  assert.ok(body);
+  assert.equal(body.parameters[0].text, 'רוני');
+  assert.match(body.parameters[1].text, /2027/);
+  assert.deepEqual(body.parameters.slice(2).map((parameter) => parameter.text), [
+    '19:30', '20:30', 'רונה ויואב',
+  ]);
+});
+
+test('day-before template keeps all seven body parameters in template order', () => {
+  const components = buildTemplateComponents({
+    ...templateInput,
+    templateName: 'wedding_day_before',
+    whenLabel: 'בעוד שלושה ימים',
+  }) as Array<{ type: string; parameters: Array<{ text: string }> }>;
+
+  const body = components.find((component) => component.type === 'body');
+  assert.ok(body);
+  assert.deepEqual(body.parameters.map((parameter) => parameter.text), [
+    'רוני', 'בעוד שלושה ימים', 'רונה ויואב', 'גן האירועים',
+    '19:30', '20:30', 'רונה ויואב',
+  ]);
+});
+
+test('post-thanks template keeps guest first name and couple name in order', () => {
+  const components = buildTemplateComponents({ ...templateInput, templateName: 'wedding_post_thanks' }) as Array<{
+    type: string;
+    parameters: Array<{ text: string }>;
+  }>;
+
+  const body = components.find((component) => component.type === 'body');
+  assert.ok(body);
+  assert.deepEqual(body.parameters.map((parameter) => parameter.text), ['רוני', 'רונה ויואב']);
+});

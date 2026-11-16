@@ -42,4 +42,6 @@ test('enforces event date boundaries for reminders and thank-you messages', () =
   assert.throws(() => validateGroupMessageSchedule('wedding_day_before', '2027-06-14', date('2027-06-15T12:00'), single, now), /תאריך החתונה/);
   assert.throws(() => validateGroupMessageSchedule('wedding_post_thanks', '2027-06-14', date('2027-06-14T12:00'), single, now), /תאריך החתונה/);
   assert.equal(validateGroupMessageSchedule('wedding_post_thanks', '2027-06-14', date('2027-06-15T12:00'), single, now)[0].scheduledAt, '2027-06-15T09:00:00.000Z');
+  assert.equal(validateGroupMessageSchedule('wedding_post_thanks', '2027-06-14', date('2027-06-21T23:59'), single, now)[0].scheduledAt, '2027-06-21T20:59:00.000Z');
+  assert.throws(() => validateGroupMessageSchedule('wedding_post_thanks', '2027-06-14', date('2027-06-22T00:00'), single, now), /תאריך החתונה/);
 });

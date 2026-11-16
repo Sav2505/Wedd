@@ -50,7 +50,7 @@ function makeDraft(data: GroupScheduleData, template: GroupMessageTemplate): { s
   return { slots: slots.length ? slots : [{ key: 0, localDateTime: '', groupIds: [] }], excluded };
 }
 
-export default function GroupMessageScheduleEditor({ weddingId, onActiveTemplatesChange, onInvitationStartedChange }: { weddingId: number; onActiveTemplatesChange: (templates: GroupMessageTemplate[]) => void; onInvitationStartedChange: (started: boolean) => void }) {
+export default function GroupMessageScheduleEditor({ weddingId, weddingDate, onActiveTemplatesChange, onInvitationStartedChange }: { weddingId: number; weddingDate?: string; onActiveTemplatesChange: (templates: GroupMessageTemplate[]) => void; onInvitationStartedChange: (started: boolean) => void }) {
   const [data, setData] = useState<GroupScheduleData | null>(null);
   const [template, setTemplate] = useState<GroupMessageTemplate>('wedding_confirmation');
   const [slots, setSlots] = useState<Slot[]>([]);
@@ -98,6 +98,12 @@ export default function GroupMessageScheduleEditor({ weddingId, onActiveTemplate
   const missing = data.groups.filter((group) => !assigned.includes(group.group_id) && !excluded.includes(group.group_id));
   const oversized = data.groups.filter((group) => !lockedIds.includes(group.group_id) && !excluded.includes(group.group_id) && countFor(group) > 250);
   const slotsMissingDate = slots.some((slot) => slot.groupIds.length > 0 && !slot.localDateTime);
+  const minDateTime = dayjs().tz('Asia/Jerusalem').add(1, 'minute').format('YYYY-MM-DDTHH:mm');
+  const weddingDay = weddingDate ? dayjs.tz(weddingDate, 'Asia/Jerusalem').startOf('day') : null;
+  const maxDay = weddingDay?.add(template === 'wedding_post_thanks' ? 7 : 0, 'day');
+  const maxDateTime = maxDay?.isValid() ? `${maxDay.format('YYYY-MM-DD')}T23:59` : undefined;
+  const slotsOutOfRange = slots.some((slot) => slot.groupIds.length > 0 && slot.localDateTime &&
+    (slot.localDateTime < minDateTime || Boolean(maxDateTime && slot.localDateTime > maxDateTime)));
   const otherSends = data.schedules.filter((row) => row.template_name !== template && row.status === 'scheduled' && row.scheduled_at).map((row) => {
     const group = data.groups.find((item) => item.group_id === row.guest_group_id);
     const count = !group ? 0 : row.template_name === 'wedding_confirmation' ? group.total : row.template_name === 'wedding_reminder' ? group.pending : group.coming;
@@ -171,7 +177,12 @@ export default function GroupMessageScheduleEditor({ weddingId, onActiveTemplate
               </Stack>
               <TextField type="datetime-local" label="תאריך ושעה בישראל" value={slot.localDateTime} size="small" fullWidth
                 disabled={templateLocked || slotLocked || saving} InputLabelProps={{ shrink: true }}
+                inputProps={{ min: minDateTime, max: maxDateTime }}
                 onChange={(event) => setSlots((current) => current.map((item) => item.key === slot.key ? { ...item, localDateTime: event.target.value } : item))} />
+              {slot.groupIds.length > 0 && slot.localDateTime && (slot.localDateTime < minDateTime || Boolean(maxDateTime && slot.localDateTime > maxDateTime)) &&
+                <Alert severity="error" sx={{ mt: 1 }}>
+                  {slot.localDateTime < minDateTime ? 'אי אפשר לתזמן מועד שכבר עבר.' : `אי אפשר לתזמן אחרי ${maxDay?.format('DD/MM/YYYY')}.`}
+                </Alert>}
               {recipientCount > 250 && <Alert severity="warning" sx={{ mt: 1 }}>מספר הרשומות במועד זה גדול מ־250. המכסה מחושבת לאורך 24 שעות.</Alert>}
               <Button
                 size="small"
@@ -209,8 +220,9 @@ export default function GroupMessageScheduleEditor({ weddingId, onActiveTemplate
         {missing.length > 0 && <Alert severity="info">טרם שובצו או הוחרגו: {missing.map((group) => group.name).join(', ')}</Alert>}
         {oversized.length > 0 && <Alert severity="error">יש לחלק קבוצות עם יותר מ־250 רשומות: {oversized.map((group) => group.name).join(', ')}</Alert>}
         {slotsMissingDate && <Alert severity="info">בחר תאריך ושעה לכל מועד שאליו שויכה קבוצה.</Alert>}
+        {slotsOutOfRange && <Alert severity="error">יש לבחור תאריכים מהיום ואילך, ולא אחרי שבוע מתאריך האירוע. בהודעות שאינן תודה, המועד מוגבל ליום האירוע.</Alert>}
         {projectedOverflow && <Alert severity="warning">לפי מספר הזכאים הנוכחי, מתוכננות יותר מ־250 הודעות בחלון של 24 שעות. המספר עשוי להשתנות לפני השליחה.</Alert>}
-        <Button variant="outlined" startIcon={<SaveIcon />} onClick={save} disabled={!data.enabled || templateLocked || saving || missing.length > 0 || oversized.length > 0 || slotsMissingDate} sx={{ alignSelf: 'flex-start' }}>שמירת תזמון הקבוצות</Button>
+        <Button variant="outlined" startIcon={<SaveIcon />} onClick={save} disabled={!data.enabled || templateLocked || saving || missing.length > 0 || oversized.length > 0 || slotsMissingDate || slotsOutOfRange} sx={{ alignSelf: 'flex-start' }}>שמירת תזמון הקבוצות</Button>
       </Stack>
     </Box>
   );

@@ -62,7 +62,11 @@ export function validateGroupMessageSchedule(
     }
     if (date.weekday === 6) throw createError('לא ניתן לתזמן שליחה בשבת', 400);
     if (date.toMillis() <= now.toMillis()) throw createError('מועד השליחה חייב להיות בעתיד', 400);
-    if (templateName === 'wedding_post_thanks' ? date.startOf('day') <= weddingDay : date.startOf('day') > weddingDay) {
+    const sendDay = date.startOf('day');
+    const invalidEventRange = templateName === 'wedding_post_thanks'
+      ? sendDay <= weddingDay || sendDay > weddingDay.plus({ days: 7 })
+      : sendDay > weddingDay;
+    if (invalidEventRange) {
       throw createError('מועד השליחה אינו מתאים לתאריך החתונה', 400);
     }
     return { ...assignment, scheduledAt: date.toUTC().toISO() };

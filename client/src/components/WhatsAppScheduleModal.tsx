@@ -487,7 +487,7 @@ export default function WhatsAppScheduleModal({ open, weddingId, weddingDate, on
 
                             <Typography sx={{ fontWeight: 700, mb: 1 }}>{thanksGrouped ? 'הודעת התודה מתוזמנת לפי קבוצות.' : 'ביום שאחרי (נוודא שלא נופל על שבת) תישלח גם הודעת תודה לכל מי שבא :)'}</Typography>
 
-                            <GroupMessageScheduleEditor key={weddingId} weddingId={weddingId} onActiveTemplatesChange={setActiveGroupTemplates} onInvitationStartedChange={setInvitationGroupStarted} />
+                            <GroupMessageScheduleEditor key={weddingId} weddingId={weddingId} weddingDate={weddingDate} onActiveTemplatesChange={setActiveGroupTemplates} onInvitationStartedChange={setInvitationGroupStarted} />
 
                             {/* Declaration status section */}
                             <Box sx={{ p: 1.5, borderRadius: 2, border: '1px dashed rgba(201,168,76,0.55)', background: 'rgba(201,168,76,0.06)' }}>

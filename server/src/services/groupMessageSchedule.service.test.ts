@@ -29,7 +29,11 @@ test('group schedules cannot be read from another wedding', async () => {
 
   test('a previously sent legacy invitation cannot be scheduled again', async () => {
     const originalConnect = pool.connect;
+    const originalEnv = { ...process.env };
     const calls: string[] = [];
+    process.env.IS_PROD = 'true';
+    process.env.WHATSAPP_TEST_ONLY = 'false';
+    process.env.WHATSAPP_GROUP_SCHEDULER_ENABLED = 'true';
     pool.connect = (async () => ({
       query: async (sql: string) => {
         calls.push(sql);
@@ -52,11 +56,15 @@ test('group schedules cannot be read from another wedding', async () => {
   });
 test('saving future groups retains a completed group and validates the remaining groups', async () => {
   const originalConnect = pool.connect;
+  const originalEnv = { ...process.env };
   const calls: Array<{ sql: string; values: unknown[] }> = [];
   const zone = 'Asia/Jerusalem';
   const completed = DateTime.now().setZone(zone).minus({ days: 3 }).startOf('hour');
   let future = DateTime.now().setZone(zone).plus({ days: 2 }).set({ hour: 12, minute: 0, second: 0, millisecond: 0 });
   if (future.weekday === 6) future = future.plus({ days: 1 });
+  process.env.IS_PROD = 'true';
+  process.env.WHATSAPP_TEST_ONLY = 'false';
+  process.env.WHATSAPP_GROUP_SCHEDULER_ENABLED = 'true';
   pool.connect = (async () => ({
     query: async (sql: string, values: unknown[] = []) => {
       calls.push({ sql, values });
@@ -85,6 +93,7 @@ test('saving future groups retains a completed group and validates the remaining
     assert.equal(calls.at(-1)?.sql, 'COMMIT');
   } finally {
     pool.connect = originalConnect;
+    process.env = originalEnv;
   }
 });
 

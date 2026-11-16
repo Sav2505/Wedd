@@ -9,6 +9,7 @@ import {
 import AddIcon from '@mui/icons-material/Add';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import SaveIcon from '@mui/icons-material/Save';
+import SelectAllIcon from '@mui/icons-material/SelectAll';
 import {
   getGroupMessageSchedule, saveGroupMessageSchedule,
   type GroupMessageTemplate, type GroupScheduleData,
@@ -172,6 +173,17 @@ export default function GroupMessageScheduleEditor({ weddingId, onActiveTemplate
                 disabled={templateLocked || slotLocked || saving} InputLabelProps={{ shrink: true }}
                 onChange={(event) => setSlots((current) => current.map((item) => item.key === slot.key ? { ...item, localDateTime: event.target.value } : item))} />
               {recipientCount > 250 && <Alert severity="warning" sx={{ mt: 1 }}>מספר הרשומות במועד זה גדול מ־250. המכסה מחושבת לאורך 24 שעות.</Alert>}
+              <Button
+                size="small"
+                startIcon={<SelectAllIcon />}
+                disabled={templateLocked || slotLocked || saving || missing.length === 0}
+                onClick={() => setSlots((current) => current.map((item) => item.key === slot.key
+                  ? { ...item, groupIds: [...item.groupIds, ...missing.map((group) => group.group_id)] }
+                  : item))}
+                sx={{ mt: 1, alignSelf: 'flex-start' }}
+              >
+                שיבוץ כל הקבוצות שטרם שובצו למועד הזה
+              </Button>
               <Stack direction="row" flexWrap="wrap" sx={{ mt: 1 }}>
                 {data.groups.map((group) => {
                   const checked = slot.groupIds.includes(group.group_id);
@@ -186,7 +198,10 @@ export default function GroupMessageScheduleEditor({ weddingId, onActiveTemplate
           );
         })}
         <Button startIcon={<AddIcon />} onClick={() => setSlots((current) => [...current, { key: Math.max(-1, ...current.map((slot) => slot.key)) + 1, localDateTime: '', groupIds: [] }])} disabled={templateLocked || saving} sx={{ alignSelf: 'flex-start' }}>הוספת מועד</Button>
-        <Typography variant="subtitle2">קבוצות מוחרגות</Typography>
+        <Typography variant="subtitle2">קבוצות שלא יקבלו את ההודעה הזו</Typography>
+        <Typography variant="body2" color="text.secondary">
+          החרגה חלה רק על סוג ההודעה הנבחר. היא לא משנה את אישור ההגעה ולא משפיעה על הודעות אחרות.
+        </Typography>
         <Stack direction="row" flexWrap="wrap">
           {data.groups.map((group) => <FormControlLabel key={group.group_id ?? 'ungrouped'} label={`${group.name} (${countFor(group)})`}
             control={<Checkbox checked={excluded.includes(group.group_id)} disabled={templateLocked || lockedIds.includes(group.group_id) || saving || assigned.includes(group.group_id)} onChange={(event) => setExcluded((current) => event.target.checked ? [...current, group.group_id] : current.filter((id) => id !== group.group_id))} />} />)}

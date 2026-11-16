@@ -5,7 +5,9 @@ import {
   deleteInvitationImage,
   downloadInvitationImage,
   getSchedule,
+  getGroupSchedule,
   patchSchedule,
+  putGroupSchedule,
   uploadInvitationImage,
 } from '../controllers/weddingMessageSchedule.controller';
 
@@ -32,6 +34,8 @@ router.use(requireCouple);
 
 router.get('/:weddingId/message-schedule', getSchedule);
 router.patch('/:weddingId/message-schedule', patchSchedule);
+router.get('/:weddingId/group-message-schedule', getGroupSchedule);
+router.put('/:weddingId/group-message-schedule/:templateName', putGroupSchedule);
 router.post('/:weddingId/invitation-image', upload.single('image'), uploadInvitationImage);
 router.get('/:weddingId/invitation-image', downloadInvitationImage);
 router.delete('/:weddingId/invitation-image', deleteInvitationImage);

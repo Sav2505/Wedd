@@ -1,6 +1,39 @@
 import api from './api';
 import { ApiResponse, WeddingMessageSchedule } from '../types/domain';
 
+export type GroupMessageTemplate = 'wedding_confirmation' | 'wedding_reminder' | 'wedding_day_before' | 'wedding_post_thanks';
+
+export interface GroupScheduleData {
+  enabled: boolean;
+  groups: Array<{ group_id: string | null; name: string; total: number; pending: number; coming: number }>;
+  schedules: Array<{
+    id: string;
+    template_name: GroupMessageTemplate;
+    guest_group_id: string | null;
+    scheduled_at: string | null;
+    status: 'scheduled' | 'processing' | 'paused_quota' | 'paused_schedule' | 'paused_error' | 'completed' | 'excluded';
+    status_detail: string | null;
+    sent_count: number;
+    skipped_count: number;
+    problem_count: number;
+  }>;
+}
+
+export async function getGroupMessageSchedule(weddingId: number): Promise<GroupScheduleData> {
+  const { data } = await api.get<ApiResponse<GroupScheduleData>>(`/weddings/${weddingId}/group-message-schedule`);
+  if (!data.success || !data.data) throw new Error(data.message ?? 'שגיאה בטעינת תזמון הקבוצות');
+  return data.data;
+}
+
+export async function saveGroupMessageSchedule(
+  weddingId: number,
+  templateName: GroupMessageTemplate,
+  assignments: Array<{ groupId: string | null; excluded: boolean; localDateTime: string | null }>,
+): Promise<void> {
+  const { data } = await api.put<ApiResponse>(`/weddings/${weddingId}/group-message-schedule/${templateName}`, { assignments });
+  if (!data.success) throw new Error(data.message ?? 'שגיאה בשמירת תזמון הקבוצות');
+}
+
 export async function getWeddingMessageSchedule(weddingId: number): Promise<WeddingMessageSchedule> {
   const { data } = await api.get<ApiResponse<WeddingMessageSchedule>>(`/weddings/${weddingId}/message-schedule`);
   if (!data.success || !data.data) throw new Error(data.message ?? 'שגיאה בטעינת הגדרות תזמון');

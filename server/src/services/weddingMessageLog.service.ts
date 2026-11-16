@@ -105,7 +105,8 @@ export async function claimConfirmationLog(
        attempt_count = wedding_message_log.attempt_count + 1,
        last_attempt_at = NOW(),
        updated_at = NOW()
-    WHERE $3::boolean OR wedding_message_log.status = 'failed'
+    WHERE wedding_message_log.status <> 'pending'
+      AND ($3::boolean OR wedding_message_log.status = 'failed')
      RETURNING id, attempt_count`,
       [weddingId, guestId, allowResend],
   );

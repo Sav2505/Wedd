@@ -61,6 +61,16 @@ interface InvitationImageRow {
   invitation_image_media_id: string | null;
 }
 
+async function assertInvitationImageEditable(client: PoolClient, weddingId: number): Promise<void> {
+  const result = await client.query(
+    `SELECT 1 FROM wedding_whatsapp_group_schedule
+     WHERE wedding_id = $1 AND template_name = 'wedding_confirmation'
+       AND status IN ('processing', 'completed', 'paused_error') LIMIT 1`,
+    [weddingId],
+  );
+  if (result.rows.length) throw createError('שליחת ההזמנה כבר החלה ותמונת ההזמנה אינה ניתנת לעריכה', 409);
+}
+
 async function getWeddingDate(weddingId: number): Promise<string> {
   const { rows } = await pool.query<WeddingDateRow>(
     'SELECT wedding_date FROM wedding_info WHERE id = $1 LIMIT 1',
@@ -277,7 +287,9 @@ export async function saveInvitationImage(
 
   try {
     await client.query('BEGIN');
+    await client.query('SELECT pg_advisory_xact_lock($1)', [748921]);
     await ensurePostThanksLockColumn(client);
+    await assertInvitationImageEditable(client, weddingId);
 
     await client.query(
       'INSERT INTO wedding_message_schedule (wedding_id) VALUES ($1) ON CONFLICT (wedding_id) DO NOTHING',
@@ -385,7 +397,9 @@ export async function clearInvitationImage(weddingId: number): Promise<WeddingMe
 
   try {
     await client.query('BEGIN');
+    await client.query('SELECT pg_advisory_xact_lock($1)', [748921]);
     await ensurePostThanksLockColumn(client);
+    await assertInvitationImageEditable(client, weddingId);
 
     const weddingDateResult = await client.query<WeddingDateRow>(
       'SELECT wedding_date FROM wedding_info WHERE id = $1 LIMIT 1',

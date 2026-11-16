@@ -59,6 +59,24 @@
 \echo '==> Running migration_023_paybox_recipient_urls.sql...'
 \i migration_023_paybox_recipient_urls.sql
 
+\echo '==> Running migration_024_whatsapp_quota.sql...'
+\i migration_024_whatsapp_quota.sql
+
+\echo '==> Running migration_025_whatsapp_group_schedule.sql...'
+\i migration_025_whatsapp_group_schedule.sql
+
+\echo '==> Running migration_026_whatsapp_quota_pauses.sql...'
+\i migration_026_whatsapp_quota_pauses.sql
+
+\echo '==> Running migration_027_whatsapp_group_deliveries.sql...'
+\i migration_027_whatsapp_group_deliveries.sql
+
+\echo '==> Running migration_028_whatsapp_quota_cutover.sql...'
+\i migration_028_whatsapp_quota_cutover.sql
+
+\echo '==> Running migration_029_whatsapp_group_schedule_paused_status.sql...'
+\i migration_029_whatsapp_group_schedule_paused_status.sql
+
 \echo '==> Running seed.sql...'
 \i seed.sql
 

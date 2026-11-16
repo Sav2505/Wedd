@@ -3,6 +3,7 @@ import { getInvitationImage } from './weddingMessageSchedule.service';
 import { buildGuestUrl } from '../utils/guestUrl';
 import { getGuestByGuestId } from './guests.service';
 import { getWeddingInfoByWeddingId } from './info.service';
+import { completeWhatsAppQuotaReservation, reserveWhatsAppQuota } from './whatsappQuota.service';
 
 export type SupportedWeddingTemplate =
     | 'wedding_confirmation'
@@ -91,10 +92,8 @@ function parseWhatsappErrorBody(body: any): { message: string; code?: number } {
 
 function isRetryableError(err: unknown): boolean {
     if (!(err instanceof WhatsAppApiError)) return false;
-    if (err.statusCode === 429) return true;
-    if (err.metaCode === 130429) return true;
-    if (err.statusCode && err.statusCode >= 500) return true;
-    return false;
+    return Boolean(err.statusCode && err.statusCode >= 400 && err.statusCode < 500 &&
+        err.statusCode !== 408 && (err.statusCode === 429 || err.metaCode === 130429));
 }
 
 function normalizePhone(to: string): string {
@@ -161,7 +160,7 @@ export async function uploadMediaToWhatsApp(input: UploadMediaInput): Promise<st
     return mediaId;
 }
 
-export async function sendTemplateMessage(payload: SendTemplatePayload): Promise<SendTemplateResult> {
+export async function sendTemplateMessage(payload: SendTemplatePayload, reservedQuotaId?: string): Promise<SendTemplateResult> {
     const { phoneNumberId } = assertWhatsAppEnv();
 
     const body = {
@@ -175,19 +174,29 @@ export async function sendTemplateMessage(payload: SendTemplatePayload): Promise
         },
     };
 
-    const responsePayload = await graphRequest(`${phoneNumberId}/messages`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(body),
-    });
-
-    const messageId = responsePayload?.messages?.[0]?.id;
-    if (!messageId || typeof messageId !== 'string') {
-        throw new WhatsAppApiError('WhatsApp API response missing message id', { raw: responsePayload });
+    const reservationId = reservedQuotaId ?? await reserveWhatsAppQuota(payload.templateName);
+    let responsePayload: any;
+    let messageId: string;
+    try {
+        responsePayload = await graphRequest(`${phoneNumberId}/messages`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(body),
+        });
+        messageId = responsePayload?.messages?.[0]?.id;
+        if (!messageId || typeof messageId !== 'string') {
+            throw new WhatsAppApiError('WhatsApp API response missing message id', { raw: responsePayload });
+        }
+    } catch (error) {
+        const rejected = error instanceof WhatsAppApiError && error.statusCode !== undefined &&
+            error.statusCode >= 400 && error.statusCode < 500 && error.statusCode !== 408;
+        await completeWhatsAppQuotaReservation(reservationId, rejected ? 'rejected' : 'unknown');
+        throw error;
     }
 
+    await completeWhatsAppQuotaReservation(reservationId, 'accepted', messageId);
     return {
         messageId,
         raw: responsePayload,
@@ -198,6 +207,7 @@ export async function sendTemplateMessage(payload: SendTemplatePayload): Promise
 export async function sendTemplateMessageWithRetry(
     payload: SendTemplatePayload,
     maxAttempts = 3,
+    reservedQuotaId?: string,
 ): Promise<SendTemplateResult> {
     let attempt = 0;
     let delayMs = 1_200;
@@ -205,7 +215,7 @@ export async function sendTemplateMessageWithRetry(
     while (attempt < maxAttempts) {
         attempt += 1;
         try {
-            const sent = await sendTemplateMessage(payload);
+            const sent = await sendTemplateMessage(payload, attempt === 1 ? reservedQuotaId : undefined);
             return {
                 ...sent,
                 attempts: attempt,

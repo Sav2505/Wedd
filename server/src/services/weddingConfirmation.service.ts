@@ -2,6 +2,7 @@ import { pool } from '../db/pool';
 import { createError } from '../middleware/errorHandler';
 import { claimConfirmationLog, markLogFailed, markLogSent } from './weddingMessageLog.service';
 import { buildTemplateComponents, sendTemplateMessage, WhatsAppApiError } from './whatsapp.service';
+import { WhatsAppQuotaError } from './whatsappQuota.service';
 
 export interface ConfirmationWedding {
   id: number;
@@ -23,7 +24,7 @@ export interface ConfirmationGuest {
   phone: string;
 }
 
-export async function sendWeddingConfirmation(wedding: ConfirmationWedding, guest: ConfirmationGuest, allowResend = false): Promise<boolean> {
+export async function sendWeddingConfirmation(wedding: ConfirmationWedding, guest: ConfirmationGuest, allowResend = false, reservedQuotaId?: string): Promise<boolean> {
   if (!wedding.whatsapp_owner_confirmed) throw createError('יש לאשר שימוש ב-WhatsApp לפני השליחה', 400);
   if (!wedding.invitation_image_media_id) throw createError('יש להעלות תמונת הזמנה לפני השליחה', 400);
   if (!wedding.bride_name || !wedding.groom_name || !wedding.wedding_date || !wedding.wedding_time || !wedding.wedding_canpoy_time || !guest.full_name || !guest.phone) {
@@ -58,10 +59,14 @@ export async function sendWeddingConfirmation(wedding: ConfirmationWedding, gues
 
   let messageId: string;
   try {
-    const result = await sendTemplateMessage({ to: guest.phone, templateName: 'wedding_confirmation', languageCode: 'he', components });
+    const result = await sendTemplateMessage({ to: guest.phone, templateName: 'wedding_confirmation', languageCode: 'he', components }, reservedQuotaId);
     messageId = result.messageId;
   } catch (error) {
-    if (error instanceof WhatsAppApiError && error.statusCode && error.statusCode >= 400 && error.statusCode < 500) {
+    if (error instanceof WhatsAppQuotaError) {
+      await markLogFailed(pending.id, error.message);
+      throw error;
+    }
+    if (error instanceof WhatsAppApiError && error.statusCode && error.statusCode >= 400 && error.statusCode < 500 && error.statusCode !== 408) {
       await markLogFailed(pending.id, error.message);
       throw createError('שליחת הודעת WhatsApp נכשלה. ניתן לנסות שוב.', 502);
     }

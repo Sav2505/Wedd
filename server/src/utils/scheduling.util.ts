@@ -69,7 +69,7 @@ export function computeDayBeforeSendAt(
 
 export function computePostThanksSendAt(weddingDate: string | Date): DateTime {
   const base = normalizeToIsraelNoon(weddingDate).plus({ days: 1 });
-  return avoidSaturday(base);
+  return base.weekday === 6 ? base.plus({ days: 1 }) : base;
 }
 
 export function computeWeddingMessageScheduleDates(

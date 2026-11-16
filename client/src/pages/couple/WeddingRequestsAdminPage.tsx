@@ -63,6 +63,7 @@ function guestMessageStatus(status: GuestCustomMessageRequest['status']): { labe
     if (status === 'approved') return { label: 'אושרה', color: 'success' };
     if (status === 'rejected') return { label: 'נדחתה', color: 'error' };
     if (status === 'sending') return { label: 'נשלחת', color: 'warning' };
+    if (status === 'paused_quota') return { label: 'הושהתה: מכסת הודעות מלאה', color: 'warning' };
     if (status === 'sent') return { label: 'נשלחה', color: 'success' };
     if (status === 'sent_with_errors') return { label: 'נשלחה חלקית', color: 'error' };
     return { label: 'פג תוקף', color: 'default' };

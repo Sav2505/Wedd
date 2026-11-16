@@ -25,11 +25,13 @@ import {
     getWeddingMessageSchedule,
     patchWeddingMessageSchedule,
     uploadWeddingInvitationImage,
+    type GroupMessageTemplate,
 } from '../services/weddingMessageSchedule.service';
 import { WeddingMessageSchedule } from '../types/domain';
 import { computeSchedulePreview, formatScheduleDateTime } from '../utils/scheduling.util';
 import LoadingOverlay from './LoadingOverlay';
 import WhatsAppMessagePreview from './WhatsAppMessagePreview';
+import GroupMessageScheduleEditor from './GroupMessageScheduleEditor';
 
 /** If the ISO date string falls on Saturday (day 6), shift it back to Friday noon. */
 function shiftSaturdayToFriday(isoDate: string): string {
@@ -62,6 +64,8 @@ export default function WhatsAppScheduleModal({ open, weddingId, weddingDate, on
     const [invitationDays, setInvitationDays] = useState(30);
     const [reminderDays, setReminderDays] = useState(14);
     const [dayBeforeDays, setDayBeforeDays] = useState(1);
+    const [activeGroupTemplates, setActiveGroupTemplates] = useState<GroupMessageTemplate[]>([]);
+    const [invitationGroupStarted, setInvitationGroupStarted] = useState(false);
     const [previewOpen, setPreviewOpen] = useState<{ invitation: boolean; reminder: boolean; dayBefore: boolean, thankYou: boolean }>({
         invitation: false,
         reminder: false,
@@ -73,12 +77,13 @@ export default function WhatsAppScheduleModal({ open, weddingId, weddingDate, on
     const isWeddingDateMissing = !weddingDate?.trim();
 
     const canLoad = open && weddingId > 0;
-
     useEffect(() => {
         if (!canLoad) return;
 
         let active = true;
-        setLoading(true);
+        const loadingTimer = window.setTimeout(() => {
+            if (active) setLoading(true);
+        }, 0);
 
         getWeddingMessageSchedule(weddingId)
             .then(async (data) => {
@@ -119,6 +124,7 @@ export default function WhatsAppScheduleModal({ open, weddingId, weddingDate, on
 
         return () => {
             active = false;
+            window.clearTimeout(loadingTimer);
         };
     }, [canLoad, weddingId]);
 
@@ -160,9 +166,13 @@ export default function WhatsAppScheduleModal({ open, weddingId, weddingDate, on
         }
     }, [weddingDate, invitationDays, reminderDays, dayBeforeDays]);
 
-    const invitationLocked = Boolean(schedule?.invitation_locked_at);
+    const invitationLocked = Boolean(schedule?.invitation_locked_at) || invitationGroupStarted;
     const reminderLocked = Boolean(schedule?.reminder_locked_at);
     const dayBeforeLocked = Boolean(schedule?.day_before_locked_at);
+    const invitationGrouped = activeGroupTemplates.includes('wedding_confirmation');
+    const reminderGrouped = activeGroupTemplates.includes('wedding_reminder');
+    const dayBeforeGrouped = activeGroupTemplates.includes('wedding_day_before');
+    const thanksGrouped = activeGroupTemplates.includes('wedding_post_thanks');
 
     async function handleSave() {
         if (!schedule) return;
@@ -172,9 +182,9 @@ export default function WhatsAppScheduleModal({ open, weddingId, weddingDate, on
 
         try {
             const updated = await patchWeddingMessageSchedule(weddingId, {
-                invitation_days_before: invitationLocked ? undefined : invitationDays,
-                reminder_days_before: reminderLocked ? undefined : reminderDays,
-                day_before_offset_days: dayBeforeLocked ? undefined : dayBeforeDays,
+                invitation_days_before: invitationLocked || invitationGrouped ? undefined : invitationDays,
+                reminder_days_before: reminderLocked || reminderGrouped ? undefined : reminderDays,
+                day_before_offset_days: dayBeforeLocked || dayBeforeGrouped ? undefined : dayBeforeDays,
             });
             setSchedule(updated);
             setResult('success');
@@ -280,7 +290,7 @@ export default function WhatsAppScheduleModal({ open, weddingId, weddingDate, on
                             לפני שמגדירים תזמון הודעות, יש למלא תאריך חתונה בעמוד פרטי האירוע.
                         </Alert>
                     )}
-                    <Typography sx={{ ml: 3, fontWeight: 400, color: '#302209', fontSize: "14px" }}>תקבלו למייל שלכם עדכון 24 שעות טרם שליחת ההודעות</Typography>
+                    <Typography sx={{ ml: 3, fontWeight: 400, color: '#302209', fontSize: "14px" }}>תקבלו למייל שלכם עדכון לפני שליחת ההודעות</Typography>
 
                     {loading || !schedule ? (
                         <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
@@ -294,18 +304,18 @@ export default function WhatsAppScheduleModal({ open, weddingId, weddingDate, on
                                     type="number"
                                     label="כמה ימים מראש"
                                     value={invitationDays}
-                                    disabled={invitationLocked || saving || isWeddingDateMissing}
+                                    disabled={invitationLocked || invitationGrouped || saving || isWeddingDateMissing}
                                     onKeyDown={blockInvalidNumberKeys}
                                     onChange={(e) => setInvitationDays((prev) => parseNonNegativeInt(e.target.value, prev))}
                                     size="small"
                                     inputProps={{ min: 0, step: 1, inputMode: 'numeric' }}
                                 />
                                 <Typography variant="body2" sx={{ color: '#5A4A2A' }}>
-                                    תאריך שליחה מחושב: {displayInvitationDate ? formatScheduleDateTime(displayInvitationDate) : '-'}
+                                    {invitationGrouped ? 'מועד השליחה מוגדר לפי קבוצות' : `תאריך שליחה מחושב: ${displayInvitationDate ? formatScheduleDateTime(displayInvitationDate) : '-'}`}
                                 </Typography>
                                 {invitationLocked && (
                                     <Alert severity="warning" sx={{ py: 0 }}>
-                                        ההודעה כבר נשלחה בתאריך {formatScheduleDateTime(schedule.invitation_locked_at!)} ולא ניתנת עוד לעריכה.
+                                        {schedule.invitation_locked_at ? `ההודעה כבר נשלחה בתאריך ${formatScheduleDateTime(schedule.invitation_locked_at)} ולא ניתנת עוד לעריכה.` : 'שליחת ההזמנה לקבוצה כבר החלה ותמונת ההזמנה אינה ניתנת לעריכה.'}
                                     </Alert>
                                 )}
                                 <Button
@@ -353,14 +363,14 @@ export default function WhatsAppScheduleModal({ open, weddingId, weddingDate, on
                                     type="number"
                                     label="כמה ימים מראש"
                                     value={reminderDays}
-                                    disabled={reminderLocked || saving || isWeddingDateMissing}
+                                    disabled={reminderLocked || reminderGrouped || saving || isWeddingDateMissing}
                                     onKeyDown={blockInvalidNumberKeys}
                                     onChange={(e) => setReminderDays((prev) => parseNonNegativeInt(e.target.value, prev))}
                                     size="small"
                                     inputProps={{ min: 0, step: 1, inputMode: 'numeric' }}
                                 />
                                 <Typography variant="body2" sx={{ color: '#5A4A2A' }}>
-                                    תאריך שליחה מחושב: {displayReminderDate ? formatScheduleDateTime(displayReminderDate) : '-'}
+                                    {reminderGrouped ? 'מועד השליחה מוגדר לפי קבוצות' : `תאריך שליחה מחושב: ${displayReminderDate ? formatScheduleDateTime(displayReminderDate) : '-'}`}
                                 </Typography>
                                 {reminderLocked && (
                                     <Alert severity="warning" sx={{ py: 0 }}>
@@ -413,14 +423,14 @@ export default function WhatsAppScheduleModal({ open, weddingId, weddingDate, on
                                     type="number"
                                     label="כמה ימים מראש"
                                     value={dayBeforeDays}
-                                    disabled={dayBeforeLocked || saving || isWeddingDateMissing}
+                                    disabled={dayBeforeLocked || dayBeforeGrouped || saving || isWeddingDateMissing}
                                     onKeyDown={blockInvalidNumberKeys}
                                     onChange={(e) => setDayBeforeDays((prev) => parseNonNegativeInt(e.target.value, prev))}
                                     size="small"
                                     inputProps={{ min: 0, step: 1, inputMode: 'numeric' }}
                                 />
                                 <Typography variant="body2" sx={{ color: '#5A4A2A' }}>
-                                    תאריך שליחה מחושב: {displayDayBeforeDate ? formatScheduleDateTime(displayDayBeforeDate) : '-'}
+                                    {dayBeforeGrouped ? 'מועד השליחה מוגדר לפי קבוצות' : `תאריך שליחה מחושב: ${displayDayBeforeDate ? formatScheduleDateTime(displayDayBeforeDate) : '-'}`}
                                 </Typography>
                                 {dayBeforeLocked && (
                                     <Alert severity="warning" sx={{ py: 0 }}>
@@ -475,7 +485,9 @@ export default function WhatsAppScheduleModal({ open, weddingId, weddingDate, on
                                 </Collapse>
                             </Stack>
 
-                            <Typography sx={{ fontWeight: 700, mb: 1 }}>ביום שאחרי (נוודא שלא נופל על שבת) תישלח גם הודעת תודה לכל מי שבא :)</Typography>
+                            <Typography sx={{ fontWeight: 700, mb: 1 }}>{thanksGrouped ? 'הודעת התודה מתוזמנת לפי קבוצות.' : 'ביום שאחרי (נוודא שלא נופל על שבת) תישלח גם הודעת תודה לכל מי שבא :)'}</Typography>
+
+                            <GroupMessageScheduleEditor key={weddingId} weddingId={weddingId} onActiveTemplatesChange={setActiveGroupTemplates} onInvitationStartedChange={setInvitationGroupStarted} />
 
                             {/* Declaration status section */}
                             <Box sx={{ p: 1.5, borderRadius: 2, border: '1px dashed rgba(201,168,76,0.55)', background: 'rgba(201,168,76,0.06)' }}>

@@ -14,16 +14,14 @@ function toDate(dt: DateTime): string {
   return dt.setZone(ISRAEL_TIMEZONE).toFormat('yyyy-LL-dd HH:mm cccc');
 }
 
-test('invitation: saturday send date moves to sunday noon', () => {
-  // 2026-08-31 (Mon) - 30 days = 2026-08-01 (Sat) -> 2026-08-02 (Sun) at 12:00
+test('invitation: saturday send date moves to friday noon', () => {
   const actual = computeInvitationSendAt('2026-08-31', 30).setZone(ISRAEL_TIMEZONE);
-  assert.equal(toDate(actual), '2026-08-02 12:00 Sunday');
+  assert.equal(toDate(actual), '2026-07-31 12:00 Friday');
 });
 
-test('reminder: saturday send date moves to sunday noon', () => {
-  // 2026-08-29 (Sat) - 14 days = 2026-08-15 (Sat) -> 2026-08-16 (Sun) at 12:00
+test('reminder: saturday send date moves to friday noon', () => {
   const actual = computeReminderSendAt('2026-08-29', 14).setZone(ISRAEL_TIMEZONE);
-  assert.equal(toDate(actual), '2026-08-16 12:00 Sunday');
+  assert.equal(toDate(actual), '2026-08-14 12:00 Friday');
 });
 
 test('day-before: sunday wedding moves from saturday to friday noon', () => {

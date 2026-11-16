@@ -64,6 +64,7 @@ function statusPresentation(status: GuestCustomMessageStatus): { label: string; 
     case 'approved': return { label: 'אושרה', color: 'success' };
     case 'rejected': return { label: 'נדחתה', color: 'error' };
     case 'sending': return { label: 'נשלחת', color: 'warning' };
+    case 'paused_quota': return { label: 'הושהתה: מכסת הודעות מלאה', color: 'warning' };
     case 'sent': return { label: 'נשלחה', color: 'success' };
     case 'sent_with_errors': return { label: 'נשלחה חלקית', color: 'error' };
     case 'expired': return { label: 'פג תוקף', color: 'default' };
@@ -172,7 +173,7 @@ export default function GuestCustomMessageModal({ open, weddingId, isDeclaration
               <Stack spacing={1}>
                 {requests.map((request) => {
                   const presentation = statusPresentation(request.status);
-                  const wasApproved = ['approved', 'sending', 'sent', 'sent_with_errors'].includes(request.status);
+                  const wasApproved = ['approved', 'sending', 'paused_quota', 'sent', 'sent_with_errors'].includes(request.status);
                   return (
                     <Box key={request.id} sx={{ borderTop: '1px solid', borderColor: 'divider', pt: 1 }}>
                       <Stack direction="row" alignItems="center" justifyContent="space-between" gap={1}>

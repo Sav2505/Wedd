@@ -16,6 +16,56 @@
 
 ---
 
+## WhatsApp Group Scheduling (In Progress)
+
+Migrations `024` through `029` add the quota ledger, group schedules, delivery
+tracking, and a fail-closed cutover. The group scheduler is disabled by default;
+do not enable or deploy it until it has been tested against an isolated
+PostgreSQL database and a mocked WhatsApp provider.
+
+If migrations `024` and `025` are already installed, apply only `026`, `027`,
+`028`, and `029`, in that order. Do not rerun the full migration script or older
+migrations. The local UI remains read-only/disabled unless the server is
+configured for production sending; do not point a local server with sending
+enabled at the production database.
+
+Migration `028` blocks the new sender indefinitely. For the wedding schedule,
+the legacy and group workers can now be controlled independently. Deploy the new
+server build, replace every old server instance, then set:
+
+```env
+WHATSAPP_SCHEDULER_ENABLED=false
+GUEST_CUSTOM_MESSAGE_SCHEDULER_ENABLED=false
+WHATSAPP_GROUP_SCHEDULER_ENABLED=true
+IS_PROD=true
+WHATSAPP_TEST_ONLY=false
+```
+
+The legacy schedules and custom campaigns stay stopped; the group editor is
+available, and the database gate still blocks all WhatsApp sends. Do not leave an
+old server instance running: it does not check the quota gate. If manual sends
+must also be impossible during replacement, stop the old API or temporarily
+remove its WhatsApp credentials until the new build is active.
+
+After the final possible send from an old instance, begin the 24-hour waiting
+period by running this once:
+
+```sql
+UPDATE whatsapp_quota_settings
+SET send_not_before = NOW() + INTERVAL '24 hours'
+WHERE id = TRUE;
+```
+
+Keep all old senders stopped throughout the waiting period. Use the group editor
+to schedule every group that should still receive a message. The invitation
+already locked/sent for a wedding must not be scheduled again. The old
+`wedding_message_schedule` offsets do not automatically populate group schedules.
+At the end of the wait, the group worker can send only the groups explicitly
+scheduled in `wedding_whatsapp_group_schedule`. Do not rerun the full migration
+or seed for this feature.
+
+---
+
 ## PayBox Gift Links (Existing Database)
 
 Before deploying recipient-specific PayBox gift links, manually run only the new migration:

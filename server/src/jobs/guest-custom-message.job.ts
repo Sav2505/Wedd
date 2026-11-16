@@ -4,6 +4,7 @@ import {
   buildTemplateComponents,
   sendTemplateMessageWithRetry,
 } from '../services/whatsapp.service';
+import { WhatsAppQuotaError } from '../services/whatsappQuota.service';
 
 const ENABLED = String(process.env.GUEST_CUSTOM_MESSAGE_SCHEDULER_ENABLED ?? 'true').toLowerCase() === 'true';
 const LOCK_KEY = 724019233;
@@ -154,6 +155,15 @@ async function sendCampaign(campaign: CampaignRow): Promise<void> {
       );
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
+      if (error instanceof WhatsAppQuotaError) {
+        await pool.query(
+          `UPDATE wedding_custom_message_requests
+           SET status = 'paused_quota', updated_at = NOW()
+           WHERE id = $1 AND status = 'sending'`,
+          [campaign.id],
+        );
+        return;
+      }
       await pool.query(
         `UPDATE wedding_custom_message_deliveries
          SET status = 'failed', error_message = $2, attempt_count = attempt_count + 1,

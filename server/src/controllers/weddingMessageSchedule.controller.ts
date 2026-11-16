@@ -1,5 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
 import { createError } from '../middleware/errorHandler';
+import { getGroupMessageSchedule, isGroupMessageSchedulerEnabled, saveGroupMessageSchedule } from '../services/groupMessageSchedule.service';
 import {
   clearInvitationImage,
   getInvitationImage,
@@ -14,6 +15,32 @@ function parseWeddingId(req: Request): number {
     throw createError('מספר חתונה לא תקין', 400);
   }
   return weddingId;
+}
+
+export async function getGroupSchedule(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const data = await getGroupMessageSchedule((req as Request & { coupleId: string }).coupleId, parseWeddingId(req));
+    res.json({ success: true, data });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function putGroupSchedule(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    if (!isGroupMessageSchedulerEnabled()) {
+      throw createError('תזמון לפי קבוצות עדיין אינו פעיל', 503);
+    }
+    await saveGroupMessageSchedule(
+      (req as Request & { coupleId: string }).coupleId,
+      parseWeddingId(req),
+      req.params.templateName,
+      req.body?.assignments,
+    );
+    res.json({ success: true });
+  } catch (error) {
+    next(error);
+  }
 }
 
 export async function getSchedule(req: Request, res: Response, next: NextFunction): Promise<void> {

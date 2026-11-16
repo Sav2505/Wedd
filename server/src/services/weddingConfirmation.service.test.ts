@@ -12,21 +12,32 @@ const guest = { id: 'guest-1', full_name: 'רוני כהן', first_name: 'רונ
 
 test('confirmation sends the template once and records its result', async () => {
   const originalQuery = pool.query;
+  const originalConnect = pool.connect;
   const originalFetch = globalThis.fetch;
   const originalEnv = { ...process.env };
   let status: string | null = null;
   let sends = 0;
   let sentMessageId: unknown;
   let payload: any;
+  pool.connect = (async () => ({
+    query: async (sql: string) => {
+      if (sql.includes('AS ready')) return { rows: [{ ready: true }] };
+      if (sql.includes('COUNT(*)')) return { rows: [{ count: '0' }] };
+      if (sql.includes('INSERT INTO')) return { rows: [{ id: '42' }] };
+      return { rows: [] };
+    },
+    release: () => undefined,
+  })) as unknown as typeof pool.connect;
   pool.query = (async (sql: string, values: unknown[] = []) => {
+    if (sql.includes('UPDATE whatsapp_quota_reservations')) return { rows: [], rowCount: 1 };
     if (sql.includes('pg_constraint')) return { rows: [{ needsUpdate: false }] };
     if (sql.includes('FROM guests couple')) {
       assert.deepEqual(values, ['couple-1', guest.id]);
       return { rows: [{ ...wedding, ...guest, id: wedding.id, guest_id: guest.id }] };
     }
     if (sql.includes('INSERT INTO wedding_message_log')) {
-      assert.match(sql, /WHERE \$3::boolean OR wedding_message_log.status = 'failed'/);
-      if (!values[2] && status && status !== 'failed') return { rows: [] };
+      assert.match(sql, /wedding_message_log.status <> 'pending'/);
+      if (status === 'pending' || (!values[2] && status && status !== 'failed')) return { rows: [] };
       status = 'pending';
       return { rows: [{ id: 1, attempt_count: 1 }] };
     }
@@ -64,12 +75,12 @@ test('confirmation sends the template once and records its result', async () => 
     assert.equal(await sendWeddingConfirmation(wedding, guest), false);
     assert.equal(await sendWeddingConfirmation(wedding, guest, true), true);
     assert.equal(sends, 2);
-    for (const previousStatus of ['pending', 'sent', 'delivered', 'read', 'failed']) {
+    for (const previousStatus of ['sent', 'delivered', 'read', 'failed']) {
       status = previousStatus;
       await sendConfirmationForCouple('couple-1', guest.id);
       assert.equal(status, 'sent');
     }
-    assert.equal(sends, 7);
+    assert.equal(sends, 6);
 
     status = null;
     globalThis.fetch = (async () => new Response(JSON.stringify({ error: { message: 'Rejected' } }), { status: 400 })) as typeof fetch;
@@ -80,6 +91,8 @@ test('confirmation sends the template once and records its result', async () => 
     assert.equal(status, 'pending');
     assert.equal(await sendWeddingConfirmation(wedding, guest), false);
     globalThis.fetch = (async () => new Response(JSON.stringify({ messages: [{ id: 'meta-2' }] }), { status: 200 })) as typeof fetch;
+    assert.equal(await sendWeddingConfirmation(wedding, guest, true), false);
+    status = 'failed';
     assert.equal(await sendWeddingConfirmation(wedding, guest, true), true);
     assert.equal(status, 'sent');
 
@@ -89,6 +102,7 @@ test('confirmation sends the template once and records its result', async () => 
     await assert.rejects(sendWeddingConfirmation(wedding, guest), /מצב בדיקה/);
   } finally {
     pool.query = originalQuery;
+    pool.connect = originalConnect;
     globalThis.fetch = originalFetch;
     process.env = originalEnv;
   }

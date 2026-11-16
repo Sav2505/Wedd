@@ -47,6 +47,14 @@ interface GuestStats {
   notComing: number;
 }
 
+interface GroupNotificationRow {
+  template_name: TomorrowWhatsappScheduledMessage['templateName'];
+  scheduled_at: Date | null;
+  status: string;
+  group_name: string;
+  recipient_count: number;
+}
+
 // ---------------------------------------------------------------------------
 // DB helpers
 // ---------------------------------------------------------------------------
@@ -174,7 +182,7 @@ function buildMessagePreviews(
         `נשמח מאוד אם תוכל/י לאשר את הגעתך באמצעות הכפתור למטה, כדי שנוכל להיערך בצורה הטובה ביותר. 🙏\n\n` +
         `מחכים ומקווים לחגוג איתך! ❤️\n\n` +
         `באהבה,\n${coupleNames} 💕`;
-      recipientCount = stats.pending + stats.notComing;
+      recipientCount = stats.pending;
 
     } else if (templateName === 'wedding_day_before') {
       messageHeader = `💍✨ ${dayBeforeWhenLabel} אנחנו מתחתנים ✨💍`;
@@ -192,7 +200,7 @@ function buildMessagePreviews(
         `ℹ️ מידע על האירוע\n\n` +
         `💛 מומלץ להגיע מספר דקות לפני קבלת הפנים, ליהנות מהאווירה, ממנות הפתיחה ולהתחיל את החגיגות איתנו.\n\n` +
         `באהבה,\n${coupleNames} 💕`;
-      recipientCount = stats.total;
+      recipientCount = stats.confirmed;
 
     } else {
       // wedding_post_thanks
@@ -288,19 +296,41 @@ export async function runWhatsappScheduleNotificationOnce(): Promise<void> {
         wedding_post_thanks: Boolean(wedding.post_thanks_locked_at),
       };
 
+      const { rows: groupSchedules } = await pool.query<GroupNotificationRow>(
+        `SELECT s.template_name, s.scheduled_at, s.status, COALESCE(gg.name, 'ללא קבוצה') AS group_name,
+           COUNT(g.id) FILTER (WHERE NULLIF(BTRIM(g.phone), '') IS NOT NULL AND
+             (s.template_name = 'wedding_confirmation'
+               OR (s.template_name = 'wedding_reminder' AND g.rsvp_status = 'PENDING')
+               OR (s.template_name IN ('wedding_day_before', 'wedding_post_thanks') AND g.rsvp_status = 'COMING')))::int AS recipient_count
+         FROM wedding_whatsapp_group_schedule s
+         LEFT JOIN guest_groups gg ON gg.id = s.guest_group_id AND gg.wedding_id = s.wedding_id
+         LEFT JOIN guests g ON g.wedding_id = s.wedding_id AND g.role = 'guest'
+           AND g.guest_group_id IS NOT DISTINCT FROM s.guest_group_id
+         WHERE s.wedding_id = $1
+         GROUP BY s.id, gg.name`,
+        [wedding.id],
+      );
+      const groupedTemplates = new Set(groupSchedules.map((row) => row.template_name));
+      const groupMessagesTomorrow = groupSchedules.filter((row) => {
+        if (row.status !== 'scheduled' || !row.scheduled_at) return false;
+        const date = DateTime.fromJSDate(new Date(row.scheduled_at)).setZone(ISRAEL_TIMEZONE).toISODate();
+        return date === tomorrowISODate || (tomorrowIsSaturday && date === dayAfterTomorrowISODate);
+      });
+
       // Include templates that:
       // - fire tomorrow (normal case), OR
       // - fire on Sunday when tomorrow is Saturday → notify today (Friday) with "מחרתיים"
       const templatesTomorrow = (
         ['wedding_confirmation', 'wedding_reminder', 'wedding_day_before', 'wedding_post_thanks'] as const
       ).filter((t) => {
+        if (groupedTemplates.has(t)) return false;
         if (lockedMap[t]) return false;
         if (isoDateMap[t] === tomorrowISODate) return true;
         if (tomorrowIsSaturday && dayAfterTomorrowISODate && isoDateMap[t] === dayAfterTomorrowISODate) return true;
         return false;
       });
 
-      if (templatesTomorrow.length === 0) {
+      if (templatesTomorrow.length === 0 && groupMessagesTomorrow.length === 0) {
         continue;
       }
 
@@ -328,6 +358,18 @@ export async function runWhatsappScheduleNotificationOnce(): Promise<void> {
         dayBeforeWhenLabel,
         stats,
       );
+      for (const group of groupMessagesTomorrow) {
+        const sendAt = DateTime.fromJSDate(new Date(group.scheduled_at!)).setZone(ISRAEL_TIMEZONE);
+        const daysUntil = Math.round(weddingDay.diff(sendAt.startOf('day'), 'days').days);
+        const groupPreview = buildMessagePreviews(
+          wedding,
+          [group.template_name],
+          { [group.template_name]: `${sendAt.toFormat('dd/LL/yyyy HH:mm')} · ${group.group_name}` },
+          computeWhenLabel(Math.max(0, daysUntil)),
+          stats,
+        )[0];
+        scheduledMessages.push({ ...groupPreview, recipientCount: group.recipient_count });
+      }
 
       const { html, text, subject } = buildTomorrowWhatsappNotificationEmail({
         brideName: wedding.bride_name,

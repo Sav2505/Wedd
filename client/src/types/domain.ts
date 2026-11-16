@@ -97,6 +97,7 @@ export type GuestCustomMessageStatus =
   | 'approved'
   | 'rejected'
   | 'sending'
+  | 'paused_quota'
   | 'sent'
   | 'sent_with_errors'
   | 'expired';

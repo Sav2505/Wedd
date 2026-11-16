@@ -14,7 +14,7 @@ import {
   markLogFailed,
   markLogSent,
   MessageTemplateName,
-  upsertPendingLog,
+  claimMessageLog,
 } from '../services/weddingMessageLog.service';
 import { computeWeddingMessageScheduleDates, computeWhenLabel, getDaysUntilWedding, ISRAEL_TIMEZONE } from '../utils/scheduling.util';
 import { sendWeddingConfirmation } from '../services/weddingConfirmation.service';
@@ -325,7 +325,8 @@ async function processTemplateForWedding(
         continue;
       }
 
-      const pending = await upsertPendingLog(wedding.id, guest.id, templateName);
+      const pending = await claimMessageLog(wedding.id, guest.id, templateName);
+      if (!pending) continue;
       try {
         const guestFirstName = (guest.first_name?.trim() || guest.full_name.split(/\s+/)[0] || '').trim();
         const weddingDisplayName = `${wedding.bride_name} & ${wedding.groom_name}`;
@@ -580,7 +581,12 @@ async function processGroupSchedule(row: GroupScheduleRow, wedding: WeddingInfoR
           continue;
         }
       } else {
-        const pending = await upsertPendingLog(wedding.id, guest.id, row.template_name);
+        const pending = await claimMessageLog(wedding.id, guest.id, row.template_name);
+        if (!pending) {
+          await completeWhatsAppQuotaReservation(delivery.quota_reservation_id, 'rejected');
+          await pool.query(`UPDATE wedding_whatsapp_group_deliveries SET status = 'skipped', updated_at = NOW() WHERE id = $1`, [delivery.id]);
+          continue;
+        }
         logId = pending.id;
         const components = buildTemplateComponents({
           templateName: row.template_name,

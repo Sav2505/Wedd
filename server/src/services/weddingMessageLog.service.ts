@@ -114,6 +114,35 @@ export async function claimConfirmationLog(
   return rows[0] ?? null;
 }
 
+export async function claimMessageLog(
+  weddingId: number,
+  guestId: string,
+  templateName: MessageTemplateName,
+  allowResend = false,
+): Promise<UpsertPendingResult | null> {
+  await ensureWeddingMessageLogSchema();
+
+  const { rows } = await pool.query<UpsertPendingResult>(
+    `INSERT INTO wedding_message_log
+      (wedding_id, guest_id, template_name, status, attempt_count, last_attempt_at, created_at, updated_at)
+     VALUES ($1, $2, $3, 'pending', 1, NOW(), NOW(), NOW())
+     ON CONFLICT (wedding_id, guest_id, template_name)
+     DO UPDATE SET
+       status = 'pending',
+       whatsapp_message_id = NULL,
+       error_message = NULL,
+       attempt_count = wedding_message_log.attempt_count + 1,
+       last_attempt_at = NOW(),
+       updated_at = NOW()
+     WHERE wedding_message_log.status <> 'pending'
+       AND ($4::boolean OR wedding_message_log.status = 'failed')
+     RETURNING id, attempt_count`,
+    [weddingId, guestId, templateName, allowResend],
+  );
+
+  return rows[0] ?? null;
+}
+
 export async function markLogSent(
   logId: number,
   whatsappMessageId: string,

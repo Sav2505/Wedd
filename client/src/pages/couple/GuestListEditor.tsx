@@ -15,6 +15,8 @@ import {
   IconButton,
   InputAdornment,
   MenuItem,
+  Radio,
+  RadioGroup,
   Skeleton,
   Snackbar,
   Stack,
@@ -59,7 +61,8 @@ import {
   getGuests,
   updateGuest,
   updateGuestGroup,
-  sendWhatsappInvitation,
+  sendWhatsappGuestMessage,
+  DirectWeddingMessageTemplate,
 } from '../../services/guests.service';
 import { updateWeddingInfo } from '../../services/info.service';
 import { useWeddingInfo } from '../../hooks/useWeddingInfo';
@@ -89,6 +92,38 @@ const EMPTY_FORM: GuestForm = {
 };
 
 type RsvpFilter = 'ALL' | RsvpStatus;
+
+const directMessageOptions: Array<{ value: DirectWeddingMessageTemplate; label: string; description: string }> = [
+  { value: 'wedding_confirmation', label: 'הזמנה ראשונית', description: 'הזמנה אישית עם פרטי האירוע וקישור לאישור הגעה' },
+  { value: 'wedding_reminder', label: 'תזכורת לאישור הגעה', description: 'מיועדת רק למי שטרם הגיב' },
+  { value: 'wedding_day_before', label: 'הודעה לקראת האירוע', description: 'כוללת מיקום, שעות ותווית זמן שמחושבת לפי היום' },
+  { value: 'wedding_post_thanks', label: 'הודעת תודה', description: 'תודה אישית לאחר האירוע' },
+];
+
+function getIsraelDateKey(date = new Date()): string {
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Asia/Jerusalem', year: 'numeric', month: '2-digit', day: '2-digit',
+  }).formatToParts(date);
+  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  return `${values.year}-${values.month}-${values.day}`;
+}
+
+function getDirectMessageUnavailableReason(
+  template: DirectWeddingMessageTemplate,
+  guest: ManagedGuest,
+  weddingDate: string | undefined,
+  today = getIsraelDateKey(),
+): string | null {
+  const eventDate = weddingDate?.slice(0, 10);
+  if (!eventDate) return 'יש להגדיר תאריך אירוע';
+  if (template === 'wedding_reminder' && guest.rsvp_status !== 'PENDING') return 'נשלחת רק למי שטרם הגיב';
+  if ((template === 'wedding_day_before' || template === 'wedding_post_thanks') && guest.rsvp_status !== 'COMING') {
+    return 'נשלחת רק למי שאישר הגעה';
+  }
+  if (template === 'wedding_day_before' && today > eventDate) return 'מועד האירוע כבר עבר';
+  if (template === 'wedding_post_thanks' && today <= eventDate) return 'זמינה לאחר יום האירוע';
+  return null;
+}
 
 function getRsvpMeta(status: RsvpStatus, numberOfGuests: number): {
   label: string;
@@ -234,6 +269,7 @@ export default function GuestListEditor() {
   const [savingWhatsappDeclaration, setSavingWhatsappDeclaration] = useState(false);
   const [importModalOpen, setImportModalOpen] = useState(false);
   const [confirmationGuest, setConfirmationGuest] = useState<ManagedGuest | null>(null);
+  const [confirmationTemplate, setConfirmationTemplate] = useState<DirectWeddingMessageTemplate>('wedding_confirmation');
   const [sendingConfirmation, setSendingConfirmation] = useState(false);
   const [confirmationError, setConfirmationError] = useState<string | null>(null);
 
@@ -435,6 +471,7 @@ export default function GuestListEditor() {
 
   const handleOpenConfirmation = useCallback((guest: ManagedGuest) => {
     setConfirmationError(null);
+    setConfirmationTemplate('wedding_confirmation');
     setConfirmationGuest(guest);
   }, []);
 
@@ -443,8 +480,9 @@ export default function GuestListEditor() {
     setSendingConfirmation(true);
     setConfirmationError(null);
     try {
-      await sendWhatsappInvitation(confirmationGuest.id);
-      setSuccessMessage(`ההודעה ל${confirmationGuest.first_name || confirmationGuest.full_name} התקבלה ב-WhatsApp`);
+      await sendWhatsappGuestMessage(confirmationGuest.id, confirmationTemplate);
+      const templateLabel = directMessageOptions.find((option) => option.value === confirmationTemplate)?.label ?? 'ההודעה';
+      setSuccessMessage(`${templateLabel} נשלחה ל${confirmationGuest.first_name || confirmationGuest.full_name}`);
       setConfirmationGuest(null);
     } catch (error) {
       setConfirmationError(error instanceof Error ? error.message : 'שליחת ההודעה נכשלה');
@@ -706,6 +744,15 @@ export default function GuestListEditor() {
       setSavingWhatsappDeclaration(false);
     }
   }
+
+  const confirmationTemplateOptions = confirmationGuest
+    ? directMessageOptions.map((option) => ({
+        ...option,
+        unavailableReason: getDirectMessageUnavailableReason(option.value, confirmationGuest, info?.wedding_date),
+      }))
+    : [];
+  const selectedTemplateUnavailableReason = confirmationTemplateOptions
+    .find((option) => option.value === confirmationTemplate)?.unavailableReason ?? null;
 
   if (loading) {
     return (
@@ -1013,20 +1060,49 @@ export default function GuestListEditor() {
         </Box>
       )}
 
-      <Dialog open={confirmationGuest !== null} onClose={sendingConfirmation ? undefined : () => setConfirmationGuest(null)} maxWidth="xs" fullWidth>
-        <DialogTitle sx={{ fontFamily: "'Frank Ruhl Libre', serif", fontWeight: 700 }}>שליחת אישור הגעה</DialogTitle>
+      <Dialog open={confirmationGuest !== null} onClose={sendingConfirmation ? undefined : () => setConfirmationGuest(null)} maxWidth="sm" fullWidth>
+        <DialogTitle sx={{ fontFamily: "'Frank Ruhl Libre', serif", fontWeight: 700 }}>שליחת הודעת WhatsApp</DialogTitle>
         <DialogContent>
-          <Typography variant="body2">
-            לשלוח את הודעת אישור ההגעה הראשונה ישירות ל{confirmationGuest?.full_name} ({confirmationGuest?.phone})?
+          <Typography variant="body2" sx={{ mb: 1.5 }}>
+            בחירת הודעה עבור {confirmationGuest?.full_name} ({confirmationGuest?.phone}). ההודעה תישלח מיד דרך WhatsApp.
           </Typography>
+          <RadioGroup
+            value={confirmationTemplate}
+            onChange={(event) => setConfirmationTemplate(event.target.value as DirectWeddingMessageTemplate)}
+          >
+            {confirmationTemplateOptions.map((option) => (
+              <Box key={option.value} sx={{ py: 0.6 }}>
+                <FormControlLabel
+                  value={option.value}
+                  disabled={Boolean(option.unavailableReason) || sendingConfirmation}
+                  control={<Radio />}
+                  label={(
+                    <Stack spacing={0.2}>
+                      <Typography variant="body2" sx={{ fontWeight: 700 }}>{option.label}</Typography>
+                      <Typography variant="caption" color="text.secondary">{option.description}</Typography>
+                    </Stack>
+                  )}
+                  sx={{ alignItems: 'flex-start', m: 0 }}
+                />
+                {option.unavailableReason && (
+                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', ml: 4.5 }}>
+                    {option.unavailableReason}
+                  </Typography>
+                )}
+              </Box>
+            ))}
+          </RadioGroup>
           {!isWhatsappDeclarationConfirmed && (
             <Alert severity="warning" sx={{ mt: 2 }}>יש לאשר שימוש ב-WhatsApp דרך תזמון הודעות לאורחים לפני השליחה.</Alert>
           )}
+          <Alert severity="info" sx={{ mt: 1.5 }}>
+            שליחה ידנית נשלחת עכשיו, נספרת במכסת 24 השעות ונרשמת ביומן. בחירה חוזרת באותה הודעה היא שליחה חוזרת מכוונת.
+          </Alert>
           {confirmationError && <Alert severity="error" sx={{ mt: 2 }}>{confirmationError}</Alert>}
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setConfirmationGuest(null)} disabled={sendingConfirmation}>ביטול</Button>
-          <Button onClick={handleSendConfirmation} disabled={sendingConfirmation || !isWhatsappDeclarationConfirmed} sx={{ color: '#1f9f51', fontWeight: 700 }}>
+          <Button onClick={handleSendConfirmation} disabled={sendingConfirmation || !isWhatsappDeclarationConfirmed || Boolean(selectedTemplateUnavailableReason)} sx={{ color: '#1f9f51', fontWeight: 700 }}>
             {sendingConfirmation ? <CircularProgress size={18} color="inherit" /> : 'שליחה'}
           </Button>
         </DialogActions>
@@ -1642,11 +1718,11 @@ const GuestRow = memo(function GuestRow({
         </Box>
 
         <Stack direction="row" spacing={0.32}>
-          <Tooltip title="שליחת הודעת אישור הגעה ב-WhatsApp">
+          <Tooltip title="שליחת הודעת WhatsApp">
             <span>
               <IconButton
                 size="small"
-                aria-label="שליחת הודעת אישור הגעה ב-WhatsApp"
+                aria-label="שליחת הודעת WhatsApp"
                 disabled={weddingId <= 0 || !guest.phone.trim()}
                 onClick={() => onSendConfirmation(guest)}
                 sx={{ color: '#1f9f51', '&:hover': { bgcolor: 'rgba(37,211,102,0.08)' } }}

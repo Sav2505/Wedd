@@ -142,3 +142,20 @@ export async function sendWhatsappInvitation(guestId: string): Promise<void> {
     throw new Error(data.message ?? 'שגיאה בשליחת הודעת WhatsApp');
   }
 }
+
+export type DirectWeddingMessageTemplate =
+  | 'wedding_confirmation'
+  | 'wedding_reminder'
+  | 'wedding_day_before'
+  | 'wedding_post_thanks';
+
+export async function sendWhatsappGuestMessage(
+  guestId: string,
+  templateName: DirectWeddingMessageTemplate,
+): Promise<void> {
+  const { data } = await api.post<ApiResponse<void>>('/whatsapp/send-template', {
+    guestId,
+    templateName,
+  }, { timeout: 60_000 });
+  if (!data.success) throw new Error(data.message ?? 'שליחת הודעת WhatsApp נכשלה');
+}

@@ -3,7 +3,6 @@ import { requireCouple } from '../middleware/requireCouple';
 import { requireGuest } from '../middleware/requireGuest';
 import {
   getGuests,
-  getWhatsappConfirmationAttempts,
   createGuest,
   updateGuest,
   deleteGuest,
@@ -27,7 +26,6 @@ router.put('/me/blessing', requireGuest, saveMyBlessing);
 
 router.use(requireCouple);
 
-router.get('/whatsapp-confirmation-attempts', getWhatsappConfirmationAttempts);
 router.get('/blessings', getBlessings);
 router.get('/groups', getGuestGroups);
 router.post('/groups', createGuestGroup);

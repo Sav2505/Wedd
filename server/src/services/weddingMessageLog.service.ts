@@ -217,35 +217,3 @@ export async function getReconciliationIssues(staleHours = 2): Promise<Reconcili
   return rows;
 }
 
-export async function listConfirmationAttemptGuestIdsForCouple(coupleId: string): Promise<string[]> {
-  const { rows } = await pool.query<{ id: string }>(
-    `SELECT t.id
-FROM (
-  SELECT
-    ROW_NUMBER() OVER (ORDER BY g.created_at ASC) AS send_order,
-    g.id,
-    g.full_name,
-    g.phone,
-    g.rsvp_status,
-    g.created_at,
-    COALESCE(l.status::text, 'NO_LOG_ROW') AS log_status
-  FROM guests g
-  LEFT JOIN wedding_message_log l
-    ON  l.wedding_id    = g.wedding_id
-    AND l.guest_id      = g.id
-    AND l.template_name = 'wedding_confirmation'
-  WHERE g.wedding_id = 1
-    AND g.role = 'guest'
-  ORDER BY g.created_at DESC
-  LIMIT 143
-) t
-JOIN guests couple
-  ON couple.id = $1
- AND couple.role = 'couple'
- AND couple.wedding_id = 1
-ORDER BY t.send_order`,
-    [coupleId],
-  );
-
-  return rows.map(({ id }) => id);
-}

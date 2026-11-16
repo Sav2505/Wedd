@@ -41,7 +41,6 @@ import DownloadIcon from '@mui/icons-material/Download';
 import UploadFileIcon from '@mui/icons-material/UploadFile';
 import CloseIcon from '@mui/icons-material/Close';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import FilterAltIcon from '@mui/icons-material/FilterAlt';
 import { exportGuestsToExcel } from '../../utils/exportGuestsToExcel';
 import { buildGuestUrl } from '../../utils/guestUrl';
 import WhatsAppScheduleModal from '../../components/WhatsAppScheduleModal';
@@ -58,7 +57,6 @@ import {
   deleteGuestGroup,
   getGuestGroups,
   getGuests,
-  getWhatsappConfirmationAttemptGuestIds,
   updateGuest,
   updateGuestGroup,
   sendWhatsappInvitation,
@@ -185,51 +183,6 @@ function formatRsvpUpdatedAt(ts: string | null): string | null {
 //   return `https://wa.me/${normalizedPhone}?text=${encodeURIComponent(message)}`;
 // }
 
-function buildManualWhatsAppInviteUrl(
-  weddingId: number,
-  guest: ManagedGuest,
-  coupleName: string,
-  weddingDate?: string,
-  weddingTime?: string,
-  weddingCanpoyTime?: string,
-): string {
-  const digits = guest.phone.replace(/\D/g, '').replace(/^00/, '');
-  const phone = digits.startsWith('0') ? `972${digits.slice(1)}` : digits;
-  if (!/^[1-9]\d{7,14}$/.test(phone)) {
-    throw new Error('מספר הטלפון של האורח אינו תקין');
-  }
-
-  const personalLink = buildGuestUrl(guest.full_name, digits.slice(-4), weddingId, 5);
-  const date = weddingDate ? new Date(weddingDate) : null;
-  const formattedDate = date && !Number.isNaN(date.getTime())
-    ? date.toLocaleDateString('he-IL', {
-      timeZone: 'Asia/Jerusalem', weekday: 'long', day: '2-digit', month: 'long', year: 'numeric',
-    })
-    : '';
-  const receptionTime = weddingTime?.slice(0, 5) ?? '';
-  const canopyTime = weddingCanpoyTime?.slice(0, 5) ?? '';
-  const message = [
-    `שלום ${guest.first_name?.trim() || guest.full_name}! 💌`,
-    '',
-    'בשמחה ובהתרגשות גדולה,',
-    'אנו מזמינים אותך לקחת חלק ביום המאושר בחיינו! 💍✨',
-    '',
-    ...(formattedDate ? [`📅 מועד האירוע: ${formattedDate}`] : []),
-    ...(receptionTime ? [`🥂 קבלת פנים: ${receptionTime}`] : []),
-    ...(canopyTime ? [`⛪ חופה: ${canopyTime}`] : []),
-    '',
-    'נשמח מאוד אם תאשר/י את הגעתך באמצעות הקישור האישי, כדי שנוכל להיערך בצורה הטובה ביותר. 🙏',
-    personalLink,
-    '',
-    'מחכים להתרגש, לשמוח ולחגוג איתך 🥂❤️',
-    '',
-    'באהבה,',
-    `${coupleName} 💕`,
-  ].join('\n');
-
-  return `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
-}
-
 function computeGroupChipLabel(items: ManagedGuest[]) {
   const total = items.reduce((s, g) => s + getEffectivePartySize(g), 0);
   if (items.length > 0) {
@@ -255,9 +208,6 @@ export default function GuestListEditor() {
 
   const [search, setSearch] = useState('');
   const [rsvpFilter, setRsvpFilter] = useState<RsvpFilter>('ALL');
-  const [whatsappAttemptGuestIds, setWhatsappAttemptGuestIds] = useState<Set<string> | null>(null);
-  const [showWhatsappAttemptsOnly, setShowWhatsappAttemptsOnly] = useState(false);
-  const [loadingWhatsappAttempts, setLoadingWhatsappAttempts] = useState(false);
 
   const [groupDialogOpen, setGroupDialogOpen] = useState(false);
   const [editingGroup, setEditingGroup] = useState<GuestGroup | null>(null);
@@ -370,12 +320,7 @@ export default function GuestListEditor() {
       : bySearch.filter((g) => g.rsvp_status === rsvpFilter);
   }, [allGuests, search, rsvpFilter]);
 
-  const visibleGuests = useMemo(() => {
-    if (!showWhatsappAttemptsOnly || !whatsappAttemptGuestIds) return processedGuests;
-    const guestsById = new Map(processedGuests.map((guest) => [guest.id, guest]));
-    return Array.from(whatsappAttemptGuestIds, (id) => guestsById.get(id))
-      .filter((guest): guest is ManagedGuest => guest !== undefined);
-  }, [processedGuests, showWhatsappAttemptsOnly, whatsappAttemptGuestIds]);
+  const visibleGuests = processedGuests;
 
   const rsvpSummary = useMemo(() => {
     let coming = 0, notComing = 0, pending = 0, effectiveTotalPeople = 0;
@@ -420,7 +365,7 @@ export default function GuestListEditor() {
   useEffect(() => { groupedRef.current = grouped; }, [grouped]);
 
   useEffect(() => {
-    const isFiltering = showWhatsappAttemptsOnly || search.trim() !== '' || rsvpFilter !== 'ALL';
+    const isFiltering = search.trim() !== '' || rsvpFilter !== 'ALL';
     if (!isFiltering) {
       // לא מסננים - לא נוגעים ב-expandedGroups בכלל, כדי לא לסגור קבוצות
       // שהמשתמש פתח ידנית (כולל אחרי reload מ-save).
@@ -433,27 +378,7 @@ export default function GuestListEditor() {
     }
     if (current.ungrouped.length > 0) next.add(UNGROUPED_KEY);
     setExpandedGroups(next);
-  }, [search, rsvpFilter, showWhatsappAttemptsOnly]);
-
-  async function handleToggleWhatsappAttempts() {
-    if (showWhatsappAttemptsOnly) {
-      setShowWhatsappAttemptsOnly(false);
-      return;
-    }
-
-    setLoadingWhatsappAttempts(true);
-    try {
-      const guestIds = await getWhatsappConfirmationAttemptGuestIds();
-      setWhatsappAttemptGuestIds(new Set(guestIds));
-      setSearch('');
-      setRsvpFilter('ALL');
-      setShowWhatsappAttemptsOnly(true);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'שגיאה בטעינת אורחי ההזמנות');
-    } finally {
-      setLoadingWhatsappAttempts(false);
-    }
-  }
+  }, [search, rsvpFilter]);
 
   const toggleGroup = useCallback((id: string) => {
     setExpandedGroups((prev) => {
@@ -507,24 +432,6 @@ export default function GuestListEditor() {
   const handleDeleteGuestOpen = useCallback((id: string) => {
     setDeleteGuestId(id);
   }, []);
-
-  const handleSendInvitation = useCallback((guest: ManagedGuest) => {
-    if (!info?.id) return;
-    try {
-      const coupleName = [info.bride_name, info.groom_name].filter(Boolean).join(' & ');
-      const url = buildManualWhatsAppInviteUrl(
-        info.id,
-        guest,
-        coupleName,
-        info.wedding_date,
-        info.wedding_time,
-        info.wedding_canpoy_time,
-      );
-      window.open(url, '_blank', 'noopener,noreferrer');
-    } catch (error) {
-      setError(error instanceof Error ? error.message : 'לא ניתן לפתוח את ההזמנה ב-WhatsApp');
-    }
-  }, [info]);
 
   const handleOpenConfirmation = useCallback((guest: ManagedGuest) => {
     setConfirmationError(null);
@@ -1040,25 +947,6 @@ export default function GuestListEditor() {
           <Chip size="small" label={`${groups.length} קבוצות`} sx={{ bgcolor: 'rgba(154,120,51,0.13)', color: '#8A6A2B' }} />
 
         </Stack>
-        <Button
-          fullWidth
-          variant={showWhatsappAttemptsOnly ? 'contained' : 'outlined'}
-          startIcon={loadingWhatsappAttempts ? <CircularProgress size={16} color="inherit" /> : <FilterAltIcon />}
-          disabled={loadingWhatsappAttempts}
-          onClick={handleToggleWhatsappAttempts}
-          sx={{
-            mt: 1.25,
-            borderColor: 'rgba(201,168,76,0.5)',
-            color: showWhatsappAttemptsOnly ? '#2C1810' : '#9A7833',
-            bgcolor: showWhatsappAttemptsOnly ? 'rgba(201,168,76,0.35)' : 'transparent',
-            fontWeight: 700,
-            '&:hover': { bgcolor: 'rgba(201,168,76,0.15)', borderColor: '#C9A84C' },
-          }}
-        >
-          {showWhatsappAttemptsOnly
-            ? 'הצג את כל האורחים'
-            : 'הצג עד 143 האורחים הממתינים האחרונים'}
-        </Button>
       </Box>
 
       {searchLoading ? (
@@ -1101,7 +989,6 @@ export default function GuestListEditor() {
               onCreateGuest={openCreateGuest}
               onEditGuest={handleEditGuestOpen}
               onDeleteGuest={handleDeleteGuestOpen}
-              onSendInvitation={handleSendInvitation}
               onSendConfirmation={handleOpenConfirmation}
               registerGuestRef={registerGuestRef}
               highlightedGuestId={highlightedGuestId}
@@ -1119,7 +1006,6 @@ export default function GuestListEditor() {
             onCreateGuest={openCreateGuest}
             onEditGuest={handleEditGuestOpen}
             onDeleteGuest={handleDeleteGuestOpen}
-            onSendInvitation={handleSendInvitation}
             onSendConfirmation={handleOpenConfirmation}
             registerGuestRef={registerGuestRef}
             highlightedGuestId={highlightedGuestId}
@@ -1548,7 +1434,6 @@ const GroupAccordionItem = memo(function GroupAccordionItem({
   onCreateGuest,
   onEditGuest,
   onDeleteGuest,
-  onSendInvitation,
   onSendConfirmation,
   registerGuestRef,
   highlightedGuestId,
@@ -1566,7 +1451,6 @@ const GroupAccordionItem = memo(function GroupAccordionItem({
   onCreateGuest: (groupId: string | null) => void;
   onEditGuest: (guest: ManagedGuest) => void;
   onDeleteGuest: (id: string) => void;
-  onSendInvitation: (guest: ManagedGuest) => void;
   onSendConfirmation: (guest: ManagedGuest) => void;
   registerGuestRef: (id: string, el: HTMLDivElement | null) => void;
   highlightedGuestId: string | null;
@@ -1660,7 +1544,6 @@ const GroupAccordionItem = memo(function GroupAccordionItem({
                 guest={guest}
                 onEdit={onEditGuest}
                 onDelete={onDeleteGuest}
-                onSendInvitation={onSendInvitation}
                 onSendConfirmation={onSendConfirmation}
                 registerRef={registerGuestRef}
                 highlighted={highlightedGuestId === guest.id}
@@ -1678,7 +1561,6 @@ const GuestRow = memo(function GuestRow({
   weddingId,
   onEdit,
   onDelete,
-  onSendInvitation,
   onSendConfirmation,
   registerRef,
   highlighted,
@@ -1687,7 +1569,6 @@ const GuestRow = memo(function GuestRow({
   weddingId: number;
   onEdit: (guest: ManagedGuest) => void;
   onDelete: (id: string) => void;
-  onSendInvitation: (guest: ManagedGuest) => void;
   onSendConfirmation: (guest: ManagedGuest) => void;
   registerRef: (id: string, el: HTMLDivElement | null) => void;
   highlighted: boolean;
@@ -1771,19 +1652,6 @@ const GuestRow = memo(function GuestRow({
                 sx={{ color: '#1f9f51', '&:hover': { bgcolor: 'rgba(37,211,102,0.08)' } }}
               >
                 <SendIcon sx={{ fontSize: 18 }} />
-              </IconButton>
-            </span>
-          </Tooltip>
-          <Tooltip title="פתיחת הזמנה ב-WhatsApp">
-            <span>
-              <IconButton
-                size="small"
-                aria-label="פתיחת הזמנה ב-WhatsApp"
-                disabled={weddingId <= 0 || !guest.phone.trim()}
-                onClick={() => onSendInvitation(guest)}
-                sx={{ color: '#1f9f51', '&:hover': { bgcolor: 'rgba(37,211,102,0.08)' } }}
-              >
-                <WhatsAppIcon sx={{ fontSize: 18 }} />
               </IconButton>
             </span>
           </Tooltip>

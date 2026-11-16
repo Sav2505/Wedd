@@ -1,6 +1,5 @@
 import nodemailer from 'nodemailer';
 import { sendAdminAlert } from './error.service';
-import { SendEmailResult } from './mailer.service';
 
 export interface MailInput {
   to: string;
@@ -72,7 +71,7 @@ async function sendViaBrevoApi(input: MailInput): Promise<MailResult> {
     }),
   });
 
-  const data = (await response.json()) as SendEmailResult;
+  const data = (await response.json()) as MailResult;
 
   if (!response.ok) {
     throw new Error(

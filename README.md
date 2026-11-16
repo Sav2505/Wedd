@@ -66,3 +66,16 @@ JWT-based authentication and role-based route protection are implemented in both
 - Alpha: Dashboards, report status updates, help options, image upload
 - Final: UI polish, robust error handling, admin management panel
 # Wedd
+
+## Email on Render
+
+Render Free web services block outbound SMTP ports 25, 465, and 587.
+Production email uses the existing Brevo HTTPS API instead of Gmail SMTP.
+Set these environment variables on the Render web service and redeploy:
+
+- `IS_PROD=true`
+- `BREVO_API_KEY`: your Brevo API key, not an SMTP key.
+- `EMAIL_ADMIN`: a sender email address verified in Brevo.
+
+For local Gmail SMTP, use `IS_PROD=false`, `EMAIL_ADMIN`, and a Gmail app
+password in `EMAIL_CODE`. The current Gmail transport does not read `SMTP_*`.

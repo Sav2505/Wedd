@@ -1,21 +1,5 @@
 // src/services/mailer.service.ts
-import nodemailer, { Transporter } from 'nodemailer';
-
-const transporter: Transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-        user: process.env.EMAIL_ADMIN,
-        pass: process.env.EMAIL_CODE,
-    },
-});
-
-transporter.verify((error) => {
-    if (error) {
-        console.error('❌ שגיאה בהתחברות למייל:', error);
-    } else {
-        console.log('✅ Email service is ready to send messages.');
-    }
-});
+import { sendMail } from './email.service';
 
 interface SendEmailParams {
     to: string;
@@ -29,13 +13,10 @@ export interface SendEmailResult {
 }
 
 export async function sendEmail({ to, subject, html, text }: SendEmailParams): Promise<SendEmailResult> {
-    const info = await transporter.sendMail({
-        from: `"WedFlow - החתונה שלכם" <${process.env.EMAIL_ADMIN}>`,
+    return sendMail({
         to,
         subject,
         html,
-        text,
+        text: text ?? '',
     });
-
-    return { messageId: info.messageId };
 }

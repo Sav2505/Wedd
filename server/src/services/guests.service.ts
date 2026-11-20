@@ -275,27 +275,34 @@ export async function updateGuest(id: string, payload: {
   const side = payload.side === undefined ? now.side : payload.side;
   const groupId = payload.guest_group_id === undefined ? now.guest_group_id : payload.guest_group_id;
   const plusCount = payload.plus_count !== undefined ? Math.max(0, Math.floor(payload.plus_count)) : undefined;
-  const giftAmount = payload.gift_amount !== undefined ? payload.gift_amount : now.gift_amount;
-  const giftKind = payload.gift_kind !== undefined ? payload.gift_kind : now.gift_kind;
 
   if (!firstName || !lastName) throw createError('שם פרטי ושם משפחה הם שדות חובה', 400);
   if (!phone) throw createError('מספר טלפון הוא שדה חובה', 400);
 
   const fullName = compactName(firstName, lastName);
+  const values: unknown[] = [];
+  const assignments: string[] = [];
+  const assign = (column: string, value: unknown) => {
+    values.push(value);
+    assignments.push(`${column} = $${values.length}`);
+  };
+
+  if (payload.first_name !== undefined) assign('first_name', firstName);
+  if (payload.last_name !== undefined) assign('last_name', lastName);
+  if (payload.first_name !== undefined || payload.last_name !== undefined) assign('full_name', fullName);
+  if (payload.phone !== undefined) assign('phone', phone);
+  if (payload.side !== undefined) assign('side', side ?? null);
+  if (payload.guest_group_id !== undefined) assign('guest_group_id', groupId ?? null);
+  if (plusCount !== undefined) assign('plus_count', plusCount);
+  if (payload.gift_amount !== undefined) assign('gift_amount', payload.gift_amount);
+  if (payload.gift_kind !== undefined) assign('gift_kind', payload.gift_kind);
+  if (assignments.length === 0) assignments.push('gift_amount = gift_amount');
+  values.push(id);
 
   const { rows } = await pool.query<ManagedGuest>(`
     UPDATE guests
-    SET
-      first_name = $1,
-      last_name = $2,
-      full_name = $3,
-      phone = $4,
-      side = $5,
-      guest_group_id = $6,
-      plus_count = COALESCE($7, plus_count),
-      gift_amount = $9,
-      gift_kind = $10
-    WHERE id = $8 AND role = 'guest'
+    SET ${assignments.join(', ')}
+    WHERE id = $${values.length} AND role = 'guest'
     RETURNING
       id,
       first_name,
@@ -316,7 +323,7 @@ export async function updateGuest(id: string, payload: {
       created_at,
       gift_amount,
       gift_kind
-  `, [firstName, lastName, fullName, phone, side ?? null, groupId ?? null, plusCount ?? null, id, giftAmount, giftKind]);
+  `, values);
 
   if (rows.length === 0) throw createError('אורח לא נמצא', 404);
   return rows[0];

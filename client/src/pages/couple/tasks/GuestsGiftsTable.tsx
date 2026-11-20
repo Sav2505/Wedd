@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import {
     Box,
     Chip,
+    CircularProgress,
     InputAdornment,
     MenuItem,
     Table,
@@ -18,6 +19,8 @@ import {
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import CloseIcon from '@mui/icons-material/Close';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import { TablePagination } from '@mui/material';
 import { ManagedGuest } from '../../../types/domain';
 
@@ -31,6 +34,27 @@ function fmt(n: number) {
     return `₪${Number(n).toLocaleString('he-IL', { maximumFractionDigits: 0 })}`;
 }
 
+type SaveStatus = 'idle' | 'saving' | 'saved' | 'error';
+
+function GiftSaveIndicator({ status }: { status: SaveStatus }) {
+    if (status === 'idle') return <Box component="span" sx={{ width: 18, flexShrink: 0 }} />;
+
+    const title = status === 'saving' ? 'שומר' : status === 'saved' ? 'נשמר' : 'השמירה נכשלה';
+    const icon = status === 'saving'
+        ? <CircularProgress size={14} />
+        : status === 'saved'
+            ? <CheckCircleOutlineIcon fontSize="small" color="success" />
+            : <ErrorOutlineIcon fontSize="small" color="error" />;
+
+    return (
+        <Tooltip title={title} arrow>
+            <Box component="span" aria-label={title} sx={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 18, flexShrink: 0 }}>
+                {icon}
+            </Box>
+        </Tooltip>
+    );
+}
+
 function GiftAmountCell({
     guest,
     onUpdateGiftAmount,
@@ -39,7 +63,7 @@ function GiftAmountCell({
     onUpdateGiftAmount: (guestId: string, amount: number | null) => Promise<void>;
 }) {
     const [value, setValue] = useState<string>(guest.gift_amount != null ? String(guest.gift_amount) : '');
-    const [saving, setSaving] = useState(false);
+    const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
 
     useEffect(() => {
         setValue(guest.gift_amount != null ? String(guest.gift_amount) : '');
@@ -51,36 +75,46 @@ function GiftAmountCell({
 
         if (parsed !== null && (Number.isNaN(parsed) || parsed < 0)) {
             setValue(guest.gift_amount != null ? String(guest.gift_amount) : '');
+            setSaveStatus('error');
             return;
         }
-        if (parsed === (guest.gift_amount ?? null)) return;
+        if (parsed === (guest.gift_amount ?? null)) {
+            setSaveStatus('idle');
+            return;
+        }
 
-        setSaving(true);
+        setSaveStatus('saving');
         try {
             await onUpdateGiftAmount(guest.id, parsed);
+            setSaveStatus('saved');
         } catch {
             setValue(guest.gift_amount != null ? String(guest.gift_amount) : '');
-        } finally {
-            setSaving(false);
+            setSaveStatus('error');
         }
     }
 
     return (
-        <TextField
-            size="small"
-            type="number"
-            value={value}
-            disabled={saving}
-            onChange={(e) => setValue(e.target.value)}
-            onBlur={commit}
-            onKeyDown={(e) => {
-                if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
-            }}
-            placeholder="—"
-            inputProps={{ min: 0, style: { textAlign: 'center' } }}
-            sx={{ width: 110 }}
-            InputProps={{ startAdornment: <InputAdornment position="start">₪</InputAdornment> }}
-        />
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, width: 138, mx: 'auto' }}>
+            <TextField
+                size="small"
+                type="number"
+                value={value}
+                disabled={saveStatus === 'saving'}
+                onChange={(e) => {
+                    setValue(e.target.value);
+                    setSaveStatus('idle');
+                }}
+                onBlur={commit}
+                onKeyDown={(e) => {
+                    if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
+                }}
+                placeholder="—"
+                inputProps={{ min: 0, style: { textAlign: 'center' } }}
+                sx={{ flex: 1, minWidth: 0 }}
+                InputProps={{ startAdornment: <InputAdornment position="start">₪</InputAdornment> }}
+            />
+            <GiftSaveIndicator status={saveStatus} />
+        </Box>
     );
 }
 
@@ -105,7 +139,7 @@ function GiftKindCell({
     onUpdateGiftKind: (guestId: string, kind: string | null) => Promise<void>;
 }) {
     const [value, setValue] = useState(guest.gift_kind ?? '');
-    const [saving, setSaving] = useState(false);
+    const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
     const knownOptions = useMemo(() => new Set(GIFT_KIND_OPTIONS), []);
     const hasCustomValue = value !== '' && !knownOptions.has(value as GiftKind);
 
@@ -118,42 +152,47 @@ function GiftKindCell({
 
         const previous = value;
         setValue(nextValue);
-        setSaving(true);
+        setSaveStatus('saving');
 
         try {
             await onUpdateGiftKind(guest.id, nextValue || null);
+            setSaveStatus('saved');
         } catch {
             setValue(previous);
-        } finally {
-            setSaving(false);
+            setSaveStatus('error');
         }
     }
 
     return (
-        <TextField
-            size="small"
-            select
-            value={value}
-            disabled={saving}
-            onChange={(e) => {
-                void handleChange(e.target.value);
-            }}
-            sx={{
-                minWidth: 160,
-                '& .MuiOutlinedInput-root': {
-                    borderRadius: 2,
-                    backgroundColor: '#FFFDF8',
-                },
-            }}
-        >
-            <MenuItem value="">—</MenuItem>
-            {hasCustomValue ? <MenuItem value={value}>{value}</MenuItem> : null}
-            {GIFT_KIND_OPTIONS.map((option) => (
-                <MenuItem key={option} value={option}>
-                    {option}
-                </MenuItem>
-            ))}
-        </TextField>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, minWidth: 178 }}>
+            <TextField
+                size="small"
+                select
+                value={value}
+                disabled={saveStatus === 'saving'}
+                onChange={(e) => {
+                    void handleChange(e.target.value);
+                }}
+                sx={{
+                    width: '100%',
+                    flex: 1,
+                    minWidth: 0,
+                    '& .MuiOutlinedInput-root': {
+                        borderRadius: 2,
+                        backgroundColor: '#FFFDF8',
+                    },
+                }}
+            >
+                <MenuItem value="">—</MenuItem>
+                {hasCustomValue ? <MenuItem value={value}>{value}</MenuItem> : null}
+                {GIFT_KIND_OPTIONS.map((option) => (
+                    <MenuItem key={option} value={option}>
+                        {option}
+                    </MenuItem>
+                ))}
+            </TextField>
+            <GiftSaveIndicator status={saveStatus} />
+        </Box>
     );
 }
 

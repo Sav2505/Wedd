@@ -68,23 +68,6 @@ export async function reserveWhatsAppQuotaBatchInTransaction(
   }
   if (count === 0) return [];
   await client.query('SELECT pg_advisory_xact_lock($1)', [QUOTA_LOCK_KEY]);
-  let settings;
-  try {
-    settings = await client.query<{ ready: boolean }>(
-      `SELECT send_not_before <= NOW() AS ready FROM whatsapp_quota_settings
-       WHERE id = TRUE AND EXISTS (
-         SELECT 1 FROM whatsapp_quota_cutover_markers WHERE name = 'require_legacy_cutover'
-       )`,
-    );
-  } catch (error) {
-    if ((error as { code?: string }).code === '42P01') {
-      throw new WhatsAppQuotaError('תשתית מכסת WhatsApp עדיין אינה מוכנה');
-    }
-    throw error;
-  }
-  if (!settings.rows[0]?.ready) {
-    throw new WhatsAppQuotaError('שליחת WhatsApp מושהית לצורך מעבר בטוח למנגנון המכסה');
-  }
   const usage = await client.query<{ count: string }>(
     `SELECT COUNT(*) AS count FROM whatsapp_quota_reservations
       WHERE (status = 'reserved' AND created_at > NOW() - INTERVAL '24 hours')

@@ -1358,7 +1358,7 @@ export default function GuestListEditor() {
           {rsvpListTitle}
         </DialogTitle>
         <DialogContent>
-          <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={1} sx={{ mb: 1.1 }}>
+          <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={1} sx={{ mb: 1.1, mt: 1 }}>
             <Typography variant="caption" sx={{ color: '#8A7565' }}>
               {rsvpListGuests.length} אורחים · {rsvpListPeopleCount} אנשים
             </Typography>
@@ -1379,13 +1379,13 @@ export default function GuestListEditor() {
               <MenuItem value="DATE_DESC">
                 <Stack direction="row" spacing={0.75} alignItems="center">
                   <ArrowDownwardIcon fontSize="small" />
-                  <span>מהחדש לישן</span>
+                  <span>מהאחרון</span>
                 </Stack>
               </MenuItem>
               <MenuItem value="DATE_ASC">
                 <Stack direction="row" spacing={0.75} alignItems="center">
                   <ArrowUpwardIcon fontSize="small" />
-                  <span>מהישן לחדש</span>
+                  <span>מהראשון</span>
                 </Stack>
               </MenuItem>
             </TextField>

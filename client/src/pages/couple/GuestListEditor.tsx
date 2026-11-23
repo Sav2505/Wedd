@@ -1421,6 +1421,11 @@ export default function GuestListEditor() {
                       <Typography variant="caption" sx={{ color: '#8E7460' }}>
                         {guest.phone}
                       </Typography>
+                      {rsvpListStatus === 'COMING' && formatRsvpUpdatedAt(guest.rsvp_updated_at) && (
+                        <Typography variant="caption" sx={{ display: 'block', color: '#9D8A7A' }}>
+                          אושר: {formatRsvpUpdatedAt(guest.rsvp_updated_at)}
+                        </Typography>
+                      )}
                     </Box>
 
                     {plus > 0 ? (

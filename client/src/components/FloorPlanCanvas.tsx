@@ -2,6 +2,7 @@ import React, { useRef } from 'react';
 import { Box, Typography } from '@mui/material';
 import { WeddingTableWithGuests } from '../types/domain';
 import { getEffectivePartySize } from '../utils/effectiveAttendance';
+import { FLOOR_PLAN_GRID_STEP, snapToFloorPlanGrid } from '../utils/floorPlanGrid';
 
 // ─── Types ───────────────────────────────────────────────────
 
@@ -21,6 +22,7 @@ export interface FloorPlanCanvasProps {
   selectedId?: string | null;
   /** Whether tables are draggable (couple editor) */
   editable?: boolean;
+  showGrid?: boolean;
   onSelectTable?: (id: string) => void;
   /** Fired once when drag ends with final percentage position */
   onDragEnd?: (id: string, posX: number, posY: number) => void;
@@ -43,6 +45,7 @@ export default function FloorPlanCanvas({
   entrancePosition = 'bottom',
   selectedId = null,
   editable = false,
+  showGrid = false,
   onSelectTable,
   onDragEnd,
   warningTableIds,
@@ -88,12 +91,24 @@ export default function FloorPlanCanvas({
       const deltaEndX = table.shape === 'rect' ? table.orientation === 'v' ? -8 : 5 : 3;
       const scaleBias = (1 - tableScale) * 6;
       const verticalBias = scaleBias * 0.65;
-      latestX = clamp(startPosX + dx, -4 - deltaStartX - scaleBias, 85 + deltaEndX + scaleBias);
-      latestY = clamp(startPosY + dy, clamp(14 - verticalBias, 8, 20), clamp(87 + verticalBias, 78, 92));
+      const minX = -4 - deltaStartX - scaleBias;
+      const maxX = 85 + deltaEndX + scaleBias;
+      const minY = clamp(14 - verticalBias, 8, 20);
+      const maxY = clamp(87 + verticalBias, 78, 92);
 
       if (Math.abs(dx) > 0.8 || Math.abs(dy) > 0.8) {
         hasMoved = true;
         didDragRef.current = true;
+      }
+
+      if (!hasMoved) return;
+
+      if (showGrid) {
+        latestX = snapToFloorPlanGrid(startPosX + dx, minX, maxX);
+        latestY = snapToFloorPlanGrid(startPosY + dy, minY, maxY);
+      } else {
+        latestX = clamp(startPosX + dx, minX, maxX);
+        latestY = clamp(startPosY + dy, minY, maxY);
       }
 
       el.style.left = `${latestX}%`;
@@ -178,6 +193,14 @@ export default function FloorPlanCanvas({
         ].join(', '),
         backgroundSize: '24px 24px',
       }} />
+
+      {editable && showGrid && (
+        <Box sx={{
+          position: 'absolute', inset: 0, pointerEvents: 'none',
+          backgroundImage: 'linear-gradient(to right, rgba(154,120,51,0.25) 1px, transparent 1px), linear-gradient(to bottom, rgba(154,120,51,0.25) 1px, transparent 1px)',
+          backgroundSize: `${FLOOR_PLAN_GRID_STEP}% ${FLOOR_PLAN_GRID_STEP}%`,
+        }} />
+      )}
 
       {/* ── Stage / חופה ── */}
       <Box sx={{

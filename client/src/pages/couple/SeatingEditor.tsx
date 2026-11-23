@@ -115,6 +115,7 @@ export default function SeatingEditor() {
     const [isSavingPublish, setIsSavingPublish] = useState(false);
     const [tableScaleFactor, setTableScaleFactor] = useState(DEFAULT_TABLE_SCALE_FACTOR);
     const [isSavingScale, setIsSavingScale] = useState(false);
+    const [showGrid, setShowGrid] = useState(false);
 
     // ── Editable copy of selected table fields ──
     const [editLabel, setEditLabel] = useState('');
@@ -710,6 +711,12 @@ export default function SeatingEditor() {
                     <ToggleButton value="left">שמאל</ToggleButton>
                 </ToggleButtonGroup>
 
+                <FormControlLabel
+                    control={<Switch checked={showGrid} onChange={event => setShowGrid(event.target.checked)} size="small" />}
+                    label="רשת והצמדה"
+                    sx={{ m: 0, color: '#9A7833', '& .MuiFormControlLabel-label': { fontSize: '0.875rem', fontWeight: 600 } }}
+                />
+
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.35, border: '1px solid rgba(201,168,76,0.3)', borderRadius: 1.5, px: 0.55, py: 0.3 }}>
                     <Tooltip title="הקטן שולחנות כדי לפנות יותר מקום באולם">
                         <span>
@@ -773,6 +780,7 @@ export default function SeatingEditor() {
                     entrancePosition={entrancePosition}
                     tableScaleFactor={tableScaleFactor}
                     editable
+                    showGrid={showGrid}
                     selectedId={selectedId}
                     onSelectTable={handleSelectTable}
                     onDragEnd={handleDragEnd}

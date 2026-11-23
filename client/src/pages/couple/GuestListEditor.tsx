@@ -45,7 +45,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
-import SortByAlphaIcon from '@mui/icons-material/SortByAlpha';
+import SortIcon from '@mui/icons-material/Sort';
 import { exportGuestsToExcel } from '../../utils/exportGuestsToExcel';
 import { buildGuestUrl } from '../../utils/guestUrl';
 import WhatsAppScheduleModal from '../../components/WhatsAppScheduleModal';
@@ -1372,7 +1372,7 @@ export default function GuestListEditor() {
             >
               <MenuItem value="NAME">
                 <Stack direction="row" spacing={0.75} alignItems="center">
-                  <SortByAlphaIcon fontSize="small" />
+                  <SortIcon fontSize="small" />
                   <span>לפי א׳-ב׳</span>
                 </Stack>
               </MenuItem>

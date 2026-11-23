@@ -1130,7 +1130,7 @@ export default function GuestListEditor() {
             <Alert severity="warning" sx={{ mt: 2 }}>יש לאשר שימוש ב-WhatsApp דרך תזמון הודעות לאורחים לפני השליחה.</Alert>
           )}
           <Alert severity="info" sx={{ mt: 1.5 }}>
-            שליחה ידנית נשלחת עכשיו, נספרת במכסת 24 השעות ונרשמת ביומן. בחירה חוזרת באותה הודעה היא שליחה חוזרת מכוונת.
+            שליחה ידנית תישלח עכשיו ותירשם ביומן. בחירה חוזרת באותה הודעה היא שליחה חוזרת מכוונת.
           </Alert>
           {confirmationError && <Alert severity="error" sx={{ mt: 2 }}>{confirmationError}</Alert>}
         </DialogContent>

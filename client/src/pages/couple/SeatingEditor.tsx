@@ -404,6 +404,34 @@ export default function SeatingEditor() {
         }
     }
 
+    async function handleAssignGuestGroup(guests: UnassignedGuest[]) {
+        if (!selectedId || !selectedGuestGroup || guests.length === 0 || !selectedTable) return;
+
+        const seatedCount = selectedTable.guests.reduce((sum, guest) => sum + getEffectivePartySize(guest), 0);
+        const availableSeats = Math.max(0, selectedTable.capacity - seatedCount);
+        const groupSeats = guests.reduce((sum, guest) => sum + getEffectivePartySize(guest), 0);
+
+        if (groupSeats > availableSeats) {
+            setError(`לא ניתן לשבץ את כל הקבוצה: נדרשים ${groupSeats} כיסאות, אך נותרו ${availableSeats} בלבד בשולחן.`);
+            return;
+        }
+
+        setIsSaving(true);
+        try {
+            for (const guest of guests) {
+                await assignGuest(selectedId, guest.id);
+            }
+            setGuestToAdd(null);
+            setConfirmedGuestToAdd(null);
+            await reload();
+        } catch {
+            setError('שגיאה בשיבוץ הקבוצה. ייתכן שחלק מהמוזמנים שובצו; הרשימה עודכנה.');
+            await reload();
+        } finally {
+            setIsSaving(false);
+        }
+    }
+
     // ── Unassign guest ────────────────────────────────────────
 
     async function handleUnassignGuest(guestId: string) {
@@ -985,7 +1013,7 @@ export default function SeatingEditor() {
                                             </Typography>
                                         )}
                                         {unassigned.some(guest => guest.rsvp_status === 'COMING') && (
-                                            <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-start' }}>
+                                            <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-start', flexWrap: 'wrap' }}>
                                                 <Autocomplete<UnassignedGuest>
                                                     options={confirmedUnassignedGuests}
                                                     getOptionLabel={getGuestOptionLabel}
@@ -1031,10 +1059,22 @@ export default function SeatingEditor() {
                                                 >
                                                     שבץ
                                                 </Button>
+                                                {selectedGuestGroup && confirmedUnassignedGuests.length > 0 && (
+                                                    <Button
+                                                        variant="outlined"
+                                                        size="small"
+                                                        onClick={() => handleAssignGuestGroup(confirmedUnassignedGuests)}
+                                                        disabled={isSaving}
+                                                        startIcon={<PeopleOutlineIcon />}
+                                                        sx={{ height: 40, flexShrink: 0, borderColor: 'rgba(76,175,80,0.5)', color: '#2E7D32', fontWeight: 700 }}
+                                                    >
+                                                        שבץ קבוצה
+                                                    </Button>
+                                                )}
                                             </Box>
                                         )}
                                         {unassigned.length > 0 && (
-                                            <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-start' }}>
+                                            <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-start', flexWrap: 'wrap' }}>
                                                 <Autocomplete<UnassignedGuest>
                                                     options={filteredUnassignedGuests}
                                                     getOptionLabel={getGuestOptionLabel}
@@ -1080,6 +1120,18 @@ export default function SeatingEditor() {
                                                 >
                                                     שבץ
                                                 </Button>
+                                                {selectedGuestGroup && filteredUnassignedGuests.length > 0 && (
+                                                    <Button
+                                                        variant="outlined"
+                                                        size="small"
+                                                        onClick={() => handleAssignGuestGroup(filteredUnassignedGuests)}
+                                                        disabled={isSaving}
+                                                        startIcon={<PeopleOutlineIcon />}
+                                                        sx={{ height: 40, flexShrink: 0, borderColor: 'rgba(201,168,76,0.6)', color: '#9A7833', fontWeight: 700 }}
+                                                    >
+                                                        שבץ קבוצה
+                                                    </Button>
+                                                )}
                                             </Box>
                                         )}
 

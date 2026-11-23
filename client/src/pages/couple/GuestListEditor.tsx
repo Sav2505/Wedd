@@ -43,6 +43,9 @@ import DownloadIcon from '@mui/icons-material/Download';
 import UploadFileIcon from '@mui/icons-material/UploadFile';
 import CloseIcon from '@mui/icons-material/Close';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
+import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
+import SortByAlphaIcon from '@mui/icons-material/SortByAlpha';
 import { exportGuestsToExcel } from '../../utils/exportGuestsToExcel';
 import { buildGuestUrl } from '../../utils/guestUrl';
 import WhatsAppScheduleModal from '../../components/WhatsAppScheduleModal';
@@ -92,6 +95,7 @@ const EMPTY_FORM: GuestForm = {
 };
 
 type RsvpFilter = 'ALL' | RsvpStatus;
+type RsvpListSort = 'NAME' | 'DATE_DESC' | 'DATE_ASC';
 
 const directMessageOptions: Array<{ value: DirectWeddingMessageTemplate; label: string; description: string }> = [
   { value: 'wedding_confirmation', label: 'הזמנה ראשונית', description: 'הזמנה אישית עם פרטי האירוע וקישור לאישור הגעה' },
@@ -258,6 +262,7 @@ export default function GuestListEditor() {
   const [deletingGuest, setDeletingGuest] = useState(false);
   const [deleteGroupId, setDeleteGroupId] = useState<string | null>(null);
   const [rsvpListStatus, setRsvpListStatus] = useState<RsvpStatus | null>(null);
+  const [rsvpListSort, setRsvpListSort] = useState<RsvpListSort>('NAME');
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
   // const [rsvpListLoadingStatus, setRsvpListLoadingStatus] = useState<RsvpStatus | null>(null);
   const [searchLoading, setSearchLoading] = useState(false);
@@ -432,8 +437,23 @@ export default function GuestListEditor() {
     if (!rsvpListStatus) return [];
     return allGuests
       .filter((g) => g.rsvp_status === rsvpListStatus)
-      .sort((a, b) => a.full_name.localeCompare(b.full_name, 'he'));
-  }, [allGuests, rsvpListStatus]);
+      .sort((a, b) => {
+        const byName = a.full_name.localeCompare(b.full_name, 'he');
+        if (rsvpListSort === 'NAME') return byName;
+
+        const aDate = a.rsvp_updated_at ? Date.parse(a.rsvp_updated_at) : Number.NaN;
+        const bDate = b.rsvp_updated_at ? Date.parse(b.rsvp_updated_at) : Number.NaN;
+        const aHasDate = Number.isFinite(aDate);
+        const bHasDate = Number.isFinite(bDate);
+        if (!aHasDate || !bHasDate) {
+          if (aHasDate !== bHasDate) return aHasDate ? -1 : 1;
+          return byName;
+        }
+
+        const byDate = rsvpListSort === 'DATE_DESC' ? bDate - aDate : aDate - bDate;
+        return byDate || byName;
+      });
+  }, [allGuests, rsvpListStatus, rsvpListSort]);
 
   const rsvpListPeopleCount = useMemo(() => {
     return rsvpListGuests.reduce((sum, g) => {
@@ -1338,9 +1358,38 @@ export default function GuestListEditor() {
           {rsvpListTitle}
         </DialogTitle>
         <DialogContent>
-          <Typography variant="caption" sx={{ color: '#8A7565', display: 'block', mb: 1.1 }}>
-            {rsvpListGuests.length} אורחים · {rsvpListPeopleCount} אנשים
-          </Typography>
+          <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={1} sx={{ mb: 1.1 }}>
+            <Typography variant="caption" sx={{ color: '#8A7565' }}>
+              {rsvpListGuests.length} אורחים · {rsvpListPeopleCount} אנשים
+            </Typography>
+            <TextField
+              select
+              size="small"
+              label="מיון"
+              value={rsvpListSort}
+              onChange={(event) => setRsvpListSort(event.target.value as RsvpListSort)}
+              sx={{ minWidth: 165 }}
+            >
+              <MenuItem value="NAME">
+                <Stack direction="row" spacing={0.75} alignItems="center">
+                  <SortByAlphaIcon fontSize="small" />
+                  <span>לפי א׳-ב׳</span>
+                </Stack>
+              </MenuItem>
+              <MenuItem value="DATE_DESC">
+                <Stack direction="row" spacing={0.75} alignItems="center">
+                  <ArrowDownwardIcon fontSize="small" />
+                  <span>מהחדש לישן</span>
+                </Stack>
+              </MenuItem>
+              <MenuItem value="DATE_ASC">
+                <Stack direction="row" spacing={0.75} alignItems="center">
+                  <ArrowUpwardIcon fontSize="small" />
+                  <span>מהישן לחדש</span>
+                </Stack>
+              </MenuItem>
+            </TextField>
+          </Stack>
 
           {rsvpListGuests.length === 0 ? (
             <Typography variant="body2" sx={{ color: '#A08070', fontStyle: 'italic' }}>

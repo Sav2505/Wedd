@@ -38,6 +38,13 @@ type Props = {
 };
 
 type SaveOutcome = 'COMING' | 'NOT_COMING' | null;
+type RsvpUpdatePayload = {
+  rsvp_status: RsvpStatus;
+  number_of_guests: number;
+  vegetarian_count: number;
+  vegan_count: number;
+  dish_notes: string | null;
+};
 
 function StatusCard({
   selected,
@@ -224,11 +231,48 @@ export default function AttendanceStatusTab({ onSaved, initialRsvp }: Props) {
   const [success, setSuccess] = useState<string | null>(null);
   const [saveOutcome, setSaveOutcome] = useState<SaveOutcome>(null);
   const autoNavRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const autoSaveQueueRef = useRef<Promise<void>>(Promise.resolve());
   const soloDishType = vegetarianCount === 1 ? 'vegetarian' : veganCount === 1 ? 'vegan' : 'regular';
 
+  function queueRsvpSave(changes: Partial<RsvpUpdatePayload>) {
+    if (!guest) return;
+
+    const payload: RsvpUpdatePayload = {
+      rsvp_status: changes.rsvp_status ?? status,
+      number_of_guests: changes.number_of_guests ?? count,
+      vegetarian_count: changes.vegetarian_count ?? vegetarianCount,
+      vegan_count: changes.vegan_count ?? veganCount,
+      dish_notes: changes.dish_notes !== undefined ? changes.dish_notes : dishNotes.trim() || null,
+    };
+
+    setError(null);
+    setSuccess(null);
+    autoSaveQueueRef.current = autoSaveQueueRef.current.catch(() => undefined).then(async () => {
+      try {
+        const updated = await updateMyRsvp(payload);
+        dispatch(setGuest({
+          ...guest,
+          rsvp_status: updated.rsvp_status,
+          number_of_guests: updated.number_of_guests,
+          rsvp_updated_at: updated.rsvp_updated_at,
+        }));
+      } catch (e) {
+        setError(e instanceof Error ? e.message : 'לא הצלחנו לשמור כרגע את האישור');
+      }
+    });
+  }
+
+  function selectStatus(nextStatus: RsvpStatus) {
+    setStatus(nextStatus);
+    queueRsvpSave({ rsvp_status: nextStatus });
+  }
+
   function chooseSoloDish(dishType: 'regular' | 'vegetarian' | 'vegan') {
-    setVegetarianCount(dishType === 'vegetarian' ? 1 : 0);
-    setVeganCount(dishType === 'vegan' ? 1 : 0);
+    const nextVegetarianCount = dishType === 'vegetarian' ? 1 : 0;
+    const nextVeganCount = dishType === 'vegan' ? 1 : 0;
+    setVegetarianCount(nextVegetarianCount);
+    setVeganCount(nextVeganCount);
+    queueRsvpSave({ vegetarian_count: nextVegetarianCount, vegan_count: nextVeganCount });
   }
 
   function decreasePartySize() {
@@ -236,7 +280,13 @@ export default function AttendanceStatusTab({ onSaved, initialRsvp }: Props) {
     const nextVegetarianCount = Math.min(vegetarianCount, nextCount);
     setCount(nextCount);
     setVegetarianCount(nextVegetarianCount);
-    setVeganCount(Math.min(veganCount, nextCount - nextVegetarianCount));
+    const nextVeganCount = Math.min(veganCount, nextCount - nextVegetarianCount);
+    setVeganCount(nextVeganCount);
+    queueRsvpSave({
+      number_of_guests: nextCount,
+      vegetarian_count: nextVegetarianCount,
+      vegan_count: nextVeganCount,
+    });
   }
 
   useEffect(() => {
@@ -294,6 +344,7 @@ export default function AttendanceStatusTab({ onSaved, initialRsvp }: Props) {
     setSuccess(null);
 
     try {
+      await autoSaveQueueRef.current;
       const updated = await updateMyRsvp({
         rsvp_status: status,
         number_of_guests: count,
@@ -488,7 +539,7 @@ export default function AttendanceStatusTab({ onSaved, initialRsvp }: Props) {
               title="אגיע ❤️"
               subtitle="איזה כיף, מחכים לכם"
               icon={<DoneAllIcon sx={{ fontSize: 19 }} />}
-              onClick={() => setStatus('COMING')}
+              onClick={() => selectStatus('COMING')}
               palette={cardPalettes.COMING}
             />
             <StatusCard
@@ -496,7 +547,7 @@ export default function AttendanceStatusTab({ onSaved, initialRsvp }: Props) {
               title="לא אגיע 😔"
               subtitle="נתגעגע ונשמח לחגוג איתכם בהמשך"
               icon={<HeartBrokenIcon sx={{ fontSize: 19 }} />}
-              onClick={() => setStatus('NOT_COMING')}
+              onClick={() => selectStatus('NOT_COMING')}
               palette={cardPalettes.NOT_COMING}
             />
             <StatusCard
@@ -504,11 +555,13 @@ export default function AttendanceStatusTab({ onSaved, initialRsvp }: Props) {
               title="עדיין לא יודע/ת להגיד.. ⏳"
               subtitle="אפשר לשמור גם החלטה זמנית"
               icon={<HourglassTopIcon sx={{ fontSize: 19 }} />}
-              onClick={() => setStatus('PENDING')}
+              onClick={() => selectStatus('PENDING')}
               palette={cardPalettes.PENDING}
             />
           </Stack>
         </GoldCard>
+
+        {error && <Alert severity="error" sx={{ mb: 1.5, borderRadius: 2 }}>{error}</Alert>}
 
         {status === 'COMING' && (
           <GoldCard delay={0.08} sx={{ mb: 2.2 }}>
@@ -547,7 +600,11 @@ export default function AttendanceStatusTab({ onSaved, initialRsvp }: Props) {
               <IconButton
                 size="small"
                 disabled={count >= RSVP_MAX_GUESTS}
-                onClick={() => setCount((v) => Math.min(RSVP_MAX_GUESTS, v + 1))}
+                onClick={() => {
+                  const nextCount = Math.min(RSVP_MAX_GUESTS, count + 1);
+                  setCount(nextCount);
+                  queueRsvpSave({ number_of_guests: nextCount });
+                }}
               >
                 <AddCircleOutlineIcon sx={{ color: count >= RSVP_MAX_GUESTS ? '#C8B89A' : '#C9A84C' }} />
               </IconButton>
@@ -588,14 +645,20 @@ export default function AttendanceStatusTab({ onSaved, initialRsvp }: Props) {
                   icon={<LocalFloristIcon sx={{ fontSize: 19 }} />}
                   value={vegetarianCount}
                   max={count - veganCount}
-                  onChange={setVegetarianCount}
+                  onChange={(value) => {
+                    setVegetarianCount(value);
+                    queueRsvpSave({ vegetarian_count: value });
+                  }}
                 />
                 <MealCountRow
                   label="מנות טבעוניות"
                   icon={<NatureIcon sx={{ fontSize: 19 }} />}
                   value={veganCount}
                   max={count - vegetarianCount}
-                  onChange={setVeganCount}
+                  onChange={(value) => {
+                    setVeganCount(value);
+                    queueRsvpSave({ vegan_count: value });
+                  }}
                 />
                 <Box sx={{ borderTop: '1px solid rgba(201,168,76,0.25)', pt: 1, display: 'flex', justifyContent: 'space-between' }}>
                   <Typography sx={{ color: '#6B5240', fontWeight: 600 }}>מנות רגילות</Typography>
@@ -612,6 +675,7 @@ export default function AttendanceStatusTab({ onSaved, initialRsvp }: Props) {
               placeholder="הערות נוספות לגבי המנה (אלרגיות, בקשות מיוחדות...)"
               value={dishNotes}
               onChange={(e) => setDishNotes(e.target.value)}
+              onBlur={() => queueRsvpSave({ dish_notes: dishNotes.trim() || null })}
               sx={{
                 mt: 1.6,
                 '& .MuiOutlinedInput-root': {
@@ -626,7 +690,6 @@ export default function AttendanceStatusTab({ onSaved, initialRsvp }: Props) {
           </GoldCard>
         )}
 
-        {error && <Alert severity="error" sx={{ mb: 1.5, borderRadius: 2 }}>{error}</Alert>}
         {success && <Alert severity="success" sx={{ mb: 1.5, borderRadius: 2 }}>{success}</Alert>}
 
         <Box sx={{ display: 'flex', justifyContent: 'center' }}>

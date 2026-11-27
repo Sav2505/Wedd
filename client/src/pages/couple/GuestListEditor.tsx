@@ -1604,6 +1604,16 @@ const GroupAccordionItem = memo(function GroupAccordionItem({
     (e: React.MouseEvent) => { e.stopPropagation(); onCreateGuest(isUngrouped ? null : groupId); },
     [onCreateGuest, isUngrouped, groupId]
   );
+  const rsvpCounts = items.reduce((counts, guest) => {
+    if (guest.rsvp_status === 'COMING') {
+      counts.coming += getEffectivePartySize(guest);
+    } else if (guest.rsvp_status === 'NOT_COMING') {
+      counts.notComing += getInvitedPartySize(guest);
+    } else {
+      counts.pending += getInvitedPartySize(guest);
+    }
+    return counts;
+  }, { coming: 0, pending: 0, notComing: 0 });
 
   return (
     <Accordion
@@ -1675,6 +1685,23 @@ const GroupAccordionItem = memo(function GroupAccordionItem({
         </Box>
       </AccordionSummary>
       <AccordionDetails sx={{ pt: 0.5 }}>
+        <Stack direction="row" spacing={0.75} sx={{ mb: 1, flexWrap: 'nowrap' }}>
+          <Chip
+            size="small"
+            label={`${rsvpCounts.coming} אישרו`}
+            sx={{ bgcolor: 'rgba(46,139,87,0.14)', color: '#2E8B57', border: '1px solid rgba(46,139,87,0.3)', fontWeight: 700 }}
+          />
+          <Chip
+            size="small"
+            label={`${rsvpCounts.pending} טרם אישרו`}
+            sx={{ bgcolor: 'rgba(140,140,140,0.14)', color: '#6C6C6C', border: '1px solid rgba(140,140,140,0.3)', fontWeight: 700 }}
+          />
+          <Chip
+            size="small"
+            label={`${rsvpCounts.notComing} סירבו`}
+            sx={{ bgcolor: 'rgba(185,71,61,0.13)', color: '#B9473D', border: '1px solid rgba(185,71,61,0.3)', fontWeight: 700 }}
+          />
+        </Stack>
         {items.length === 0 ? (
           <Typography variant="body2" sx={{ color: '#A08070', fontStyle: 'italic', py: 0.75 }}>
             {isUngrouped ? 'כל האורחים משויכים לקבוצות.' : 'אין אורחים בקבוצה הזו עדיין.'}

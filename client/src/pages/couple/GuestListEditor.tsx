@@ -852,7 +852,7 @@ export default function GuestListEditor() {
           value={rsvpFilter}
           onChange={(e) => setRsvpFilter(e.target.value as RsvpFilter)}
           fullWidth
-          sx={{ mt: 1.25 }}
+          sx={{ mt: 1.5 }}
         >
           <MenuItem value="ALL">הכל</MenuItem>
           <MenuItem value="PENDING">ממתינים</MenuItem>

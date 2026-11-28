@@ -116,7 +116,7 @@ export default function SeatingEditor() {
     const [isSavingPublish, setIsSavingPublish] = useState(false);
     const [tableScaleFactor, setTableScaleFactor] = useState(DEFAULT_TABLE_SCALE_FACTOR);
     const [isSavingScale, setIsSavingScale] = useState(false);
-    const [showGrid, setShowGrid] = useState(false);
+    const [showGrid, setShowGrid] = useState(true);
 
     // ── Editable copy of selected table fields ──
     const [editLabel, setEditLabel] = useState('');

@@ -96,6 +96,7 @@ const EMPTY_FORM: GuestForm = {
 
 type RsvpFilter = 'ALL' | RsvpStatus;
 type RsvpListSort = 'NAME' | 'DATE_DESC' | 'DATE_ASC';
+type RsvpGroupScope = { id: string; name: string; isUngrouped: boolean };
 
 const directMessageOptions: Array<{ value: DirectWeddingMessageTemplate; label: string; description: string }> = [
   { value: 'wedding_confirmation', label: 'הזמנה ראשונית', description: 'הזמנה אישית עם פרטי האירוע וקישור לאישור הגעה' },
@@ -262,6 +263,7 @@ export default function GuestListEditor() {
   const [deletingGuest, setDeletingGuest] = useState(false);
   const [deleteGroupId, setDeleteGroupId] = useState<string | null>(null);
   const [rsvpListStatus, setRsvpListStatus] = useState<RsvpStatus | null>(null);
+  const [rsvpListGroup, setRsvpListGroup] = useState<RsvpGroupScope | null>(null);
   const [rsvpListSort, setRsvpListSort] = useState<RsvpListSort>('NAME');
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
   // const [rsvpListLoadingStatus, setRsvpListLoadingStatus] = useState<RsvpStatus | null>(null);
@@ -435,7 +437,14 @@ export default function GuestListEditor() {
 
   const rsvpListGuests = useMemo(() => {
     if (!rsvpListStatus) return [];
-    return allGuests
+    let guestsInScope = allGuests;
+    if (rsvpListGroup?.isUngrouped) {
+      const groupIds = new Set(groups.map((group) => group.id));
+      guestsInScope = allGuests.filter((guest) => !guest.guest_group_id || !groupIds.has(guest.guest_group_id));
+    } else if (rsvpListGroup) {
+      guestsInScope = allGuests.filter((guest) => guest.guest_group_id === rsvpListGroup.id);
+    }
+    return guestsInScope
       .filter((g) => g.rsvp_status === rsvpListStatus)
       .sort((a, b) => {
         const byName = a.full_name.localeCompare(b.full_name, 'he');
@@ -453,7 +462,7 @@ export default function GuestListEditor() {
         const byDate = rsvpListSort === 'DATE_DESC' ? bDate - aDate : aDate - bDate;
         return byDate || byName;
       });
-  }, [allGuests, rsvpListStatus, rsvpListSort]);
+  }, [allGuests, groups, rsvpListGroup, rsvpListStatus, rsvpListSort]);
 
   const rsvpListPeopleCount = useMemo(() => {
     return rsvpListGuests.reduce((sum, g) => {
@@ -469,9 +478,15 @@ export default function GuestListEditor() {
     return '';
   }, [rsvpListStatus]);
 
-  function handleOpenRsvpList(status: RsvpStatus) {
+  const handleOpenRsvpList = useCallback((status: RsvpStatus, group: RsvpGroupScope | null = null) => {
+    setRsvpListGroup(group);
     setRsvpListStatus(status);
-  }
+  }, []);
+
+  const handleCloseRsvpList = useCallback(() => {
+    setRsvpListStatus(null);
+    setRsvpListGroup(null);
+  }, []);
 
   const handleEditGuestOpen = useCallback((guest: ManagedGuest) => {
     setEditingGuest(guest);
@@ -1061,6 +1076,7 @@ export default function GuestListEditor() {
               onEditGuest={handleEditGuestOpen}
               onDeleteGuest={handleDeleteGuestOpen}
               onSendConfirmation={handleOpenConfirmation}
+              onOpenRsvpList={handleOpenRsvpList}
               registerGuestRef={registerGuestRef}
               highlightedGuestId={highlightedGuestId}
             />
@@ -1078,6 +1094,7 @@ export default function GuestListEditor() {
             onEditGuest={handleEditGuestOpen}
             onDeleteGuest={handleDeleteGuestOpen}
             onSendConfirmation={handleOpenConfirmation}
+            onOpenRsvpList={handleOpenRsvpList}
             registerGuestRef={registerGuestRef}
             highlightedGuestId={highlightedGuestId}
           />
@@ -1353,9 +1370,9 @@ export default function GuestListEditor() {
         </DialogActions>
       </Dialog>
 
-      <Dialog open={rsvpListStatus !== null} onClose={() => setRsvpListStatus(null)} maxWidth="sm" fullWidth>
+      <Dialog open={rsvpListStatus !== null} onClose={handleCloseRsvpList} maxWidth="sm" fullWidth>
         <DialogTitle sx={{ fontFamily: "'Frank Ruhl Libre', serif", fontWeight: 700 }}>
-          {rsvpListTitle}
+          {rsvpListGroup ? `${rsvpListTitle} · ${rsvpListGroup.name}` : rsvpListTitle}
         </DialogTitle>
         <DialogContent>
           <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={1} sx={{ mb: 1.1, mt: 1 }}>
@@ -1448,7 +1465,7 @@ export default function GuestListEditor() {
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setRsvpListStatus(null)} sx={{ color: '#A08070' }}>
+          <Button onClick={handleCloseRsvpList} sx={{ color: '#A08070' }}>
             סגירה
           </Button>
         </DialogActions>
@@ -1579,6 +1596,7 @@ const GroupAccordionItem = memo(function GroupAccordionItem({
   onEditGuest,
   onDeleteGuest,
   onSendConfirmation,
+  onOpenRsvpList,
   registerGuestRef,
   highlightedGuestId,
 }: {
@@ -1596,6 +1614,7 @@ const GroupAccordionItem = memo(function GroupAccordionItem({
   onEditGuest: (guest: ManagedGuest) => void;
   onDeleteGuest: (id: string) => void;
   onSendConfirmation: (guest: ManagedGuest) => void;
+  onOpenRsvpList: (status: RsvpStatus, group: RsvpGroupScope) => void;
   registerGuestRef: (id: string, el: HTMLDivElement | null) => void;
   highlightedGuestId: string | null;
 }) {
@@ -1603,6 +1622,10 @@ const GroupAccordionItem = memo(function GroupAccordionItem({
   const handleCreateGuest = useCallback(
     (e: React.MouseEvent) => { e.stopPropagation(); onCreateGuest(isUngrouped ? null : groupId); },
     [onCreateGuest, isUngrouped, groupId]
+  );
+  const handleOpenRsvpList = useCallback(
+    (status: RsvpStatus) => onOpenRsvpList(status, { id: groupId, name, isUngrouped: Boolean(isUngrouped) }),
+    [onOpenRsvpList, groupId, name, isUngrouped]
   );
   const rsvpCounts = items.reduce((counts, guest) => {
     if (guest.rsvp_status === 'COMING') {
@@ -1689,16 +1712,22 @@ const GroupAccordionItem = memo(function GroupAccordionItem({
           <Chip
             size="small"
             label={`${rsvpCounts.coming} אישרו`}
+            clickable
+            onClick={() => handleOpenRsvpList('COMING')}
             sx={{ bgcolor: 'rgba(46,139,87,0.14)', color: '#2E8B57', border: '1px solid rgba(46,139,87,0.3)', fontWeight: 700 }}
           />
           <Chip
             size="small"
             label={`${rsvpCounts.pending} טרם אישרו`}
+            clickable
+            onClick={() => handleOpenRsvpList('PENDING')}
             sx={{ bgcolor: 'rgba(140,140,140,0.14)', color: '#6C6C6C', border: '1px solid rgba(140,140,140,0.3)', fontWeight: 700 }}
           />
           <Chip
             size="small"
             label={`${rsvpCounts.notComing} סירבו`}
+            clickable
+            onClick={() => handleOpenRsvpList('NOT_COMING')}
             sx={{ bgcolor: 'rgba(185,71,61,0.13)', color: '#B9473D', border: '1px solid rgba(185,71,61,0.3)', fontWeight: 700 }}
           />
         </Stack>

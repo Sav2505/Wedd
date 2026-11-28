@@ -283,10 +283,10 @@ export default function FloorPlanCanvas({
               '&::before': isJoined ? {
                 content: '""',
                 position: 'absolute',
-                top: '28%',
+                top: '22%',
                 left: '14%',
                 right: '14%',
-                height: '2px',
+                height: '3px',
                 borderRadius: '2px',
                 background: isOwn ? 'rgba(255,255,255,0.72)' : 'rgba(154,120,51,0.6)',
                 pointerEvents: 'none',

@@ -258,6 +258,7 @@ export default function FloorPlanCanvas({
         return (
           <Box
             key={table.id}
+            title={table.label?.trim() || `שולחן ${table.table_number}`}
             onPointerDown={(e) => handlePointerDown(e, table)}
             onClick={() => { if (!didDragRef.current) onSelectTable?.(table.id); }}
             style={{ left: `${safeLeft}%`, top: `${safeTop}%` }}
@@ -285,6 +286,8 @@ export default function FloorPlanCanvas({
                   : isWarning
                     ? '1.5px solid rgba(196,60,50,0.6)'
                     : '1.5px solid rgba(201,168,76,0.55)',
+                    outline: editable && table.is_closed ? '3px solid #2E8B57' : 'none',
+                    outlineOffset: 2,
               boxShadow: isOwn
                 ? '0 0 0 5px rgba(201,168,76,0.18), 0 4px 14px rgba(201,168,76,0.35)'
                 : isSelected

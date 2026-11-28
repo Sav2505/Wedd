@@ -91,6 +91,7 @@ export default function SeatingEditor() {
     const [selectedId, setSelectedId] = useState<string | null>(null);
     const [addDialogOpen, setAddDialogOpen] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
+    const [isSavingClosed, setIsSavingClosed] = useState(false);
     const [isSavingLabel, setIsSavingLabel] = useState(false);
     const [labelSaved, setLabelSaved] = useState(false);
     const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
@@ -179,6 +180,21 @@ export default function SeatingEditor() {
         setSelectedId(id);
         setGuestToAdd(null);
         setConfirmedGuestToAdd(null);
+    }
+
+    async function handleClosedChange(isClosed: boolean) {
+        if (!selectedTable || isSavingClosed || selectedTable.is_closed === isClosed) return;
+        const tableId = selectedTable.id;
+        setIsSavingClosed(true);
+        setTables(prev => prev.map(table => table.id === tableId ? { ...table, is_closed: isClosed } : table));
+        try {
+            await updateTable(tableId, { is_closed: isClosed });
+        } catch {
+            setError('שגיאה בשמירת מצב השולחן');
+            await reload();
+        } finally {
+            setIsSavingClosed(false);
+        }
     }
 
     function handleGuestGroupChange(group: SeatingGuestGroup | null) {
@@ -884,6 +900,28 @@ export default function SeatingEditor() {
                                         שמור
                                     </Button>
                                 </Box>
+
+                                <ToggleButton
+                                    value="closed"
+                                    selected={selectedTable.is_closed}
+                                    disabled={isSavingClosed}
+                                    aria-label={selectedTable.is_closed ? 'השולחן סגור' : 'סמן שולחן כסגור'}
+                                    onChange={(_, selected) => { void handleClosedChange(Boolean(selected)); }}
+                                    sx={{
+                                        alignSelf: 'flex-start',
+                                        borderColor: 'rgba(46,139,87,0.45)',
+                                        color: '#52705E',
+                                        '&.Mui-selected': {
+                                            color: '#1F6B42',
+                                            backgroundColor: 'rgba(46,139,87,0.12)',
+                                            borderColor: 'rgba(46,139,87,0.65)',
+                                        },
+                                        '&.Mui-selected:hover': { backgroundColor: 'rgba(46,139,87,0.18)' },
+                                    }}
+                                >
+                                    <CheckCircleOutlineIcon sx={{ fontSize: 18, ml: 0.75 }} />
+                                    {selectedTable.is_closed ? 'השולחן סגור' : 'סמן שולחן כסגור'}
+                                </ToggleButton>
 
                                 <Divider sx={{ borderColor: 'rgba(201,168,76,0.15)' }} />
 

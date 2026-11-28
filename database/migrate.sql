@@ -77,6 +77,9 @@
 \echo '==> Running migration_029_whatsapp_group_schedule_paused_status.sql...'
 \i migration_029_whatsapp_group_schedule_paused_status.sql
 
+\echo '==> Running migration_030_table_closed.sql...'
+\i migration_030_table_closed.sql
+
 \echo '==> Running seed.sql...'
 \i seed.sql
 

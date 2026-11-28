@@ -115,6 +115,19 @@ The migration adds vegetarian and vegan meal quantities, backfills existing sing
 
 ---
 
+## Table Closure Status (Existing Database)
+
+Before deploying the table-closure editor, run the standalone migration against
+the existing database:
+
+```bash
+psql -U <user> -d <database> -f database/migration_030_table_closed.sql
+```
+
+It adds `tables.is_closed`, defaulting existing and new tables to `FALSE`. Apply
+this migration before deploying the updated server and client. Do not rerun the
+full migration or seed for this feature.
+
 ## Tables
 
 | Table          | Purpose                                           |

@@ -199,6 +199,7 @@ export interface WeddingTable {
   pos_y: number;
   shape: 'round' | 'square' | 'rect';
   orientation: 'h' | 'v' | null;
+  is_closed: boolean;
 }
 
 export interface WeddingTableWithGuests extends WeddingTable {

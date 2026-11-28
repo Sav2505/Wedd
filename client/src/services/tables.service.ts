@@ -17,6 +17,7 @@ function normalizeTable(table: WeddingTableWithGuests): WeddingTableWithGuests {
     pos_y: toFiniteNumber(table.pos_y, 50),
     shape,
     orientation: shape === 'rect' ? (table.orientation === 'v' ? 'v' : 'h') : null,
+    is_closed: table.is_closed ?? false,
   };
 }
 
@@ -45,7 +46,7 @@ export async function createTable(payload: {
 
 export async function updateTable(
   id: string,
-  payload: { label?: string | null; capacity?: number; table_number?: number; pos_x?: number; pos_y?: number; shape?: 'round' | 'square' | 'rect'; orientation?: 'h' | 'v' | null },
+  payload: { label?: string | null; capacity?: number; table_number?: number; pos_x?: number; pos_y?: number; shape?: 'round' | 'square' | 'rect'; orientation?: 'h' | 'v' | null; is_closed?: boolean },
 ): Promise<void> {
   await api.put(`/tables/${id}`, payload);
 }

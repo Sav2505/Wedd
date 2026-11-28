@@ -20,6 +20,7 @@ export async function getAllTables(weddingId: number): Promise<WeddingTableWithG
       t.pos_y,
       t.shape,
       t.orientation,
+      t.is_closed,
       t.created_at,
 
       COALESCE(
@@ -113,9 +114,10 @@ export async function updateTable(
     pos_y?: number;
     shape?: 'round' | 'square' | 'rect';
     orientation?: 'h' | 'v' | null;
+    is_closed?: boolean;
   },
 ): Promise<WeddingTable> {
-  const allowed = ['label', 'capacity', 'table_number', 'pos_x', 'pos_y', 'shape', 'orientation'] as const;
+  const allowed = ['label', 'capacity', 'table_number', 'pos_x', 'pos_y', 'shape', 'orientation', 'is_closed'] as const;
   const sets: string[] = [];
   const values: unknown[] = [];
   let idx = 1;

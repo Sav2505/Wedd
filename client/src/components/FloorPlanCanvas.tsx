@@ -280,6 +280,17 @@ export default function FloorPlanCanvas({
               // minWidth: isRect ? (isPortrait ? 22 : `max(${TABLE_RECT_MIN_WIDTH}px, 20%)`) : `min(${TABLE_MIN_WIDTH}px, 10%)`,
               aspectRatio: isRect || isJoined ? 'unset' : '1 / 1',
               borderRadius: isRect || isJoined ? '7px' : table.shape === 'square' ? '16%' : '50%',
+              '&::before': isJoined ? {
+                content: '""',
+                position: 'absolute',
+                top: '28%',
+                left: '14%',
+                right: '14%',
+                height: '2px',
+                borderRadius: '2px',
+                background: isOwn ? 'rgba(255,255,255,0.72)' : 'rgba(154,120,51,0.6)',
+                pointerEvents: 'none',
+              } : undefined,
               background: isOwn
                 ? 'linear-gradient(135deg, #E0C97A 0%, #C9A84C 100%)'
                 : isWarning

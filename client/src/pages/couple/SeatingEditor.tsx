@@ -228,7 +228,7 @@ export default function SeatingEditor() {
 
     function handleNewShapeChange(shape: 'round' | 'square' | 'rect' | 'joined') {
         setNewShape(shape);
-        if (shape === 'joined') setNewCap(18);
+        setNewCap(shape === 'square' ? 12 : shape === 'rect' ? 22 : shape === 'joined' ? 18 : 10);
     }
 
     function handleStageLabelChange(value: string) {

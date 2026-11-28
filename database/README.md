@@ -138,7 +138,9 @@ psql -U <user> -d <database> -f database/migration_031_joined_table.sql
 ```
 
 It adds the `tables.shape` column when it is missing, defaulting existing and
-new tables to `round`. Apply it before deploying the updated server and client.
+new tables to `round`, and allows `joined` in the shape constraint. If you have
+already applied an earlier version of this migration, run it again to update
+the constraint before creating joined tables.
 
 ## Tables
 

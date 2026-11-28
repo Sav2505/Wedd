@@ -177,6 +177,7 @@ export default function SeatingEditor() {
     const confirmedUnassignedGuests = filterSeatingGuests(unassigned, selectedGuestGroup, true);
 
     function handleSelectTable(id: string) {
+        if (id !== selectedId) setSelectedGuestGroup(null);
         setSelectedId(id);
         setGuestToAdd(null);
         setConfirmedGuestToAdd(null);

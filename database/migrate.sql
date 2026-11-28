@@ -80,6 +80,9 @@
 \echo '==> Running migration_030_table_closed.sql...'
 \i migration_030_table_closed.sql
 
+\echo '==> Running migration_031_joined_table.sql...'
+\i migration_031_joined_table.sql
+
 \echo '==> Running seed.sql...'
 \i seed.sql
 

@@ -90,7 +90,7 @@ export async function createTable(
   capacity: number,
   posX: number,
   posY: number,
-  shape: 'round' | 'square' | 'rect' = 'round',
+  shape: 'round' | 'square' | 'rect' | 'joined' = 'round',
   orientation: 'h' | 'v' | null = null,
   weddingId: number,
 ): Promise<WeddingTableWithGuests> {
@@ -112,7 +112,7 @@ export async function updateTable(
     table_number?: number;
     pos_x?: number;
     pos_y?: number;
-    shape?: 'round' | 'square' | 'rect';
+    shape?: 'round' | 'square' | 'rect' | 'joined';
     orientation?: 'h' | 'v' | null;
     is_closed?: boolean;
   },

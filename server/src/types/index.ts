@@ -159,7 +159,7 @@ export interface WeddingTable {
   capacity: number;
   pos_x: number;
   pos_y: number;
-  shape: 'round' | 'square' | 'rect';
+  shape: 'round' | 'square' | 'rect' | 'joined';
   orientation: 'h' | 'v' | null;
   is_closed: boolean;
   created_at: string;

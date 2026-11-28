@@ -100,7 +100,7 @@ export default function SeatingEditor() {
     const [newNum, setNewNum] = useState('');
     const [newCap, setNewCap] = useState(10);
     const [newLabel, setNewLabel] = useState('');
-    const [newShape, setNewShape] = useState<'round' | 'square' | 'rect'>('round');
+    const [newShape, setNewShape] = useState<'round' | 'square' | 'rect' | 'joined'>('round');
     const [newOrientation, setNewOrientation] = useState<'h' | 'v'>('h');
     const [stageLabel, setStageLabel] = useState(() => {
         if (typeof window === 'undefined') return 'חופה';
@@ -224,6 +224,11 @@ export default function SeatingEditor() {
         setNewShape('round');
         setNewOrientation('h');
         setAddDialogOpen(true);
+    }
+
+    function handleNewShapeChange(shape: 'round' | 'square' | 'rect' | 'joined') {
+        setNewShape(shape);
+        if (shape === 'joined') setNewCap(18);
     }
 
     function handleStageLabelChange(value: string) {
@@ -376,7 +381,7 @@ export default function SeatingEditor() {
 
     // ── Change shape (auto-saves) ─────────────────────────────
 
-    async function handleShapeChange(_e: React.MouseEvent, shape: 'round' | 'square' | 'rect' | null) {
+    async function handleShapeChange(_e: React.MouseEvent, shape: 'round' | 'square' | 'rect' | 'joined' | null) {
         if (!selectedId || !shape) return;
         const orientation = shape === 'rect'
             ? (tables.find(t => t.id === selectedId)?.orientation ?? 'h')
@@ -962,6 +967,10 @@ export default function SeatingEditor() {
                                             <TableRowsIcon sx={{ fontSize: 17 }} />
                                             <Typography variant="caption" sx={{ fontWeight: 600 }}>אבירים</Typography>
                                         </ToggleButton>
+                                        <ToggleButton value="joined">
+                                            <TableRowsIcon sx={{ fontSize: 17 }} />
+                                            <Typography variant="caption" sx={{ fontWeight: 600 }}>מחובר</Typography>
+                                        </ToggleButton>
                                     </ToggleButtonGroup>
                                 </Box>
 
@@ -1257,7 +1266,7 @@ export default function SeatingEditor() {
                         <ToggleButtonGroup
                             value={newShape}
                             exclusive
-                            onChange={(_e, v) => v && setNewShape(v)}
+                            onChange={(_e, v) => v && handleNewShapeChange(v)}
                             size="small"
                             sx={{
                                 '& .MuiToggleButton-root': {
@@ -1280,6 +1289,10 @@ export default function SeatingEditor() {
                             <ToggleButton value="rect">
                                 <TableRowsIcon sx={{ fontSize: 17 }} />
                                 <Typography variant="caption" sx={{ fontWeight: 600 }}>אבירים</Typography>
+                            </ToggleButton>
+                            <ToggleButton value="joined">
+                                <TableRowsIcon sx={{ fontSize: 17 }} />
+                                <Typography variant="caption" sx={{ fontWeight: 600 }}>מחובר</Typography>
                             </ToggleButton>
                         </ToggleButtonGroup>
                     </Box>

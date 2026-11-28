@@ -7,8 +7,10 @@ function toFiniteNumber(value: unknown, fallback: number): number {
 }
 
 function normalizeTable(table: WeddingTableWithGuests): WeddingTableWithGuests {
-  const shape: 'round' | 'square' | 'rect' =
-    table.shape === 'square' ? 'square' : table.shape === 'rect' ? 'rect' : 'round';
+  const shape: WeddingTableWithGuests['shape'] =
+    table.shape === 'square' ? 'square'
+      : table.shape === 'rect' ? 'rect'
+        : table.shape === 'joined' ? 'joined' : 'round';
   return {
     ...table,
     table_number: toFiniteNumber(table.table_number, 0),
@@ -37,7 +39,7 @@ export async function getAllTables(weddingId: number | null): Promise<WeddingTab
 
 export async function createTable(payload: {
   wedding_id: number; table_number: number; label?: string; capacity?: number; pos_x?: number; pos_y?: number;
-  shape?: 'round' | 'square' | 'rect'; orientation?: 'h' | 'v';
+  shape?: 'round' | 'square' | 'rect' | 'joined'; orientation?: 'h' | 'v';
 }): Promise<WeddingTableWithGuests> {
   const { data } = await api.post<ApiResponse<WeddingTableWithGuests>>('/tables', payload);
   if (!data.success || !data.data) throw new Error(data.message ?? 'שגיאה ביצירת שולחן');
@@ -46,7 +48,7 @@ export async function createTable(payload: {
 
 export async function updateTable(
   id: string,
-  payload: { label?: string | null; capacity?: number; table_number?: number; pos_x?: number; pos_y?: number; shape?: 'round' | 'square' | 'rect'; orientation?: 'h' | 'v' | null; is_closed?: boolean },
+  payload: { label?: string | null; capacity?: number; table_number?: number; pos_x?: number; pos_y?: number; shape?: 'round' | 'square' | 'rect' | 'joined'; orientation?: 'h' | 'v' | null; is_closed?: boolean },
 ): Promise<void> {
   await api.put(`/tables/${id}`, payload);
 }

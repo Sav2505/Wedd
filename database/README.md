@@ -128,6 +128,18 @@ It adds `tables.is_closed`, defaulting existing and new tables to `FALSE`. Apply
 this migration before deploying the updated server and client. Do not rerun the
 full migration or seed for this feature.
 
+## Joined Seating Tables (Existing Database)
+
+Before deploying the joined-table editor, run the standalone migration against
+the existing database:
+
+```bash
+psql -U <user> -d <database> -f database/migration_031_joined_table.sql
+```
+
+It adds the `tables.shape` column when it is missing, defaulting existing and
+new tables to `round`. Apply it before deploying the updated server and client.
+
 ## Tables
 
 | Table          | Purpose                                           |

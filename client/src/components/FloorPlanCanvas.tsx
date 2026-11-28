@@ -9,6 +9,7 @@ import { FLOOR_PLAN_GRID_STEP, snapToFloorPlanGrid } from '../utils/floorPlanGri
 const TABLE_WIDTH = '38px';
 const TABLE_RECT_WIDTH = '78px';
 const TABLE_RECT_HEIGHT = '30px';
+const TABLE_JOINED_HEIGHT = '46px';
 
 export interface FloorPlanCanvasProps {
   tables: WeddingTableWithGuests[];
@@ -253,6 +254,7 @@ export default function FloorPlanCanvas({
         const safeLeft = Number.isFinite(Number(table.pos_x)) ? Number(table.pos_x) : 50;
         const safeTop = Number.isFinite(Number(table.pos_y)) ? Number(table.pos_y) : 50;
         const isRect = table.shape === 'rect';
+        const isJoined = table.shape === 'joined';
         const isPortrait = isRect && table.orientation === 'v';
 
         return (
@@ -266,14 +268,18 @@ export default function FloorPlanCanvas({
               position: 'absolute',
               transform: `translate(-50%, -50%) scale(${tableScale})`,
               width: isRect ? (isPortrait ? `max(12%, ${TABLE_RECT_WIDTH})` : '5%') : `max(6%, ${TABLE_WIDTH})`,
-              height: isRect ? (isPortrait ? '5%' : `max(12%, ${TABLE_RECT_WIDTH})`) : `max(6%, ${TABLE_WIDTH})`,
-              minHeight: isRect ? (isPortrait ? TABLE_RECT_HEIGHT : `max(5%, ${TABLE_RECT_WIDTH})`) : TABLE_WIDTH,
+              height: isRect
+                ? (isPortrait ? '5%' : `max(12%, ${TABLE_RECT_WIDTH})`)
+                : isJoined ? `max(8%, ${TABLE_JOINED_HEIGHT})` : `max(6%, ${TABLE_WIDTH})`,
+              minHeight: isRect
+                ? (isPortrait ? TABLE_RECT_HEIGHT : `max(5%, ${TABLE_RECT_WIDTH})`)
+                : isJoined ? TABLE_JOINED_HEIGHT : TABLE_WIDTH,
               minWidth: isRect ? (isPortrait ? TABLE_RECT_WIDTH : `${TABLE_RECT_HEIGHT}`) : TABLE_WIDTH,
               // width: isRect ? (isPortrait ? `min(${TABLE_RECT_MIN_HEIGHT}px, 10%)` : `min(${TABLE_RECT_MIN_WIDTH}px, 20%)`) : `min(${TABLE_MIN_WIDTH}px, 10%)`,
               // height: isRect ? (isPortrait ? `min(${TABLE_RECT_MIN_WIDTH}px, 20%)` : `min(${TABLE_RECT_MIN_HEIGHT}px, 10%)`) : undefined,
               // minWidth: isRect ? (isPortrait ? 22 : `max(${TABLE_RECT_MIN_WIDTH}px, 20%)`) : `min(${TABLE_MIN_WIDTH}px, 10%)`,
-              aspectRatio: isRect ? 'unset' : '1 / 1',
-              borderRadius: isRect ? '7px' : table.shape === 'square' ? '16%' : '50%',
+              aspectRatio: isRect || isJoined ? 'unset' : '1 / 1',
+              borderRadius: isRect || isJoined ? '7px' : table.shape === 'square' ? '16%' : '50%',
               background: isOwn
                 ? 'linear-gradient(135deg, #E0C97A 0%, #C9A84C 100%)'
                 : isWarning

@@ -29,19 +29,19 @@ export async function createTable(req: Request, res: Response, next: NextFunctio
   try {
     const { wedding_id, table_number, label, capacity, pos_x, pos_y, shape, orientation } = req.body as {
       table_number: number; label?: string; capacity?: number; pos_x?: number; pos_y?: number;
-      shape?: 'round' | 'square' | 'rect'; orientation?: 'h' | 'v'; wedding_id: number;
+      shape?: 'round' | 'square' | 'rect' | 'joined'; orientation?: 'h' | 'v'; wedding_id: number;
     };
     if (!table_number || isNaN(Number(table_number))) {
       return next(createError('מספר שולחן הוא שדה חובה', 400));
     }
-    const safeShape: 'round' | 'square' | 'rect' =
-      shape === 'square' ? 'square' : shape === 'rect' ? 'rect' : 'round';
+    const safeShape: 'round' | 'square' | 'rect' | 'joined' =
+      shape === 'square' ? 'square' : shape === 'rect' ? 'rect' : shape === 'joined' ? 'joined' : 'round';
     const safeOrientation: 'h' | 'v' | null =
       safeShape === 'rect' ? (orientation === 'v' ? 'v' : 'h') : null;
     const table = await tablesService.createTable(
       Number(table_number),
       label ?? null,
-      Number(capacity ?? 10),
+      Number(capacity ?? (safeShape === 'joined' ? 18 : 10)),
       Number(pos_x ?? 50),
       Number(pos_y ?? 50),
       safeShape,

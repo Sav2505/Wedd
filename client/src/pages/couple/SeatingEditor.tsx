@@ -906,8 +906,8 @@ export default function SeatingEditor() {
                                     value="closed"
                                     selected={selectedTable.is_closed}
                                     disabled={isSavingClosed}
-                                    aria-label={selectedTable.is_closed ? 'השולחן סגור' : 'סמן שולחן כסגור'}
-                                    onChange={(_, selected) => { void handleClosedChange(Boolean(selected)); }}
+                                    aria-label={selectedTable.is_closed ? 'בטל סגירת שולחן' : 'סמן שולחן כסגור'}
+                                    onChange={() => { void handleClosedChange(!selectedTable.is_closed); }}
                                     sx={{
                                         alignSelf: 'flex-start',
                                         borderColor: 'rgba(46,139,87,0.45)',
@@ -921,7 +921,7 @@ export default function SeatingEditor() {
                                     }}
                                 >
                                     <CheckCircleOutlineIcon sx={{ fontSize: 18, ml: 0.75 }} />
-                                    {selectedTable.is_closed ? 'השולחן סגור' : 'סמן שולחן כסגור'}
+                                    {selectedTable.is_closed ? 'בטל סגירה' : 'סמן שולחן כסגור'}
                                 </ToggleButton>
 
                                 <Divider sx={{ borderColor: 'rgba(201,168,76,0.15)' }} />

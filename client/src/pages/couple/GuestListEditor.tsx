@@ -264,7 +264,7 @@ export default function GuestListEditor() {
   const [deleteGroupId, setDeleteGroupId] = useState<string | null>(null);
   const [rsvpListStatus, setRsvpListStatus] = useState<RsvpStatus | null>(null);
   const [rsvpListGroup, setRsvpListGroup] = useState<RsvpGroupScope | null>(null);
-  const [rsvpListSort, setRsvpListSort] = useState<RsvpListSort>('NAME');
+  const [rsvpListSort, setRsvpListSort] = useState<RsvpListSort>('DATE_DESC');
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
   // const [rsvpListLoadingStatus, setRsvpListLoadingStatus] = useState<RsvpStatus | null>(null);
   const [searchLoading, setSearchLoading] = useState(false);

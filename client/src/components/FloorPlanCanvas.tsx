@@ -21,6 +21,8 @@ export interface FloorPlanCanvasProps {
   entrancePosition?: 'right' | 'bottom' | 'left';
   /** Currently selected table id in editor mode */
   selectedId?: string | null;
+  /** Table id temporarily highlighted by the seated guest search */
+  highlightedTableId?: string | null;
   /** Whether tables are draggable (couple editor) */
   editable?: boolean;
   showGrid?: boolean;
@@ -45,6 +47,7 @@ export default function FloorPlanCanvas({
   stageLabel = 'חופה',
   entrancePosition = 'bottom',
   selectedId = null,
+  highlightedTableId = null,
   editable = false,
   showGrid = false,
   onSelectTable,
@@ -250,6 +253,7 @@ export default function FloorPlanCanvas({
       {tables.map(table => {
         const isOwn = table.table_number === ownTableNumber;
         const isSelected = table.id === selectedId;
+        const isLookupHighlighted = table.id === highlightedTableId;
         const isWarning = warningTableIds?.has(table.id) ?? false;
         const safeLeft = Number.isFinite(Number(table.pos_x)) ? Number(table.pos_x) : 50;
         const safeTop = Number.isFinite(Number(table.pos_y)) ? Number(table.pos_y) : 50;
@@ -260,6 +264,7 @@ export default function FloorPlanCanvas({
         return (
           <Box
             key={table.id}
+            id={`floor-table-${table.id}`}
             title={table.label?.trim() || `שולחן ${table.table_number}`}
             onPointerDown={(e) => handlePointerDown(e, table)}
             onClick={() => { if (!didDragRef.current) onSelectTable?.(table.id); }}
@@ -303,8 +308,15 @@ export default function FloorPlanCanvas({
                   : isWarning
                     ? '1.5px solid rgba(196,60,50,0.6)'
                     : '1.5px solid rgba(201,168,76,0.55)',
-                    outline: editable && table.is_closed ? '3px solid #2E8B57' : 'none',
+                    outline: isLookupHighlighted
+                      ? '4px solid #1F9F51'
+                      : editable && table.is_closed ? '3px solid #2E8B57' : 'none',
                     outlineOffset: 2,
+                    animation: isLookupHighlighted ? 'floorTableLookupPulse 600ms ease-in-out 5' : 'none',
+                    '@keyframes floorTableLookupPulse': {
+                      '0%, 100%': { boxShadow: '0 0 0 2px rgba(31,159,81,0.2)' },
+                      '50%': { boxShadow: '0 0 0 8px rgba(31,159,81,0.75)' },
+                    },
               boxShadow: isOwn
                 ? '0 0 0 5px rgba(201,168,76,0.18), 0 4px 14px rgba(201,168,76,0.35)'
                 : isSelected

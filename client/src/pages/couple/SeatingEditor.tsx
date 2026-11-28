@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import {
     Box, Typography, Button, IconButton, TextField, Chip,
     CircularProgress, Alert, Autocomplete, Dialog,
@@ -45,6 +45,14 @@ const MIN_TABLE_SCALE_FACTOR = 0.5;
 const MAX_TABLE_SCALE_FACTOR = 1.3;
 const TABLE_SCALE_STEP = 0.05;
 const DEFAULT_TABLE_SCALE_FACTOR = 1;
+
+interface SeatedGuestOption {
+    id: string;
+    fullName: string;
+    tableId: string;
+    tableNumber: number;
+    tableLabel: string | null;
+}
 
 function clampTableScaleFactor(value: number) {
     return clamp(Number(value) || DEFAULT_TABLE_SCALE_FACTOR, MIN_TABLE_SCALE_FACTOR, MAX_TABLE_SCALE_FACTOR);
@@ -96,6 +104,9 @@ export default function SeatingEditor() {
     const [labelSaved, setLabelSaved] = useState(false);
     const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
     const [unassignedListType, setUnassignedListType] = useState<'all' | 'confirmed' | null>(null);
+    const [guestSearchValue, setGuestSearchValue] = useState<SeatedGuestOption | null>(null);
+    const [highlightedTableId, setHighlightedTableId] = useState<string | null>(null);
+    const lookupTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     // ── "Add table" dialog local state ──
     const [newNum, setNewNum] = useState('');
@@ -160,6 +171,10 @@ export default function SeatingEditor() {
         load();
     }, [weddingId, reload]);
 
+    useEffect(() => () => {
+        if (lookupTimeoutRef.current) clearTimeout(lookupTimeoutRef.current);
+    }, []);
+
     // ── Sync edit fields when selection changes ───────────────
 
     useEffect(() => {
@@ -173,6 +188,15 @@ export default function SeatingEditor() {
     // ── Helpers ───────────────────────────────────────────────
 
     const selectedTable = tables.find(t => t.id === selectedId) ?? null;
+    const seatedGuestOptions = tables
+        .flatMap(table => table.guests.map(guest => ({
+            id: guest.id,
+            fullName: guest.full_name,
+            tableId: table.id,
+            tableNumber: table.table_number,
+            tableLabel: table.label,
+        })))
+        .sort((guestA, guestB) => guestA.fullName.localeCompare(guestB.fullName, 'he'));
     const guestGroups = getSeatingGuestGroups(unassigned, selectedGuestGroup);
     const filteredUnassignedGuests = filterSeatingGuests(unassigned, selectedGuestGroup);
     const confirmedUnassignedGuests = filterSeatingGuests(unassigned, selectedGuestGroup, true);
@@ -182,6 +206,26 @@ export default function SeatingEditor() {
         setSelectedId(id);
         setGuestToAdd(null);
         setConfirmedGuestToAdd(null);
+    }
+
+    function handleFindSeatedGuest(guest: SeatedGuestOption | null) {
+        setGuestSearchValue(guest);
+        if (!guest) return;
+
+        handleSelectTable(guest.tableId);
+        setHighlightedTableId(guest.tableId);
+        if (lookupTimeoutRef.current) clearTimeout(lookupTimeoutRef.current);
+        lookupTimeoutRef.current = setTimeout(() => {
+            setHighlightedTableId(null);
+            lookupTimeoutRef.current = null;
+        }, 3000);
+
+        requestAnimationFrame(() => {
+            document.querySelector<HTMLElement>('[data-tour-anchor="seating-floorplan"]')?.scrollIntoView({
+                behavior: 'smooth',
+                block: 'center',
+            });
+        });
     }
 
     async function handleClosedChange(isClosed: boolean) {
@@ -801,6 +845,30 @@ export default function SeatingEditor() {
                 </Box>
             </Box>
 
+            <Box sx={{ mb: 1.5, maxWidth: { xs: '100%', sm: 420 } }}>
+                <Autocomplete<SeatedGuestOption>
+                    options={seatedGuestOptions}
+                    value={guestSearchValue}
+                    onChange={(_, guest) => handleFindSeatedGuest(guest)}
+                    getOptionLabel={guest => guest.fullName}
+                    isOptionEqualToValue={(option, value) => option.id === value.id}
+                    noOptionsText={seatedGuestOptions.length > 0 ? 'לא נמצאו אורחים תואמים' : 'אין עדיין אורחים משובצים'}
+                    renderOption={(props, guest) => (
+                        <Box component="li" {...props} key={guest.id}>
+                            <Box>
+                                <Typography sx={{ fontWeight: 600 }}>{guest.fullName}</Typography>
+                                <Typography variant="caption" sx={{ color: '#8E7460' }}>
+                                    שולחן {guest.tableNumber}{guest.tableLabel ? ` · ${guest.tableLabel}` : ''}
+                                </Typography>
+                            </Box>
+                        </Box>
+                    )}
+                    renderInput={params => (
+                        <TextField {...params} label="חיפוש אורח משובץ" placeholder="הקלד שם אורח" size="small" />
+                    )}
+                />
+            </Box>
+
             <motion.div
                 data-tour-anchor="seating-floorplan"
                 initial={{ opacity: 0, y: 12 }}
@@ -815,6 +883,7 @@ export default function SeatingEditor() {
                     editable
                     showGrid={showGrid}
                     selectedId={selectedId}
+                    highlightedTableId={highlightedTableId}
                     onSelectTable={handleSelectTable}
                     onDragEnd={handleDragEnd}
                     warningTableIds={tableIdsWithDeclinedGuest}

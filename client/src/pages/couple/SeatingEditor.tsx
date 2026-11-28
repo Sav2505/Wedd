@@ -95,6 +95,7 @@ export default function SeatingEditor() {
     const [isSavingLabel, setIsSavingLabel] = useState(false);
     const [labelSaved, setLabelSaved] = useState(false);
     const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+    const [unassignedListType, setUnassignedListType] = useState<'all' | 'confirmed' | null>(null);
 
     // ── "Add table" dialog local state ──
     const [newNum, setNewNum] = useState('');
@@ -502,6 +503,10 @@ export default function SeatingEditor() {
     const unassignedConfirmedCount = unassigned
         .filter(g => g.rsvp_status === 'COMING')
         .reduce((s, g) => s + getEffectivePartySize(g), 0);
+    const unassignedListGuests = unassignedListType === 'confirmed'
+        ? unassigned.filter(g => g.rsvp_status === 'COMING')
+        : unassigned;
+    const unassignedListPeopleCount = unassignedListGuests.reduce((sum, guest) => sum + getEffectivePartySize(guest), 0);
     const decliningAssignedCount = tables.reduce(
         (s, t) => s + t.guests.filter(g => g.rsvp_status === 'NOT_COMING').length,
         0
@@ -562,6 +567,9 @@ export default function SeatingEditor() {
                             icon={<PeopleOutlineIcon sx={{ fontSize: 16 }} />}
                             label={`${unassignedCount} ללא שולחן`}
                             size="small"
+                            clickable
+                            aria-label="הצגת כל האורחים ללא שולחן"
+                            onClick={() => setUnassignedListType('all')}
                             sx={{ background: 'rgba(220,80,80,0.1)', color: '#B03030', border: '1px solid rgba(220,80,80,0.25)', fontWeight: 600 }}
                         />
                     )}
@@ -570,6 +578,9 @@ export default function SeatingEditor() {
                             icon={<PeopleOutlineIcon sx={{ fontSize: 16 }} />}
                             label={unassignedConfirmedCount > 0 ? `${unassignedConfirmedCount} שאישרו ללא שולחן` : "כל המוזמנים שאישרו משובצים"}
                             size="small"
+                            clickable
+                            aria-label="הצגת אורחים שאישרו וטרם שובצו"
+                            onClick={() => setUnassignedListType('confirmed')}
                             sx={{ background: 'rgba(46,139,87,0.12)', color: '#1f6b42', border: '1px solid rgba(46,139,87,0.3)', fontWeight: 600 }}
                         />
                     )}
@@ -1209,6 +1220,65 @@ export default function SeatingEditor() {
                     </motion.div>
                 )}
             </AnimatePresence>
+
+            <Dialog
+                open={unassignedListType !== null}
+                onClose={() => setUnassignedListType(null)}
+                maxWidth="sm"
+                fullWidth
+            >
+                <DialogTitle sx={{ fontFamily: "'Frank Ruhl Libre', serif", fontWeight: 700 }}>
+                    {unassignedListType === 'confirmed' ? 'אורחים שאישרו וטרם שובצו' : 'אורחים ללא שולחן'}
+                </DialogTitle>
+                <DialogContent>
+                    <Typography variant="caption" sx={{ display: 'block', color: '#8A7565', mb: 1, mt: 0.5 }}>
+                        {unassignedListGuests.length} אורחים · {unassignedListPeopleCount} אנשים
+                    </Typography>
+                    {unassignedListGuests.length === 0 ? (
+                        <Typography variant="body2" sx={{ color: '#A08070', fontStyle: 'italic' }}>
+                            אין אורחים להצגה כרגע.
+                        </Typography>
+                    ) : (
+                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.8 }}>
+                            {unassignedListGuests.map(guest => (
+                                <Box
+                                    key={guest.id}
+                                    sx={{
+                                        border: '1px solid rgba(201,168,76,0.2)',
+                                        borderRadius: 2,
+                                        px: 1.2,
+                                        py: 0.85,
+                                        background: 'rgba(255,255,255,0.72)',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'space-between',
+                                        gap: 1,
+                                    }}
+                                >
+                                    <Box sx={{ minWidth: 0 }}>
+                                        <Typography sx={{ color: '#2C1810', fontWeight: 700, lineHeight: 1.2 }}>
+                                            {guest.full_name}
+                                        </Typography>
+                                        <Typography variant="caption" sx={{ color: '#8E7460' }}>
+                                            {guest.group_name || 'ללא קבוצה'}{guest.side ? ` · ${guest.side}` : ''}
+                                        </Typography>
+                                    </Box>
+                                    <Chip
+                                        size="small"
+                                        label={`${getEffectivePartySize(guest)} אנשים`}
+                                        sx={{ flexShrink: 0, bgcolor: 'rgba(154,120,51,0.12)', color: '#7A5C1E', fontWeight: 700 }}
+                                    />
+                                </Box>
+                            ))}
+                        </Box>
+                    )}
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setUnassignedListType(null)} sx={{ color: '#A08070' }}>
+                        סגירה
+                    </Button>
+                </DialogActions>
+            </Dialog>
 
             {/* ── Add Table Dialog ─────────────────────────────── */}
             <Dialog
